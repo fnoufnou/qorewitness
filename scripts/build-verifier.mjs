@@ -6,7 +6,7 @@ const out = await build({
   target: "es2022", minify: true, write: false, legalComments: "none",
 });
 const js = out.outputFiles[0].text.replace(/<\/script/gi, "<\\/script");
-const html = readFileSync("web/verifier/index.html", "utf8").replace("<script>/*BUNDLE*/</script>", `<script type="module">${js}</script>`);
+const html = readFileSync("web/verifier/index.html", "utf8").replace("<script>/*BUNDLE*/</script>", () => `<script type="module">${js}</script>`);
 mkdirSync("web/verifier/dist", { recursive: true });
 writeFileSync("web/verifier/dist/index.html", html);
 console.log(`web/verifier/dist/index.html ${(html.length / 1024).toFixed(0)} KB`);
