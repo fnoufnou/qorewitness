@@ -16,3 +16,4 @@ QoreWitness is built by one developer with Claude (Anthropic) as the coding assi
 |---|---|---|
 | 2026-11-08 | Research: QoreChain due diligence, Dev Fest rules, prior art on media timestamping, concept scoring | Chose the concept |
 | 2026-11-09 | Developer reference from docs and npm. Live probes of `pqcVerify` and `pqcKeyStatus`. `AnchorRegistry`, `MerkleSha256`, `QorePqc`, mocks, 9 tests. Agent building blocks. | Review |
+| 2026-11-09 (night) | `DeviceRegistry`, key rotation and `verifyAnchor` with 38 contract tests. Device key CLI, receipt v2, shared verify core, tamper demo. Deploy of registry v2 and live tests of every action on testnet. Agent bug fix (open window lost on restart). Q-Day Drill dry-run script and a throwaway drill account. Found that the SDK derives the ML-DSA key from the ECDSA key for seed-based accounts. | Set the task order and the rules. Added the SSH key. Rebuilt the repo history under the alias. Reviews the design choices. |

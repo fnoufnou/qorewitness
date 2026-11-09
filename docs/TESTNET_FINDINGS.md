@@ -81,3 +81,30 @@ Conclusions:
 - So for an account made from a raw private key (the `PRIVATE_KEY` path of the template helper `pnpm window`), the ECDSA key is enough to rebuild the ML-DSA key. The post-quantum protection is then likely void for that account.
 - `deriveUnifiedAccount(mnemonic)` uses the mnemonic as the secret. The ECDSA key alone does not give the ML-DSA key, because the BIP-32 path is one-way.
 - Rule for the Q-Day Drill: create the drill account from a fresh mnemonic. Hand over only its ECDSA private key.
+
+## Q-Day Drill dry run (9 Nov 2026, 23:45 UTC)
+
+Throwaway drill account `0x06af2d43F5048AdF71b3957d2e6b0C4027F8dc06` from a fresh mnemonic. ML-DSA-87 key registered with proof of possession. Device `drill-cam` registered and one anchor made. Open EVM window scoped to the v2 registry (12 txs, 3.77 QOR left). Then `scripts/qday-drill.ts dryrun` with `DRILL_SEND=1` used only the ECDSA key.
+
+| Attack | Result |
+|---|---|
+| A0 rebuild the ML-DSA key from the ECDSA key | Refused: the derived key is not the registered key |
+| A1 native transfer, ECDSA only | Refused at broadcast: `pqc` code 20 (registered key, PQC signature required) |
+| A2 native transfer, hybrid with the derived key | Refused: `pqc` code 21 (`hybrid_verify_failed`) |
+| A3 open an EVM window, ECDSA only / derived key | Refused: code 20 / code 21 |
+| A4 EVM transfer of 1 QOR | Not admitted. The RPC answered "Missing or invalid parameters". Likely the window scope check. |
+| A5 token approval, target outside the scope | Not admitted, same answer |
+| A6 send QOR to the registry | Mined, reverted (no receive function) |
+| A7 revoke with a forged owner signature | Mined, reverted |
+| A8 register an attacker device | Mined, reverted |
+| A9 rotate to an attacker key | Mined, reverted |
+| A10 forged anchor with the real device key | Mined, reverted |
+| A11 replay of the real anchor | Mined, reverted (window overlap) |
+
+13 attacks, 0 succeeded. Cost to the victim: 303,750 uqor (0.30 QOR) in fees and 6 window slots.
+
+Conclusions:
+
+- Calls to an in-scope target are admitted, then revert. Each one used a window slot and charged 450,000 gas, which is half of the 900,000 gas limit. So an attacker with the ECDSA key can burn the open window: slots and fees, up to its `maxValue`. The attacker cannot take value or change state.
+- Mitigation for the drill: keep no EVM window open on 18 Nov, or a very small one. Make the "normal tx" a hybrid native-lane tx, which needs no window.
+- The RPC error text for A4 and A5 does not name the window. Still to confirm that it is the scope rule and not a malformed request.
