@@ -1,12 +1,14 @@
 /**
  * anchor-files.ts - anchors a set of files as one window and writes a receipt.
  * Usage: pnpm tsx --env-file=.env scripts/anchor-files.ts <device-label> <file...>
- * Env: QORE_MNEMONIC, QORE_REGISTRY (0x...), optional QORE_WINDOW_SECONDS (default 60).
+ * Env: QORE_MNEMONIC, QORE_REGISTRY (0x...), optional QW_DEVICE_KEY (default keys/<label>.key),
+ *      optional QORE_WINDOW_SECONDS (default 60). The device must be registered (pnpm device register).
  */
 import { statSync, writeFileSync, mkdirSync } from "node:fs";
 import { basename } from "node:path";
 import type { Address } from "viem";
 import { AnchorClient } from "../src/agent/anchor-client.js";
+import { loadDeviceKey } from "../src/agent/device-key.js";
 import { sha256File } from "../src/agent/hash-file.js";
 import { buildReceipt } from "../src/agent/receipt.js";
 import type { Segment } from "../src/agent/window.js";
@@ -31,12 +33,14 @@ const now = Math.floor(Date.now() / 1000);
 const windowStart = BigInt(now - windowSeconds);
 const client = await AnchorClient.create(mnemonic, registry);
 const deviceId = deviceIdOf(label);
-const res = await client.anchorWindow(deviceId, { windowStart, windowSeconds, segments });
+const deviceKey = loadDeviceKey(process.env.QW_DEVICE_KEY?.trim() || `keys/${label}.key`);
+const res = await client.anchorWindow(deviceId, deviceKey, { windowStart, windowSeconds, segments });
 
 const receipt = buildReceipt(
   {
     chain: { evmChainId: 9800, registry, txHash: res.txHash, anchorId: res.anchorId, blockNumber: res.blockNumber.toString() },
-    signer: client.address, deviceId, deviceLabel: label, root: res.root, signature: res.signature,
+    owner: client.address, deviceId, deviceLabel: label, devicePubkey: deviceKey.publicKeyHex,
+    root: res.root, signature: res.signature,
   },
   { windowStart, windowSeconds, segments },
 );

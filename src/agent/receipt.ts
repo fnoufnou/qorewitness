@@ -8,16 +8,19 @@ import { hex } from "../core/message.js";
 import type { Window } from "./window.js";
 import type { Address, Hex } from "viem";
 
+export const RECEIPT_FORMAT = "qorewitness-receipt/v2";
+
 export interface Receipt {
-  format: "qorewitness-receipt/v1";
+  format: typeof RECEIPT_FORMAT;
   chain: { evmChainId: number; registry: Address; txHash?: Hex; anchorId?: Hex; blockNumber?: string };
-  signer: Address;
+  owner: Address; // account that owns the device and sent the anchor
   deviceId: Hex;
   deviceLabel: string;
+  devicePubkey: Hex; // ML-DSA-87 device key (2,592 bytes). keccak256 of it is stored on chain.
   windowStart: string;
   windowSeconds: number;
   root: Hex;
-  signature: Hex; // ML-DSA-87, 4627 bytes
+  signature: Hex; // ML-DSA-87 by the device key, 4,627 bytes
   segments: { file: string; sha256: Hex; size: number; index: number; proof: Hex[] }[];
   opentimestamps?: { calendar: string; ots: string /* base64 */ }[];
 }
@@ -28,7 +31,7 @@ export function buildReceipt(
 ): Receipt {
   const hashes: Hash[] = w.segments.map((s) => s.sha256);
   return {
-    format: "qorewitness-receipt/v1",
+    format: RECEIPT_FORMAT,
     ...base,
     windowStart: w.windowStart.toString(),
     windowSeconds: w.windowSeconds,

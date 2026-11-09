@@ -8,3 +8,4 @@ ignition/deployments/
 *.key
 data/
 receipts/
+keys/

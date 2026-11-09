@@ -19,7 +19,10 @@
   .verdict { font-weight:600; font-size:18px; }
   .verdict.ok { color:var(--ok); } .verdict.bad { color:var(--bad); }
   ol#steps { padding-left:20px; } ol#steps li { margin:6px 0; }
-  li.pass::marker { content:"✔ "; color:var(--ok); } li.fail::marker { content:"✘ "; color:var(--bad); } li.info::marker { content:"ℹ "; color:var(--muted); }
+  li.pass::marker { content:"✔ "; color:var(--ok); } li.fail::marker { content:"✘ "; color:var(--bad); } li.info::marker { content:"ℹ "; color:var(--muted); } li.warn::marker { content:"⚠ "; color:#d29922; }
+  button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); margin-left:8px; }
+  button:disabled { opacity:.4; cursor:default; }
+  #note { color:var(--muted); font-size:14px; margin-top:8px; }
   footer { color:var(--muted); font-size:13px; }
 </style>
 </head>
@@ -32,7 +35,8 @@
     <input id="video" type="file" accept="video/*,.mp4,.ts">
     <label for="receipt">Receipt (.json)</label>
     <input id="receipt" type="file" accept=".json,application/json">
-    <button id="go">Verify</button>
+    <button id="go">Verify</button><button id="tamper" class="secondary" disabled title="Verify the original first">Change one byte and verify again</button>
+    <div id="note"></div>
   </div>
   <div class="card">
     <div id="verdict" class="verdict">Choose a file and its receipt.</div>

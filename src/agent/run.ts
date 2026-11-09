@@ -3,8 +3,9 @@
  * segments into windows, anchors each window on QoreChain and writes a receipt.
  *
  * Env:
- *   QORE_MNEMONIC     agent account (testnet only)
- *   QORE_REGISTRY     AnchorRegistry address
+ *   QORE_MNEMONIC     owner account (testnet only)
+ *   QORE_REGISTRY     AnchorRegistry address (v2, with DeviceRegistry)
+ *   QW_DEVICE_KEY     device key file (default /etc/qorewitness/<device>.key)
  *   QW_DEVICE         device label, e.g. lsc-indoor
  *   QW_SEGMENT_DIR    folder with segments and segments.csv (ffmpeg -segment_list)
  *   QW_RECEIPT_DIR    folder for receipts (default <segment dir>/../receipts)
@@ -13,7 +14,8 @@
 import { existsSync, readFileSync, statSync, writeFileSync, mkdirSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import type { Address } from "viem";
-import { AnchorClient } from "./anchor-client.js";
+import { AnchorClient, DEVICE_STATUS } from "./anchor-client.js";
+import { loadDeviceKey } from "./device-key.js";
 import { ensureScopedWindow } from "./evm-window.js";
 import { sha256File } from "./hash-file.js";
 import { buildReceipt } from "./receipt.js";
@@ -31,6 +33,7 @@ const device = env("QW_DEVICE");
 const segDir = env("QW_SEGMENT_DIR");
 const receiptDir = env("QW_RECEIPT_DIR", join(segDir, "..", "receipts"));
 const windowSeconds = Number(env("QW_WINDOW_SECONDS", "600"));
+const deviceKey = loadDeviceKey(env("QW_DEVICE_KEY", `/etc/qorewitness/${device}.key`));
 const statePath = join(receiptDir, `.state-${device}.json`);
 mkdirSync(receiptDir, { recursive: true });
 
@@ -51,6 +54,18 @@ const client = await AnchorClient.create(mnemonic, registry);
 const deviceId = deviceIdOf(device);
 const batcher = new WindowBatcher(windowSeconds);
 log(`agent ${client.address} device ${device} (${deviceId}) window ${windowSeconds}s registry ${registry}`);
+
+/** The device must be registered and active with this key, or every anchor fails. */
+async function deviceReady(): Promise<boolean> {
+  const d = await client.getDevice(deviceId);
+  if (d.status === 1 && d.keyHash === deviceKey.keyHash) return true;
+  log(
+    `device not ready: status ${DEVICE_STATUS[d.status] ?? d.status}` +
+      (d.status === 1 ? `, key on chain ${d.keyHash.slice(0, 12)}... differs from ${deviceKey.keyHash.slice(0, 12)}...` : "") +
+      `. Run: pnpm device register ${device}`,
+  );
+  return false;
+}
 
 /** Reads the segment list. ffmpeg appends a line only after a segment file is closed. */
 function finishedSegments(): string[] {
@@ -80,6 +95,7 @@ async function collect(): Promise<void> {
 }
 
 async function anchorPending(): Promise<void> {
+  if (state.pending.length > 0 && !(await deviceReady())) return; // keep windows, retry later
   while (state.pending.length > 0) {
     const p = state.pending[0];
     const w: Window = {
@@ -89,11 +105,12 @@ async function anchorPending(): Promise<void> {
     };
     if (await ensureScopedWindow(client.account, registry)) log("opened a new scoped EVM window");
     try {
-      const res = await client.anchorWindow(deviceId, w);
+      const res = await client.anchorWindow(deviceId, deviceKey, w);
       const receipt = buildReceipt(
         {
           chain: { evmChainId: 9800, registry, txHash: res.txHash, anchorId: res.anchorId, blockNumber: res.blockNumber.toString() },
-          signer: client.address, deviceId, deviceLabel: device, root: res.root, signature: res.signature,
+          owner: client.address, deviceId, deviceLabel: device, devicePubkey: deviceKey.publicKeyHex,
+          root: res.root, signature: res.signature,
         },
         w,
       );
