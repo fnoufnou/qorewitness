@@ -15,6 +15,10 @@ import {
   derivePqcCanonical,
   directSignerFromPrivateKey,
   EthNativeSigner,
+  buildRegisterPqcKeyMsg,
+  fetchPqcStatus,
+  isRegisteredPqcKey,
+  signProofOfPossession,
 } from "@qorechain/sdk";
 
 const CHAIN_ID = "qorechain-diana";
@@ -59,9 +63,27 @@ if (native.address === expect) {
 } else if (unified.cosmos === expect) {
   console.log("Match: unified (Ethereum path) derivation.");
   if (!send) process.exit(0);
-  const signer = new EthNativeSigner(unified, { signMode: "hybrid", rest: REST });
   const transport = await StargateClient.connect(RPC);
   try {
+    // A new account first needs its ML-DSA-87 key on chain (the one message allowed classical-only).
+    const pqc = await fetchPqcStatus({ rest: REST, address: unified.cosmos });
+    if (!pqc.registered) {
+      console.log("Registering the post-quantum key first...");
+      const pop = signProofOfPossession({ chainId: CHAIN_ID, account: unified.cosmos, keypair: unified.pqc });
+      const msg = buildRegisterPqcKeyMsg(unified.cosmos, { pqcKeypair: unified.pqc, proofOfPossession: pop });
+      const reg = new EthNativeSigner(unified, { signMode: "classical", rest: REST });
+      const r = await reg.signAndBroadcast(transport, {
+        chainId: CHAIN_ID,
+        ...(await accountSequence(unified.cosmos)),
+        fee: { amount: [{ denom: "uqor", amount: "100000" }], gas: "800000" },
+        messages: [msg],
+      });
+      console.log("registered:", r.transactionHash);
+      await new Promise((ok) => setTimeout(ok, 8000)); // wait for the next block
+    } else if (isRegisteredPqcKey(pqc, unified.pqc.publicKey) === false) {
+      throw new Error("A different PQC key is registered for this address. Use the wallet that registered it.");
+    }
+    const signer = new EthNativeSigner(unified, { signMode: "hybrid", rest: REST });
     const seq = await accountSequence(unified.cosmos);
     console.log(await signer.bankSend(transport, expect, AMOUNT, { chainId: CHAIN_ID, ...seq, fee: FEE, memo }));
   } finally {
