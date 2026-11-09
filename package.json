@@ -13,7 +13,8 @@
     "probe:keystatus": "tsx scripts/probe-keystatus.ts",
     "deploy:testnet": "hardhat ignition deploy ignition/modules/AnchorRegistry.ts --network qorechainTestnet --deployment-id qorewitness-v2",
     "build:verifier": "node scripts/build-verifier.mjs",
-    "device": "tsx --env-file=.env scripts/device.ts"
+    "device": "tsx --env-file=.env scripts/device.ts",
+    "drill": "tsx scripts/qday-drill.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
