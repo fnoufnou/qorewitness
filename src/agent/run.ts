@@ -1,0 +1,131 @@
+/**
+ * QoreWitness agent: watches the segment list that ffmpeg writes, groups finished
+ * segments into windows, anchors each window on QoreChain and writes a receipt.
+ *
+ * Env:
+ *   QORE_MNEMONIC     agent account (testnet only)
+ *   QORE_REGISTRY     AnchorRegistry address
+ *   QW_DEVICE         device label, e.g. lsc-indoor
+ *   QW_SEGMENT_DIR    folder with segments and segments.csv (ffmpeg -segment_list)
+ *   QW_RECEIPT_DIR    folder for receipts (default <segment dir>/../receipts)
+ *   QW_WINDOW_SECONDS window length (default 600)
+ */
+import { existsSync, readFileSync, statSync, writeFileSync, mkdirSync, renameSync } from "node:fs";
+import { join } from "node:path";
+import type { Address } from "viem";
+import { AnchorClient } from "./anchor-client.js";
+import { ensureScopedWindow } from "./evm-window.js";
+import { sha256File } from "./hash-file.js";
+import { buildReceipt } from "./receipt.js";
+import { WindowBatcher, type Segment, type Window } from "./window.js";
+import { deviceIdOf } from "../core/message.js";
+
+const env = (k: string, d?: string) => {
+  const v = process.env[k]?.trim() || d;
+  if (!v) throw new Error(`missing env ${k}`);
+  return v;
+};
+const mnemonic = env("QORE_MNEMONIC");
+const registry = env("QORE_REGISTRY") as Address;
+const device = env("QW_DEVICE");
+const segDir = env("QW_SEGMENT_DIR");
+const receiptDir = env("QW_RECEIPT_DIR", join(segDir, "..", "receipts"));
+const windowSeconds = Number(env("QW_WINDOW_SECONDS", "600"));
+const statePath = join(receiptDir, `.state-${device}.json`);
+mkdirSync(receiptDir, { recursive: true });
+
+interface State {
+  seen: string[]; // segment file names already hashed
+  pending: { windowStart: string; windowSeconds: number; segments: { path: string; sha256: string; size: number; completedAt: number }[] }[];
+}
+const state: State = existsSync(statePath) ? JSON.parse(readFileSync(statePath, "utf8")) : { seen: [], pending: [] };
+const seen = new Set(state.seen);
+const saveState = () => {
+  state.seen = [...seen].slice(-5000);
+  writeFileSync(statePath + ".tmp", JSON.stringify(state));
+  renameSync(statePath + ".tmp", statePath); // atomic replace
+};
+
+const log = (...a: unknown[]) => console.log(new Date().toISOString(), ...a);
+const client = await AnchorClient.create(mnemonic, registry);
+const deviceId = deviceIdOf(device);
+const batcher = new WindowBatcher(windowSeconds);
+log(`agent ${client.address} device ${device} (${deviceId}) window ${windowSeconds}s registry ${registry}`);
+
+/** Reads the segment list. ffmpeg appends a line only after a segment file is closed. */
+function finishedSegments(): string[] {
+  const list = join(segDir, "segments.csv");
+  if (!existsSync(list)) return [];
+  return readFileSync(list, "utf8").split("\n").map((l) => l.split(",")[0]?.trim()).filter(Boolean);
+}
+
+async function collect(): Promise<void> {
+  for (const name of finishedSegments()) {
+    if (seen.has(name)) continue;
+    const path = join(segDir, name);
+    if (!existsSync(path)) { seen.add(name); continue; }
+    const st = statSync(path);
+    const seg: Segment = { path, sha256: await sha256File(path), size: st.size, completedAt: Math.floor(st.mtimeMs / 1000) };
+    batcher.add(seg);
+    seen.add(name);
+  }
+  for (const w of batcher.closeReady(Math.floor(Date.now() / 1000))) {
+    state.pending.push({
+      windowStart: w.windowStart.toString(),
+      windowSeconds: w.windowSeconds,
+      segments: w.segments.map((s) => ({ ...s, sha256: Buffer.from(s.sha256).toString("hex") })),
+    });
+  }
+  saveState();
+}
+
+async function anchorPending(): Promise<void> {
+  while (state.pending.length > 0) {
+    const p = state.pending[0];
+    const w: Window = {
+      windowStart: BigInt(p.windowStart),
+      windowSeconds: p.windowSeconds,
+      segments: p.segments.map((s) => ({ ...s, sha256: Uint8Array.from(Buffer.from(s.sha256, "hex")) })),
+    };
+    if (await ensureScopedWindow(client.account, registry)) log("opened a new scoped EVM window");
+    try {
+      const res = await client.anchorWindow(deviceId, w);
+      const receipt = buildReceipt(
+        {
+          chain: { evmChainId: 9800, registry, txHash: res.txHash, anchorId: res.anchorId, blockNumber: res.blockNumber.toString() },
+          signer: client.address, deviceId, deviceLabel: device, root: res.root, signature: res.signature,
+        },
+        w,
+      );
+      writeFileSync(join(receiptDir, `${device}-${p.windowStart}.json`), JSON.stringify(receipt, null, 2));
+      log(`anchored ${w.segments.length} segments, window ${p.windowStart}, block ${res.blockNumber}, gas ${res.gasUsed}, tx ${res.txHash}`);
+      state.pending.shift();
+      saveState();
+    } catch (err) {
+      const msg = (err as Error).message;
+      if (/WindowOverlap/.test(msg)) {
+        log(`window ${p.windowStart} overlaps an existing anchor, dropping it`);
+        state.pending.shift();
+        saveState();
+        continue;
+      }
+      log(`anchor failed, retry later: ${msg.split("\n")[0]}`);
+      return;
+    }
+  }
+}
+
+let stopping = false;
+process.on("SIGTERM", () => { stopping = true; });
+process.on("SIGINT", () => { stopping = true; });
+while (!stopping) {
+  try {
+    await collect();
+    await anchorPending();
+  } catch (err) {
+    log(`loop error: ${(err as Error).message.split("\n")[0]}`);
+  }
+  for (let i = 0; i < 15 && !stopping; i++) await new Promise((ok) => setTimeout(ok, 1000));
+}
+saveState();
+log("stopped");

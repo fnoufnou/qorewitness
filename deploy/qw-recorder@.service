@@ -1,0 +1,15 @@
+[Unit]
+Description=QoreWitness recorder for %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=dev
+EnvironmentFile=/etc/qorewitness/%i.env
+Environment=TZ=UTC
+ExecStart=/opt/qorewitness/scripts/record.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

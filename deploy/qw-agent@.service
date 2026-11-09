@@ -1,0 +1,15 @@
+[Unit]
+Description=QoreWitness anchoring agent for %i
+After=qw-recorder@%i.service network-online.target
+
+[Service]
+User=dev
+WorkingDirectory=/opt/qorewitness
+EnvironmentFile=/opt/qorewitness/.env
+EnvironmentFile=/etc/qorewitness/%i.env
+ExecStart=/usr/local/bin/pnpm -s tsx src/agent/run.ts
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
