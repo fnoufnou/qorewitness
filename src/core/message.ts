@@ -1,13 +1,16 @@
 /**
- * The exact bytes a device signs for one window. Must match
- * AnchorRegistry.signingMessage() (abi.encodePacked).
+ * The exact bytes that ML-DSA-87 keys sign. Must match AnchorRegistry and
+ * DeviceRegistry (abi.encodePacked) byte for byte.
  */
 import { encodePacked, keccak256, toBytes, toHex, type Address, type Hex } from "viem";
 
-export const DOMAIN: Hex = keccak256(toBytes("QoreWitness/AnchorRegistry/v1"));
+export const DOMAIN: Hex = keccak256(toBytes("QoreWitness/AnchorRegistry/v2"));
+export const REGISTER_TAG: Hex = keccak256(toBytes("QoreWitness/DeviceRegistry/register/v1"));
+export const REVOKE_TAG: Hex = keccak256(toBytes("QoreWitness/DeviceRegistry/revoke/v1"));
+export const ROTATE_TAG: Hex = keccak256(toBytes("QoreWitness/DeviceRegistry/rotate/v1"));
 
 export interface WindowClaim {
-  signer: Address;
+  owner: Address;
   deviceId: Hex; // bytes32
   windowStart: bigint; // unix seconds
   windowSeconds: number;
@@ -15,14 +18,52 @@ export interface WindowClaim {
   root: Hex; // bytes32
 }
 
+/** Window message, signed by the device key. */
 export function signingMessage(chainId: bigint, registry: Address, w: WindowClaim): Uint8Array {
   return toBytes(
     encodePacked(
       ["bytes32", "uint256", "address", "address", "bytes32", "uint64", "uint32", "uint32", "bytes32"],
-      [DOMAIN, chainId, registry, w.signer, w.deviceId, w.windowStart, w.windowSeconds, w.leafCount, w.root],
+      [DOMAIN, chainId, registry, w.owner, w.deviceId, w.windowStart, w.windowSeconds, w.leafCount, w.root],
     ),
   );
 }
+
+/** Register message, signed by the owner key and by the new device key. */
+export function registerMessage(
+  chainId: bigint, registry: Address, owner: Address, deviceId: Hex, keyHash: Hex, nonce: bigint,
+): Uint8Array {
+  return toBytes(
+    encodePacked(
+      ["bytes32", "uint256", "address", "address", "bytes32", "bytes32", "uint256"],
+      [REGISTER_TAG, chainId, registry, owner, deviceId, keyHash, nonce],
+    ),
+  );
+}
+
+/** Revoke message, signed by the owner key. */
+export function revokeMessage(chainId: bigint, registry: Address, owner: Address, deviceId: Hex, nonce: bigint): Uint8Array {
+  return toBytes(
+    encodePacked(
+      ["bytes32", "uint256", "address", "address", "bytes32", "uint256"],
+      [REVOKE_TAG, chainId, registry, owner, deviceId, nonce],
+    ),
+  );
+}
+
+/** Rotate message, signed by the old and by the new device key. */
+export function rotateMessage(
+  chainId: bigint, registry: Address, owner: Address, deviceId: Hex, oldKeyHash: Hex, newKeyHash: Hex, nonce: bigint,
+): Uint8Array {
+  return toBytes(
+    encodePacked(
+      ["bytes32", "uint256", "address", "address", "bytes32", "bytes32", "bytes32", "uint256"],
+      [ROTATE_TAG, chainId, registry, owner, deviceId, oldKeyHash, newKeyHash, nonce],
+    ),
+  );
+}
+
+/** keccak256 of a device public key, as stored on chain. */
+export const keyHashOf = (pubkey: Uint8Array | Hex): Hex => keccak256(pubkey);
 
 /** deviceId = keccak256 of a human label such as "front-door". */
 export function deviceIdOf(label: string): Hex {

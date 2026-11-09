@@ -3,18 +3,21 @@ pragma solidity ^0.8.28;
 
 import {QorePqc} from "./QorePqc.sol";
 import {MerkleSha256} from "./MerkleSha256.sol";
+import {DeviceRegistry} from "./DeviceRegistry.sol";
 
 /// @title AnchorRegistry
 /// @notice Stores Merkle roots of camera recording windows. Each root carries an
-///         ML-DSA-87 signature that the contract checks against the post-quantum
-///         key the chain has registered for the sender. The block time of the
-///         anchor is the trusted "existed before" time.
-/// @dev No owner and no upgrade path: an anchor can never be changed or removed.
-///      Windows per (signer, device) must not overlap and must move forward, so a
-///      verifier can show that no window was inserted later.
-contract AnchorRegistry {
-    /// @notice Domain tag of the signed message. Change it on any format change.
-    bytes32 public constant DOMAIN = keccak256("QoreWitness/AnchorRegistry/v1");
+///         ML-DSA-87 signature by the device key that the owner registered in the
+///         DeviceRegistry. The contract checks the signature on chain with the
+///         pqcVerify precompile. The block time of the anchor is the trusted
+///         "existed before" time.
+/// @dev No contract owner and no upgrade path: an anchor can never be changed or
+///      removed. Windows per (owner, device) must not overlap and must move
+///      forward, so a verifier can show that no window was inserted later.
+///      Only the sender itself can anchor for its devices.
+contract AnchorRegistry is DeviceRegistry {
+    /// @notice Domain tag of the signed window message. Change it on any format change.
+    bytes32 public constant DOMAIN = keccak256("QoreWitness/AnchorRegistry/v2");
 
     /// @notice Max allowed clock skew between the device and the chain, in seconds.
     uint64 public constant MAX_FUTURE_SKEW = 120;
@@ -22,7 +25,9 @@ contract AnchorRegistry {
     struct Anchor {
         bytes32 root; // Merkle root over the segment hashes of the window
         bytes32 sigHash; // keccak256 of the ML-DSA-87 signature (full signature is in the tx input)
-        address signer; // account whose registered PQC key signed the root
+        bytes32 deviceKeyHash; // keccak256 of the device key that signed
+        address owner; // account that owns the device and sent the anchor
+        uint32 deviceKeyVersion;
         uint64 windowStart; // device claim: unix time of the window start
         uint32 windowSeconds; // device claim: window length
         uint32 leafCount; // number of segments in the window
@@ -30,16 +35,30 @@ contract AnchorRegistry {
         uint64 blockNumber;
     }
 
-    /// @notice If true, the sender's PQC key must have a proof of possession on chain.
-    bool public immutable requirePossessionProof;
+    /// @notice Result of verifyAnchor. `found` is false for an unknown window.
+    struct Verification {
+        bool found;
+        bool included; // segment hash + path lead to the anchored root
+        bytes32 anchorId;
+        bytes32 root;
+        uint64 windowStart;
+        uint32 windowSeconds;
+        uint32 leafCount;
+        uint64 anchoredAt;
+        uint64 blockNumber;
+        bytes32 deviceKeyHash; // key that signed this anchor
+        uint32 deviceKeyVersion;
+        DeviceStatus deviceStatus; // status now
+        uint64 deviceRevokedAt; // 0 if not revoked
+    }
 
     mapping(bytes32 anchorId => Anchor) private _anchors;
-    mapping(address signer => mapping(bytes32 deviceId => uint64)) public nextWindowStart;
-    mapping(address signer => mapping(bytes32 deviceId => uint256)) public anchorCount;
+    mapping(address owner => mapping(bytes32 deviceId => uint64)) public nextWindowStart;
+    mapping(address owner => mapping(bytes32 deviceId => uint256)) public anchorCount;
 
     event Anchored(
         bytes32 indexed anchorId,
-        address indexed signer,
+        address indexed owner,
         bytes32 indexed deviceId,
         uint64 windowStart,
         uint32 windowSeconds,
@@ -51,18 +70,14 @@ contract AnchorRegistry {
     error EmptyWindow();
     error WindowInFuture(uint64 windowEnd, uint64 blockTime);
     error WindowOverlap(uint64 windowStart, uint64 nextAllowed);
-    error NoPqcKey(address signer);
-    error PossessionNotProven(address signer);
     error BadSignature();
     error UnknownAnchor(bytes32 anchorId);
 
-    constructor(bool requirePossessionProof_) {
-        requirePossessionProof = requirePossessionProof_;
-    }
+    constructor(bool requirePossessionProof_) DeviceRegistry(requirePossessionProof_) {}
 
     /// @notice The exact bytes the device signs with ML-DSA-87 (empty context).
     function signingMessage(
-        address signer,
+        address owner,
         bytes32 deviceId,
         uint64 windowStart,
         uint32 windowSeconds,
@@ -70,24 +85,58 @@ contract AnchorRegistry {
         bytes32 root
     ) public view returns (bytes memory) {
         return abi.encodePacked(
-            DOMAIN, block.chainid, address(this), signer, deviceId, windowStart, windowSeconds, leafCount, root
+            DOMAIN, block.chainid, address(this), owner, deviceId, windowStart, windowSeconds, leafCount, root
         );
     }
 
     /// @notice Unique id of the anchor for one window of one device.
-    function anchorIdOf(address signer, bytes32 deviceId, uint64 windowStart) public pure returns (bytes32) {
-        return keccak256(abi.encode(signer, deviceId, windowStart));
+    function anchorIdOf(address owner, bytes32 deviceId, uint64 windowStart) public pure returns (bytes32) {
+        return keccak256(abi.encode(owner, deviceId, windowStart));
     }
 
     /// @notice Anchors the Merkle root of one recording window.
+    /// @param devicePubkey Current ML-DSA-87 key of the device (2,592 bytes).
+    /// @param signature ML-DSA-87 signature by the device key over signingMessage.
     function anchor(
         bytes32 deviceId,
         uint64 windowStart,
         uint32 windowSeconds,
         uint32 leafCount,
         bytes32 root,
+        bytes calldata devicePubkey,
         bytes calldata signature
     ) external returns (bytes32 anchorId) {
+        _checkWindow(deviceId, windowStart, windowSeconds, leafCount);
+        Device storage d = _activeDeviceKey(msg.sender, deviceId, devicePubkey);
+        if (!QorePqc.verify(
+                devicePubkey,
+                signature,
+                signingMessage(msg.sender, deviceId, windowStart, windowSeconds, leafCount, root)
+            )) revert BadSignature();
+
+        anchorId = anchorIdOf(msg.sender, deviceId, windowStart);
+        bytes32 sigHash = keccak256(signature);
+        Anchor storage a = _anchors[anchorId];
+        a.root = root;
+        a.sigHash = sigHash;
+        a.deviceKeyHash = d.keyHash;
+        a.owner = msg.sender;
+        a.deviceKeyVersion = d.keyVersion;
+        a.windowStart = windowStart;
+        a.windowSeconds = windowSeconds;
+        a.leafCount = leafCount;
+        a.anchoredAt = uint64(block.timestamp);
+        a.blockNumber = uint64(block.number);
+        nextWindowStart[msg.sender][deviceId] = windowStart + windowSeconds;
+        anchorCount[msg.sender][deviceId] += 1;
+        emit Anchored(anchorId, msg.sender, deviceId, windowStart, windowSeconds, leafCount, root, sigHash);
+    }
+
+    /// @dev Window rules: not empty, not in the future, after the previous window of the device.
+    function _checkWindow(bytes32 deviceId, uint64 windowStart, uint32 windowSeconds, uint32 leafCount)
+        private
+        view
+    {
         if (windowSeconds == 0 || leafCount == 0) revert EmptyWindow();
         uint64 windowEnd = windowStart + windowSeconds;
         if (windowEnd > uint64(block.timestamp) + MAX_FUTURE_SKEW) {
@@ -95,36 +144,6 @@ contract AnchorRegistry {
         }
         uint64 nextAllowed = nextWindowStart[msg.sender][deviceId];
         if (windowStart < nextAllowed) revert WindowOverlap(windowStart, nextAllowed);
-
-        _requireSignature(
-            signingMessage(msg.sender, deviceId, windowStart, windowSeconds, leafCount, root), signature
-        );
-
-        anchorId = anchorIdOf(msg.sender, deviceId, windowStart);
-        bytes32 sigHash = keccak256(signature);
-        _anchors[anchorId] = Anchor({
-            root: root,
-            sigHash: sigHash,
-            signer: msg.sender,
-            windowStart: windowStart,
-            windowSeconds: windowSeconds,
-            leafCount: leafCount,
-            anchoredAt: uint64(block.timestamp),
-            blockNumber: uint64(block.number)
-        });
-        nextWindowStart[msg.sender][deviceId] = windowEnd;
-        anchorCount[msg.sender][deviceId] += 1;
-        emit Anchored(anchorId, msg.sender, deviceId, windowStart, windowSeconds, leafCount, root, sigHash);
-    }
-
-    /// @dev Checks `signature` against the PQC key the chain has registered for the sender.
-    function _requireSignature(bytes memory message, bytes calldata signature) private view {
-        (bool registered, uint8 alg, bytes memory pubkey, bool pop) = QorePqc.keyStatus(msg.sender);
-        if (!registered || alg != QorePqc.ALG_ML_DSA_87 || pubkey.length != QorePqc.ML_DSA_87_PUBKEY_LEN) {
-            revert NoPqcKey(msg.sender);
-        }
-        if (requirePossessionProof && !pop) revert PossessionNotProven(msg.sender);
-        if (!QorePqc.verify(pubkey, signature, message)) revert BadSignature();
     }
 
     /// @notice Returns a stored anchor. Reverts for an unknown id.
@@ -145,5 +164,34 @@ contract AnchorRegistry {
         Anchor storage a = _anchors[anchorId];
         if (a.anchoredAt == 0) revert UnknownAnchor(anchorId);
         return MerkleSha256.verify(a.root, MerkleSha256.leaf(segmentHash), index, a.leafCount, proof);
+    }
+
+    /// @notice One call for third parties: is this segment in the anchored window of
+    ///         (owner, device, windowStart), when was it anchored, by which device key,
+    ///         and what is the device status now. Never reverts.
+    function verifyAnchor(
+        address owner,
+        bytes32 deviceId,
+        uint64 windowStart,
+        bytes32 segmentHash,
+        uint256 index,
+        bytes32[] calldata proof
+    ) external view returns (Verification memory v) {
+        v.anchorId = anchorIdOf(owner, deviceId, windowStart);
+        Anchor storage a = _anchors[v.anchorId];
+        Device memory d = getDevice(owner, deviceId);
+        v.deviceStatus = d.status;
+        v.deviceRevokedAt = d.revokedAt;
+        if (a.anchoredAt == 0) return v;
+        v.found = true;
+        v.included = MerkleSha256.verify(a.root, MerkleSha256.leaf(segmentHash), index, a.leafCount, proof);
+        v.root = a.root;
+        v.windowStart = a.windowStart;
+        v.windowSeconds = a.windowSeconds;
+        v.leafCount = a.leafCount;
+        v.anchoredAt = a.anchoredAt;
+        v.blockNumber = a.blockNumber;
+        v.deviceKeyHash = a.deviceKeyHash;
+        v.deviceKeyVersion = a.deviceKeyVersion;
     }
 }

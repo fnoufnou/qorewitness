@@ -7,12 +7,13 @@
   "scripts": {
     "build": "hardhat build",
     "test": "hardhat test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "hardhat build --quiet && tsc --noEmit",
     "window": "tsx --env-file=.env scripts/window.ts",
     "probe:pqc": "tsx scripts/probe-pqc.ts",
     "probe:keystatus": "tsx scripts/probe-keystatus.ts",
     "deploy:testnet": "hardhat ignition deploy ignition/modules/AnchorRegistry.ts --network qorechainTestnet",
-    "build:verifier": "node scripts/build-verifier.mjs"
+    "build:verifier": "node scripts/build-verifier.mjs",
+    "device": "tsx --env-file=.env scripts/device.ts"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
