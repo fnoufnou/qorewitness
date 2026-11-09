@@ -2,7 +2,7 @@
 
 Post-quantum evidence anchor for camera footage on QoreChain.
 
-QoreWitness proves that a video segment existed before a known time. It hashes each recording segment, builds a SHA-256 Merkle tree per time window, signs the root with ML-DSA-87 and stores it in the `AnchorRegistry` contract on QoreChain. The contract checks the ML-DSA signature on chain against the post-quantum key that the chain has registered for the sender. The block time is the trusted "existed before" time.
+QoreWitness proves that a video segment existed before a known time. It hashes each recording segment, builds a SHA-256 Merkle tree per time window, signs the root with the camera's own ML-DSA-87 key and stores it in the `AnchorRegistry` contract on QoreChain. The contract checks the ML-DSA signature on chain. The block time is the trusted "existed before" time.
 
 Status: proof of concept for the QoreChain Developer Fest (Nov 2026). Testnet only. Do not use it as your only evidence.
 
@@ -14,41 +14,56 @@ Evidence can be needed 10 to 30 years after recording. Classical signatures (ECD
 
 ```
 camera (RTSP) -> ffmpeg segments -> agent: sha256 per segment
-  -> window of N seconds -> Merkle root -> ML-DSA-87 signature
+  -> window of N seconds -> Merkle root -> ML-DSA-87 signature by the device key
   -> AnchorRegistry.anchor() on QoreChain (pqcVerify on chain)
   -> receipt JSON next to the recordings (+ OpenTimestamps, planned)
-verifier (static web page): file + receipt -> hash, Merkle path, signature, chain record
+verifier (static web page or CLI): file + receipt -> hash, Merkle path,
+  verifyAnchor on chain, device key, ML-DSA-87 signature
 ```
 
-Two layers of post-quantum protection:
+Two keys, two layers of post-quantum protection:
 
-1. Chain level. Every EVM transaction needs a registered ML-DSA-87 key and an EVM authorisation window. The agent opens a window that is scoped to the registry contract only (`allowed_targets`).
-2. Application level. The contract verifies the ML-DSA-87 signature over each root with the `pqcVerify` precompile (`0x...0A01`) against the key from `pqcKeyStatus` (`0x...0A02`).
+| Key | Holder | Signs | Checked by |
+|---|---|---|---|
+| Owner key: the account's ML-DSA-87 key registered on chain | Owner account | Native-lane txs (hybrid), EVM window, register and revoke a device | Chain, and the contract via `pqcKeyStatus` (`0x...0A02`) + `pqcVerify` (`0x...0A01`) |
+| Device key: one ML-DSA-87 key per camera | Agent next to the camera | Window roots, key rotation (old and new key) | Contract via `pqcVerify` |
 
-## Live on testnet
+1. Chain level. Every EVM transaction needs a registered ML-DSA-87 key and an EVM authorisation window. The agent opens a window that is scoped to the registry only (`allowed_targets`).
+2. Application level. Every state change in the registry needs fresh ML-DSA-87 signatures. A stolen ECDSA key, even inside an open window, cannot anchor, register, revoke or rotate.
 
-- Registry: `0xA73d4347b50C2A373533915d698Bf03a01c65aAF` on qorechain-diana (EVM chain ID 9800).
-- A home camera records 60-second segments. The agent anchors every 10-minute window.
-- Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`.
+## Live on testnet (qorechain-diana, EVM chain ID 9800)
+
+| What | Address or tx |
+|---|---|
+| Registry v2 (devices, rotation, `verifyAnchor`) | `0x1854EeE2A659F4f39A05d5832cceC405E8045336` |
+| Registry v1 (9 Nov, anchors by account key) | `0xA73d4347b50C2A373533915d698Bf03a01c65aAF` |
+| Owner and agent account | `0xD6C6bDfBE567BcE731907789800205Df0B78ca52` |
+
+- A home camera records 60-second segments. The agent anchors every 10-minute window on v2.
+- Gas and tx hashes: `docs/TESTNET_FINDINGS.md`.
+- Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`. The page has a tamper demo: it changes one byte in a copy in memory and checks again.
 
 ## Contract rules
 
-- Anchors are immutable. There is no owner and no upgrade path.
-- Windows per (signer, device) must move forward and must not overlap. A later anchor cannot fill a gap in the past.
+- Anchors are immutable. There is no contract owner and no upgrade path.
+- Devices belong to the account that registered them. Register: the owner key and the new device key sign (proof of possession). Revoke: the owner key signs. Final, a revoked device id cannot come back. Rotate: the old and the new device key sign. A nonce per owner stops replays.
+- Anchor: only the owner account can send it, and the current device key must sign. Anchors from a revoked device or with an old key fail.
+- Windows per (owner, device) must move forward and must not overlap. A later anchor cannot fill a gap in the past.
 - A window must end before the block time (120 s skew allowed).
-- The signed message is domain-separated: tag, chain ID, registry address, signer, device, window start, window length, leaf count, root.
-- Optional: only keys registered with a proof of possession can anchor (`requirePossessionProof`).
+- Every signed message is domain-separated: tag, chain ID, registry address, owner, device and the action data.
+- `verifyAnchor(owner, device, windowStart, segmentHash, index, path)` gives a third party one answer: found, included, anchor time, signing key and version, device status now. It never reverts.
+- `requirePossessionProof`: the owner key must have a proof of possession on chain.
 
 ## Repository
 
 | Path | Content |
 |---|---|
 | `contracts/` | `AnchorRegistry`, `MerkleSha256`, `QorePqc` (safe precompile wrappers), test mocks |
-| `src/core/` | Merkle tree and signing message, shared by agent and verifier |
-| `src/agent/` | Agent: segment watcher, windows, ML-DSA signing, scoped EVM window renewal, receipts |
+| `src/core/` | Merkle tree, signed messages and receipt checks, shared by agent, CLI and browser verifier |
+| `src/agent/` | Agent: segment watcher, windows, device key, ML-DSA signing, scoped EVM window renewal, receipts |
 | `web/verifier/` | Browser verifier (single HTML file after `pnpm build:verifier`) |
 | `deploy/` | Recorder (ffmpeg) and agent systemd units, per-camera config |
-| `scripts/` | EVM window helper, live precompile probes |
+| `scripts/` | Device CLI, EVM window helper, anchor and verify CLIs, live precompile probes |
 | `test/` | Contract and Merkle tests (Hardhat 3, node:test, viem) |
 | `docs/` | Architecture, threat model, testnet findings |
 
@@ -64,9 +79,15 @@ Deploy to testnet (needs a funded testnet account, see `.env.example`):
 
 ```bash
 pnpm window register      # once: register the ML-DSA-87 key
-pnpm window open          # open an EVM window
+pnpm window open          # open an unscoped EVM window (deploys need one)
 pnpm deploy:testnet
+QORE_ALLOWED_TARGETS=<registry> QORE_WINDOW_TXS=20 pnpm window open   # scoped window
+pnpm device keygen keys/front-door.key
+QORE_REGISTRY=<registry> pnpm device register front-door
+QORE_REGISTRY=<registry> pnpm tsx --env-file=.env scripts/anchor-files.ts front-door <file...>
 ```
+
+Create the account with `scripts/new-account.ts` (mnemonic). Do not use the `PRIVATE_KEY` path for a real account: the SDK derives its ML-DSA key from the ECDSA key (see `docs/TESTNET_FINDINGS.md`).
 
 ## Legal limits
 
