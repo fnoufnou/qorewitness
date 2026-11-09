@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QoreWitness Verifier</title>
+<style>
+  :root { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --card:#161b22; --line:#30363d; --ok:#3fb950; --bad:#f85149; --accent:#a371f7; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f6f8fa; --fg:#1f2328; --muted:#59636e; --card:#fff; --line:#d1d9e0; --ok:#1a7f37; --bad:#cf222e; --accent:#8250df; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width:720px; margin:0 auto; padding:32px 16px; }
+  h1 { margin:0 0 4px; font-size:28px; } h1 span { color:var(--accent); }
+  p.lead { color:var(--muted); margin:0 0 24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin:12px 0 6px; }
+  input[type=file] { width:100%; }
+  button { margin-top:16px; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 18px; font-size:16px; cursor:pointer; }
+  .verdict { font-weight:600; font-size:18px; }
+  .verdict.ok { color:var(--ok); } .verdict.bad { color:var(--bad); }
+  ol#steps { padding-left:20px; } ol#steps li { margin:6px 0; }
+  li.pass::marker { content:"✔ "; color:var(--ok); } li.fail::marker { content:"✘ "; color:var(--bad); } li.info::marker { content:"ℹ "; color:var(--muted); }
+  footer { color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Qore<span>Witness</span> Verifier</h1>
+  <p class="lead">Check that a camera recording existed before a known time. Post-quantum signatures (ML-DSA-87), anchored on QoreChain. Your video stays in this browser.</p>
+  <div class="card">
+    <label for="video">Video segment</label>
+    <input id="video" type="file" accept="video/*,.mp4,.ts">
+    <label for="receipt">Receipt (.json)</label>
+    <input id="receipt" type="file" accept=".json,application/json">
+    <button id="go">Verify</button>
+  </div>
+  <div class="card">
+    <div id="verdict" class="verdict">Choose a file and its receipt.</div>
+    <ol id="steps"></ol>
+  </div>
+  <footer>QoreChain testnet (diana, chain ID 9800). A blockchain anchor is not an eIDAS qualified timestamp. It proves the file existed at a time. It does not prove who recorded it or that the camera was honest.</footer>
+</main>
+<script>/*BUNDLE*/</script>
+</body>
+</html>

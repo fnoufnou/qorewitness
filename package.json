@@ -11,7 +11,8 @@
     "window": "tsx --env-file=.env scripts/window.ts",
     "probe:pqc": "tsx scripts/probe-pqc.ts",
     "probe:keystatus": "tsx scripts/probe-keystatus.ts",
-    "deploy:testnet": "hardhat ignition deploy ignition/modules/AnchorRegistry.ts --network qorechainTestnet"
+    "deploy:testnet": "hardhat ignition deploy ignition/modules/AnchorRegistry.ts --network qorechainTestnet",
+    "build:verifier": "node scripts/build-verifier.mjs"
   },
   "dependencies": {
     "@cosmjs/stargate": "^0.39.0",
@@ -33,6 +34,7 @@
     "@nomicfoundation/hardhat-viem-assertions": "^3.1.5",
     "@nomicfoundation/ignition-core": "^3.1.11",
     "@types/node": "^22.7.5",
+    "esbuild": "0.25.12",
     "hardhat": "^3.21.1",
     "tsx": "^4.19.0",
     "typescript": "^5.6.3",

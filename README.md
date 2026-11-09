@@ -25,6 +25,12 @@ Two layers of post-quantum protection:
 1. Chain level. Every EVM transaction needs a registered ML-DSA-87 key and an EVM authorisation window. The agent opens a window that is scoped to the registry contract only (`allowed_targets`).
 2. Application level. The contract verifies the ML-DSA-87 signature over each root with the `pqcVerify` precompile (`0x...0A01`) against the key from `pqcKeyStatus` (`0x...0A02`).
 
+## Live on testnet
+
+- Registry: `0xA73d4347b50C2A373533915d698Bf03a01c65aAF` on qorechain-diana (EVM chain ID 9800).
+- A home camera records 60-second segments. The agent anchors every 10-minute window.
+- Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`.
+
 ## Contract rules
 
 - Anchors are immutable. There is no owner and no upgrade path.
@@ -39,7 +45,9 @@ Two layers of post-quantum protection:
 |---|---|
 | `contracts/` | `AnchorRegistry`, `MerkleSha256`, `QorePqc` (safe precompile wrappers), test mocks |
 | `src/core/` | Merkle tree and signing message, shared by agent and verifier |
-| `src/agent/` | Segment hashing, window batching, receipts (work in progress) |
+| `src/agent/` | Agent: segment watcher, windows, ML-DSA signing, scoped EVM window renewal, receipts |
+| `web/verifier/` | Browser verifier (single HTML file after `pnpm build:verifier`) |
+| `deploy/` | Recorder (ffmpeg) and agent systemd units, per-camera config |
 | `scripts/` | EVM window helper, live precompile probes |
 | `test/` | Contract and Merkle tests (Hardhat 3, node:test, viem) |
 | `docs/` | Architecture, threat model, testnet findings |
