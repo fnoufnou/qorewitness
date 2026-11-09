@@ -28,14 +28,14 @@ export default defineConfig({
       chainType: "l1",
       chainId: 9800,
       url: "https://evm-testnet.qore.host",
-      accounts: [configVariable("PRIVATE_KEY")],
+      accounts: { mnemonic: configVariable("QORE_MNEMONIC") },
     },
     qorechain: {
       type: "http",
       chainType: "l1",
       chainId: 9801,
       url: "https://evm.qore.host",
-      accounts: [configVariable("PRIVATE_KEY")],
+      accounts: { mnemonic: configVariable("QORE_MNEMONIC") },
     },
   },
 });
