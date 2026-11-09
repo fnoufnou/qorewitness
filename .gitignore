@@ -1,0 +1,10 @@
+node_modules/
+artifacts/
+cache/
+types/
+coverage/
+ignition/deployments/
+.env
+*.key
+data/
+receipts/
