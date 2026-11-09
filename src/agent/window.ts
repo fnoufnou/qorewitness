@@ -35,6 +35,11 @@ export class WindowBatcher {
     this.open.set(start, list);
   }
 
+  /** Segments in windows that are still open. The agent saves them, so a restart loses nothing. */
+  openSegments(): Segment[] {
+    return [...this.open.values()].flat();
+  }
+
   /** Returns windows that ended before `now - graceSeconds`, oldest first, and forgets them. */
   closeReady(now: number, graceSeconds = 5): Window[] {
     const ready: Window[] = [];

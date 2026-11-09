@@ -37,14 +37,19 @@ const deviceKey = loadDeviceKey(env("QW_DEVICE_KEY", `/etc/qorewitness/${device}
 const statePath = join(receiptDir, `.state-${device}.json`);
 mkdirSync(receiptDir, { recursive: true });
 
+interface StoredSegment { path: string; sha256: string; size: number; completedAt: number }
 interface State {
   seen: string[]; // segment file names already hashed
-  pending: { windowStart: string; windowSeconds: number; segments: { path: string; sha256: string; size: number; completedAt: number }[] }[];
+  open?: StoredSegment[]; // hashed segments in windows that are not closed yet
+  pending: { windowStart: string; windowSeconds: number; segments: StoredSegment[] }[];
 }
 const state: State = existsSync(statePath) ? JSON.parse(readFileSync(statePath, "utf8")) : { seen: [], pending: [] };
 const seen = new Set(state.seen);
+const toStored = (s: Segment): StoredSegment => ({ ...s, sha256: Buffer.from(s.sha256).toString("hex") });
+const fromStored = (s: StoredSegment): Segment => ({ ...s, sha256: Uint8Array.from(Buffer.from(s.sha256, "hex")) });
 const saveState = () => {
   state.seen = [...seen].slice(-5000);
+  state.open = batcher.openSegments().map(toStored);
   writeFileSync(statePath + ".tmp", JSON.stringify(state));
   renameSync(statePath + ".tmp", statePath); // atomic replace
 };
@@ -53,6 +58,8 @@ const log = (...a: unknown[]) => console.log(new Date().toISOString(), ...a);
 const client = await AnchorClient.create(mnemonic, registry);
 const deviceId = deviceIdOf(device);
 const batcher = new WindowBatcher(windowSeconds);
+// Until 9 Nov the open window lived only in memory: a restart lost its segments.
+for (const s of state.open ?? []) batcher.add(fromStored(s));
 log(`agent ${client.address} device ${device} (${deviceId}) window ${windowSeconds}s registry ${registry}`);
 
 /** The device must be registered and active with this key, or every anchor fails. */
@@ -88,7 +95,7 @@ async function collect(): Promise<void> {
     state.pending.push({
       windowStart: w.windowStart.toString(),
       windowSeconds: w.windowSeconds,
-      segments: w.segments.map((s) => ({ ...s, sha256: Buffer.from(s.sha256).toString("hex") })),
+      segments: w.segments.map(toStored),
     });
   }
   saveState();
@@ -101,7 +108,7 @@ async function anchorPending(): Promise<void> {
     const w: Window = {
       windowStart: BigInt(p.windowStart),
       windowSeconds: p.windowSeconds,
-      segments: p.segments.map((s) => ({ ...s, sha256: Uint8Array.from(Buffer.from(s.sha256, "hex")) })),
+      segments: p.segments.map(fromStored),
     };
     if (await ensureScopedWindow(client.account, registry)) log("opened a new scoped EVM window");
     try {
