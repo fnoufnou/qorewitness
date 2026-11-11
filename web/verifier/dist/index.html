@@ -4,73 +4,88 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QoreWitness Verifier</title>
-<meta name="theme-color" content="#F7F1E6">
+<meta name="theme-color" content="#17483A">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
-  @font-face { font-family:"Fredoka"; src:url(fonts/fredoka.woff2) format("woff2"); font-weight:300 700; font-display:swap; }
-  @font-face { font-family:"Nunito"; src:url(fonts/nunito.woff2) format("woff2"); font-weight:200 1000; font-display:swap; }
+  @font-face { font-family:"IBM Plex Sans"; src:url(fonts/plex-sans.woff2) format("woff2"); font-weight:100 700; font-display:swap; }
+  @font-face { font-family:"IBM Plex Mono"; src:url(fonts/plex-mono-400.woff2) format("woff2"); font-weight:400; font-display:swap; }
   /* QoreWitness design tokens. See docs/BRAND.md */
   :root {
-    --bg:#F7F1E6; --card:#FFFBF4; --line:#E8DCC8; --fg:#22332D; --muted:#5F6B64;
-    --persimmon:#EF7B4F; --accent:#B84A22; --pistachio:#BFD9A8; --butter:#F6D98B; --blush:#F4A99A;
-    --ok:#3E7A4A; --ok-bg:#E3F0D8; --bad:#B23A48; --bad-bg:#FBE3E0; --warn:#8A6512;
-    --font-display:"Fredoka",ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif;
-    --font-body:"Nunito",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --bg:#FFFFFF; --surface:#F6F7F5; --line:#DCE1DD; --fg:#13201C; --muted:#5A6661;
+    --brand:#17483A; --brand-dark:#0E2F26; --pine-50:#F1F6F4; --link:#1F5C4B; --signal:#E8663D;
+    --ok:#1E7A50; --ok-bg:#E6F2EC; --bad:#B42318; --bad-bg:#FBEAE7; --warn:#8A5A00;
+    --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   @media (prefers-color-scheme: dark) { :root {
-    --bg:#231D1A; --card:#2E2622; --line:#433832; --fg:#F4ECE0; --muted:#B9AD9F;
-    --accent:#FF9A6E; --ok:#A9CF8E; --ok-bg:#2F3A28; --bad:#FF8A93; --bad-bg:#45272A; --warn:#F6D98B;
+    --bg:#0F211C; --surface:#152B25; --line:#284039; --fg:#E9EFEC; --muted:#A3B3AD;
+    --brand:#2F7A63; --pine-50:#152B25; --link:#8FD1B8;
+    --ok:#6FCF9D; --ok-bg:#173A2C; --bad:#FF8F84; --bad-bg:#3A1F1C; --warn:#F2C46B;
   } }
   * { box-sizing:border-box; }
-  body { margin:0; font:17px/1.6 var(--font-body); background:var(--bg); color:var(--fg); }
-  main { max-width:720px; margin:0 auto; padding:20px 16px 40px; }
-  a { color:var(--accent); text-underline-offset:3px; }
-  .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
-  .brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--fg); font:600 22px/1 var(--font-display); }
-  .brand svg { width:40px; height:36px; }
-  .back { font-weight:700; font-size:15px; color:var(--muted); text-decoration:none; }
-  h1 { margin:0 0 6px; font:600 2.2rem/1.15 var(--font-display); letter-spacing:-.01em; }
-  p.lead { color:var(--muted); margin:0 0 24px; }
-  .card { background:var(--card); border:2px solid var(--line); border-radius:24px; padding:22px 24px; margin-bottom:16px; }
-  label { display:block; font-weight:800; margin:14px 0 6px; }
+  body { margin:0; font:16px/1.6 var(--font); background:var(--bg); color:var(--fg); }
+  a { color:var(--link); text-underline-offset:3px; }
+  header { border-bottom:1px solid var(--line); }
+  header .in { max-width:760px; margin:0 auto; padding:0 20px; height:64px; display:flex; align-items:center; justify-content:space-between; }
+  .brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--fg); font-weight:600; font-size:19px; letter-spacing:-.01em; }
+  .brand svg { width:30px; height:30px; }
+  .back { font-size:15px; font-weight:500; color:var(--muted); text-decoration:none; }
+  .back:hover { color:var(--fg); }
+  .top { background:linear-gradient(180deg,var(--pine-50),var(--bg)); }
+  main { max-width:760px; margin:0 auto; padding:48px 20px 56px; }
+  .eyebrow { font:500 13px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:#B3451C; margin:0 0 14px; }
+  @media (prefers-color-scheme: dark) { .eyebrow { color:#FF936B; } }
+  h1 { margin:0 0 12px; font-size:2.4rem; font-weight:600; line-height:1.15; letter-spacing:-.015em; }
+  p.lead { color:var(--muted); font-size:1.1rem; margin:0 0 32px; }
+  .card { background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:24px; margin-bottom:20px; box-shadow:0 1px 2px rgba(19,32,28,.05); }
+  label { display:block; font-weight:600; font-size:15px; margin:18px 0 8px; }
   label:first-child { margin-top:0; }
-  input[type=file] { width:100%; font:inherit; font-size:15px; color:var(--muted); background:var(--bg); border:2px dashed var(--line); border-radius:16px; padding:10px; }
-  input[type=file]::file-selector-button { font:800 14px var(--font-body); color:#22332D; background:var(--pistachio); border:0; border-radius:999px; padding:7px 14px; margin-right:12px; cursor:pointer; }
-  .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
-  button { font:800 16px var(--font-body); background:var(--accent); color:#fff; border:2px solid var(--accent); border-radius:999px; padding:10px 22px; cursor:pointer; }
-  @media (prefers-color-scheme: dark) { button { color:#22332D; } }
-  button.secondary { background:transparent; color:var(--accent); }
-  button:disabled { opacity:.4; cursor:default; }
-  button:focus-visible, input:focus-visible, a:focus-visible { outline:3px solid var(--persimmon); outline-offset:2px; }
-  #note { color:var(--muted); font-size:14px; margin-top:10px; }
-  .result { display:grid; grid-template-columns:96px 1fr; gap:18px; align-items:start; }
-  .result svg { width:96px; height:85px; }
-  .face { display:none; }
-  .result .face-idle { display:inline; }
-  .result:has(.verdict.ok) .face-idle, .result:has(.verdict.bad) .face-idle { display:none; }
-  .result:has(.verdict.ok) .face-ok { display:inline; }
-  .result:has(.verdict.bad) .face-bad { display:inline; }
-  .verdict { font:600 1.2rem/1.35 var(--font-display); padding:2px 0 6px; }
+  input[type=file] { width:100%; font:inherit; font-size:14px; color:var(--muted); background:var(--surface); border:1px dashed var(--line); border-radius:8px; padding:10px; }
+  input[type=file]::file-selector-button { font:600 14px var(--font); color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px 12px; margin-right:12px; cursor:pointer; }
+  .actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:22px; }
+  button { font:600 15px var(--font); background:var(--brand); color:#fff; border:1px solid var(--brand); border-radius:8px; padding:11px 20px; cursor:pointer; }
+  button:hover { background:var(--brand-dark); }
+  button.secondary { background:var(--bg); color:var(--fg); border-color:var(--line); }
+  button.secondary:hover { background:var(--surface); }
+  button:disabled { opacity:.45; cursor:default; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline:2px solid var(--signal); outline-offset:2px; }
+  #note { color:var(--muted); font-size:14px; margin-top:12px; }
+  .result { padding:0; overflow:hidden; }
+  .result .bar { display:flex; align-items:flex-start; gap:12px; padding:18px 24px; border-bottom:1px solid var(--line); background:var(--surface); }
+  .result .bar svg { width:26px; height:26px; flex:none; margin-top:1px; color:var(--muted); }
+  .result .bar .i-ok, .result .bar .i-bad { display:none; }
+  .result:has(.verdict.ok) .bar { background:var(--ok-bg); }
+  .result:has(.verdict.bad) .bar { background:var(--bad-bg); }
+  .result:has(.verdict.ok) .i-idle, .result:has(.verdict.bad) .i-idle { display:none; }
+  .result:has(.verdict.ok) .i-ok { display:block; color:var(--ok); }
+  .result:has(.verdict.bad) .i-bad { display:block; color:var(--bad); }
+  .verdict { font-weight:600; font-size:16px; }
   .verdict.ok { color:var(--ok); } .verdict.bad { color:var(--bad); }
-  .card:has(.verdict.ok) { background:var(--ok-bg); border-color:transparent; }
-  .card:has(.verdict.bad) { background:var(--bad-bg); border-color:transparent; }
-  ol#steps { padding-left:22px; margin:6px 0 0; } ol#steps li { margin:6px 0; font-size:15px; }
-  li.pass::marker { content:"✔  "; color:var(--ok); } li.fail::marker { content:"✘  "; color:var(--bad); } li.info::marker { content:"ℹ  "; color:var(--muted); } li.warn::marker { content:"⚠  "; color:var(--warn); }
-  footer { color:var(--muted); font-size:14px; margin-top:24px; }
-  @media (max-width:480px) { .result { grid-template-columns:1fr; } .result svg { width:72px; height:64px; } h1 { font-size:1.8rem; } }
+  ol#steps { list-style:none; margin:0; padding:8px 24px 12px; }
+  ol#steps:empty { display:none; }
+  ol#steps li { position:relative; padding:10px 0 10px 28px; border-bottom:1px solid var(--line); font-size:14.5px; }
+  ol#steps li:last-child { border-bottom:0; }
+  ol#steps li::before { position:absolute; left:0; top:10px; font:600 14px/1.6 var(--mono); }
+  li.pass::before { content:"✓"; color:var(--ok); } li.fail::before { content:"✕"; color:var(--bad); } li.info::before { content:"i"; color:var(--muted); } li.warn::before { content:"!"; color:var(--warn); }
+  footer { color:var(--muted); font-size:13.5px; margin-top:28px; }
+  @media (max-width:520px) { h1 { font-size:1.9rem; } main { padding-top:32px; } }
 </style>
 </head>
 <body>
-<main>
-  <div class="top">
+<header>
+  <div class="in">
     <a class="brand" href="./" aria-label="QoreWitness home">
-      <svg viewBox="0 0 260 230" aria-hidden="true"><rect x="52" y="34" width="62" height="40" rx="16" fill="#9CC384"/><rect x="24" y="56" width="212" height="150" rx="58" fill="#BFD9A8"/><circle cx="130" cy="132" r="54" fill="#EF7B4F"/><circle cx="130" cy="132" r="41" fill="#FFFBF4"/><circle cx="115" cy="128" r="7" fill="#22332D"/><circle cx="145" cy="128" r="7" fill="#22332D"/><path d="M122 143q4 5 8 0q4 5 8 0" fill="none" stroke="#22332D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#17483A"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="16" cy="16" r="3" fill="#fff"/><circle cx="25.5" cy="6.5" r="3" fill="#E8663D"/></svg>
       QoreWitness
     </a>
-    <a class="back" href="./">About the demo</a>
+    <a class="back" href="./">About QoreWitness</a>
   </div>
-  <h1>Verifier</h1>
-  <p class="lead">Check that a camera recording existed before a known time. Post-quantum signatures (ML-DSA-87), anchored on QoreChain. Your video stays in this browser.</p>
+</header>
+<div class="top">
+<main>
+  <p class="eyebrow">Verifier</p>
+  <h1>Check a recording</h1>
+  <p class="lead">Prove that a camera recording existed before a known time and that nobody changed it. Your video stays in this browser.</p>
   <div class="card">
     <label for="video">Video segment</label>
     <input id="video" type="file" accept="video/*,.mp4,.ts">
@@ -82,39 +97,18 @@
     </div>
     <div id="note"></div>
   </div>
-  <div class="card">
-    <div class="result">
-      <svg viewBox="0 0 260 230" aria-hidden="true">
-        <rect x="52" y="34" width="62" height="40" rx="16" fill="#9CC384"/>
-        <rect x="24" y="56" width="212" height="150" rx="58" fill="#BFD9A8"/>
-        <circle cx="196" cy="88" r="9" fill="#F6D98B"/>
-        <circle cx="130" cy="132" r="54" fill="#EF7B4F"/>
-        <circle cx="130" cy="132" r="41" fill="#FFFBF4"/>
-        <ellipse cx="62" cy="152" rx="12" ry="7" fill="#F4A99A"/>
-        <ellipse cx="198" cy="152" rx="12" ry="7" fill="#F4A99A"/>
-        <g class="face face-idle" fill="none" stroke="#22332D" stroke-width="4" stroke-linecap="round">
-          <circle cx="115" cy="128" r="3" fill="#22332D"/><circle cx="145" cy="128" r="3" fill="#22332D"/>
-          <path d="M123 145h14"/>
-        </g>
-        <g class="face face-ok" fill="none" stroke="#22332D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M107 130q8 -9 16 0"/><path d="M137 130q8 -9 16 0"/>
-          <path d="M120 142q10 10 20 0"/>
-        </g>
-        <g class="face face-bad" fill="none" stroke="#22332D" stroke-width="4" stroke-linecap="round">
-          <path d="M106 121l11 -4"/><path d="M154 121l-11 -4"/>
-          <circle cx="115" cy="132" r="3" fill="#22332D"/><circle cx="145" cy="132" r="3" fill="#22332D"/>
-          <path d="M120 150q5 -5 10 0q5 5 10 0"/>
-          <path d="M166 108q5 8 0 11q-5 -3 0 -11z" fill="#9FD3E8" stroke="none"/>
-        </g>
-      </svg>
-      <div>
-        <div id="verdict" class="verdict">Choose a file and its receipt.</div>
-        <ol id="steps"></ol>
-      </div>
+  <div class="card result">
+    <div class="bar">
+      <svg class="i-idle" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="i-bad" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <div id="verdict" class="verdict">Choose a file and its receipt.</div>
     </div>
+    <ol id="steps"></ol>
   </div>
-  <footer>QoreChain testnet (diana, chain ID 9800). A blockchain anchor is not an eIDAS qualified timestamp. It proves the file existed at a time. It does not prove who recorded it or that the camera was honest.</footer>
+  <footer>QoreChain testnet (diana, chain ID 9800). A blockchain record is not an eIDAS qualified timestamp. It proves that the file existed at a time. It does not prove who recorded it or that the scene was real.</footer>
 </main>
+</div>
 <script type="module">var Rx=Object.defineProperty;var k=(e,t)=>()=>(e&&(t=e(e=0)),t);var oc=(e,t)=>{for(var r in t)Rx(e,r,{get:t[r],enumerable:!0})};var Zp,Yp=k(()=>{Zp="1.2.3"});var ke,Ko=k(()=>{Yp();ke=class e extends Error{constructor(t,r={}){let n=r.cause instanceof e?r.cause.details:r.cause?.message?r.cause.message:r.details,o=r.cause instanceof e&&r.cause.docsPath||r.docsPath,s=[t||"An error occurred.","",...r.metaMessages?[...r.metaMessages,""]:[],...o?[`Docs: https://abitype.dev${o}`]:[],...n?[`Details: ${n}`]:[],`Version: abitype@${Zp}`].join(`
 `);super(s),Object.defineProperty(this,"details",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"docsPath",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"metaMessages",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"shortMessage",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"AbiTypeError"}),r.cause&&(this.cause=r.cause),this.details=n,this.docsPath=o,this.metaMessages=r.metaMessages,this.shortMessage=t}}});function Rt(e,t){return e.exec(t)?.groups}var Zu,Yu,sc,$i=k(()=>{Zu=/^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/,Yu=/^u?int(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/,sc=/^\(.+?\).*?$/});function ic(e){let t=e.type;if(Xp.test(e.type)&&"components"in e){t="(";let r=e.components.length;for(let o=0;o<r;o++){let s=e.components[o];t+=ic(s),o<r-1&&(t+=", ")}let n=Rt(Xp,e.type);return t+=`)${n?.array||""}`,ic({...e,type:t})}return"indexed"in e&&e.indexed&&(t=`${t} indexed`),e.name?`${t} ${e.name}`:t}var Xp,Jp=k(()=>{$i();Xp=/^tuple(?<array>(\[(\d*)\])*)$/});function Rr(e){let t="",r=e.length;for(let n=0;n<r;n++){let o=e[n];t+=ic(o),n!==r-1&&(t+=", ")}return t}var Xu=k(()=>{Jp()});function Hr(e){return e.type==="function"?`function ${e.name}(${Rr(e.inputs)})${e.stateMutability&&e.stateMutability!=="nonpayable"?` ${e.stateMutability}`:""}${e.outputs?.length?` returns (${Rr(e.outputs)})`:""}`:e.type==="event"?`event ${e.name}(${Rr(e.inputs)})`:e.type==="error"?`error ${e.name}(${Rr(e.inputs)})`:e.type==="constructor"?`constructor(${Rr(e.inputs)})${e.stateMutability==="payable"?" payable":""}`:e.type==="fallback"?`fallback() external${e.stateMutability==="payable"?" payable":""}`:"receive() external payable"}var Qp=k(()=>{Xu()});function tl(e){return el.test(e)}function rl(e){return Rt(el,e)}function ol(e){return nl.test(e)}function sl(e){return Rt(nl,e)}function al(e){return il.test(e)}function cl(e){return Rt(il,e)}function mn(e){return fl.test(e)}function ul(e){return Rt(fl,e)}function pl(e){return dl.test(e)}function ll(e){return Rt(dl,e)}function bl(e){return ml.test(e)}function hl(e){return Rt(ml,e)}function yl(e){return Hx.test(e)}var el,nl,il,fl,dl,ml,Hx,Ju,xl,ac,Wo=k(()=>{$i();el=/^error (?<name>[a-zA-Z$_][a-zA-Z0-9$_]*)\((?<parameters>.*?)\)$/;nl=/^event (?<name>[a-zA-Z$_][a-zA-Z0-9$_]*)\((?<parameters>.*?)\)$/;il=/^function (?<name>[a-zA-Z$_][a-zA-Z0-9$_]*)\((?<parameters>.*?)\)(?: (?<scope>external|public{1}))?(?: (?<stateMutability>pure|view|nonpayable|payable{1}))?(?: returns\s?\((?<returns>.*?)\))?$/;fl=/^struct (?<name>[a-zA-Z$_][a-zA-Z0-9$_]*) \{(?<properties>.*?)\}$/;dl=/^constructor\((?<parameters>.*?)\)(?:\s(?<stateMutability>payable{1}))?$/;ml=/^fallback\(\) external(?:\s(?<stateMutability>payable{1}))?$/;Hx=/^receive\(\) external payable$/;Ju=new Set(["memory","indexed","storage","calldata"]),xl=new Set(["indexed"]),ac=new Set(["calldata","memory","storage"])});var Ni,Oi,cc,fc=k(()=>{Ko();Ni=class extends ke{constructor({signature:t}){super("Failed to parse ABI item.",{details:`parseAbiItem(${JSON.stringify(t,null,2)})`,docsPath:"/api/human#parseabiitem-1"}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"InvalidAbiItemError"})}},Oi=class extends ke{constructor({type:t}){super("Unknown type.",{metaMessages:[`Type "${t}" is not a valid ABI type. Perhaps you forgot to include a struct signature?`]}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"UnknownTypeError"})}},cc=class extends ke{constructor({type:t}){super("Unknown type.",{metaMessages:[`Type "${t}" is not a valid ABI type.`]}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"UnknownSolidityTypeError"})}}});var Li,Ui,Mi,Fi,_i,zi,uc=k(()=>{Ko();Li=class extends ke{constructor({params:t}){super("Failed to parse ABI parameters.",{details:`parseAbiParameters(${JSON.stringify(t,null,2)})`,docsPath:"/api/human#parseabiparameters-1"}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"InvalidAbiParametersError"})}},Ui=class extends ke{constructor({param:t}){super("Invalid ABI parameter.",{details:t}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"InvalidParameterError"})}},Mi=class extends ke{constructor({param:t,name:r}){super("Invalid ABI parameter.",{details:t,metaMessages:[`"${r}" is a protected Solidity keyword. More info: https://docs.soliditylang.org/en/latest/cheatsheet.html`]}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"SolidityProtectedKeywordError"})}},Fi=class extends ke{constructor({param:t,type:r,modifier:n}){super("Invalid ABI parameter.",{details:t,metaMessages:[`Modifier "${n}" not allowed${r?` in "${r}" type`:""}.`]}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"InvalidModifierError"})}},_i=class extends ke{constructor({param:t,type:r,modifier:n}){super("Invalid ABI parameter.",{details:t,metaMessages:[`Modifier "${n}" not allowed${r?` in "${r}" type`:""}.`,`Data location can only be specified for array, struct, or mapping types, but "${n}" was given.`]}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"InvalidFunctionModifierError"})}},zi=class extends ke{constructor({abiParameter:t}){super("Invalid ABI parameter.",{details:JSON.stringify(t,null,2),metaMessages:["ABI parameter type is invalid."]}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"InvalidAbiTypeParameterError"})}}});var Wt,ji,Di,Qu=k(()=>{Ko();Wt=class extends ke{constructor({signature:t,type:r}){super(`Invalid ${r} signature.`,{details:t}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"InvalidSignatureError"})}},ji=class extends ke{constructor({signature:t}){super("Unknown signature.",{details:t}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"UnknownSignatureError"})}},Di=class extends ke{constructor({signature:t}){super("Invalid struct signature.",{details:t,metaMessages:["No properties exist."]}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"InvalidStructSignatureError"})}}});var Gi,gl=k(()=>{Ko();Gi=class extends ke{constructor({type:t}){super("Circular reference detected.",{metaMessages:[`Struct "${t}" is a circular reference.`]}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"CircularReferenceError"})}}});var qi,wl=k(()=>{Ko();qi=class extends ke{constructor({current:t,depth:r}){super("Unbalanced parentheses.",{metaMessages:[`"${t.trim()}" has too many ${r>0?"opening":"closing"} parentheses.`],details:`Depth "${r}"`}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"InvalidParenthesisError"})}}});function El(e,t,r){let n="";if(r)for(let o of Object.entries(r)){if(!o)continue;let s="";for(let i of o[1])s+=`[${i.type}${i.name?`:${i.name}`:""}]`;n+=`(${o[0]}{${s}})`}return t?`${t}:${e}${n}`:`${e}${n}`}var dc,vl=k(()=>{dc=new Map([["address",{type:"address"}],["bool",{type:"bool"}],["bytes",{type:"bytes"}],["bytes32",{type:"bytes32"}],["int",{type:"int256"}],["int256",{type:"int256"}],["string",{type:"string"}],["uint",{type:"uint256"}],["uint8",{type:"uint8"}],["uint16",{type:"uint16"}],["uint24",{type:"uint24"}],["uint32",{type:"uint32"}],["uint64",{type:"uint64"}],["uint96",{type:"uint96"}],["uint112",{type:"uint112"}],["uint160",{type:"uint160"}],["uint192",{type:"uint192"}],["uint256",{type:"uint256"}],["address owner",{type:"address",name:"owner"}],["address to",{type:"address",name:"to"}],["bool approved",{type:"bool",name:"approved"}],["bytes _data",{type:"bytes",name:"_data"}],["bytes data",{type:"bytes",name:"data"}],["bytes signature",{type:"bytes",name:"signature"}],["bytes32 hash",{type:"bytes32",name:"hash"}],["bytes32 r",{type:"bytes32",name:"r"}],["bytes32 root",{type:"bytes32",name:"root"}],["bytes32 s",{type:"bytes32",name:"s"}],["string name",{type:"string",name:"name"}],["string symbol",{type:"string",name:"symbol"}],["string tokenURI",{type:"string",name:"tokenURI"}],["uint tokenId",{type:"uint256",name:"tokenId"}],["uint8 v",{type:"uint8",name:"v"}],["uint256 balance",{type:"uint256",name:"balance"}],["uint256 tokenId",{type:"uint256",name:"tokenId"}],["uint256 value",{type:"uint256",name:"value"}],["event:address indexed from",{type:"address",name:"from",indexed:!0}],["event:address indexed to",{type:"address",name:"to",indexed:!0}],["event:uint indexed tokenId",{type:"uint256",name:"tokenId",indexed:!0}],["event:uint256 indexed tokenId",{type:"uint256",name:"tokenId",indexed:!0}]])});function Vi(e,t={}){if(al(e))return Cx(e,t);if(ol(e))return $x(e,t);if(tl(e))return Nx(e,t);if(pl(e))return Ox(e,t);if(bl(e))return Lx(e);if(yl(e))return{type:"receive",stateMutability:"payable"};throw new ji({signature:e})}function Cx(e,t={}){let r=cl(e);if(!r)throw new Wt({signature:e,type:"function"});let n=ht(r.parameters),o=[],s=n.length;for(let a=0;a<s;a++)o.push(Zt(n[a],{modifiers:ac,structs:t,type:"function"}));let i=[];if(r.returns){let a=ht(r.returns),c=a.length;for(let f=0;f<c;f++)i.push(Zt(a[f],{modifiers:ac,structs:t,type:"function"}))}return{name:r.name,type:"function",stateMutability:r.stateMutability??"nonpayable",inputs:o,outputs:i}}function $x(e,t={}){let r=sl(e);if(!r)throw new Wt({signature:e,type:"event"});let n=ht(r.parameters),o=[],s=n.length;for(let i=0;i<s;i++)o.push(Zt(n[i],{modifiers:xl,structs:t,type:"event"}));return{name:r.name,type:"event",inputs:o}}function Nx(e,t={}){let r=rl(e);if(!r)throw new Wt({signature:e,type:"error"});let n=ht(r.parameters),o=[],s=n.length;for(let i=0;i<s;i++)o.push(Zt(n[i],{structs:t,type:"error"}));return{name:r.name,type:"error",inputs:o}}function Ox(e,t={}){let r=ll(e);if(!r)throw new Wt({signature:e,type:"constructor"});let n=ht(r.parameters),o=[],s=n.length;for(let i=0;i<s;i++)o.push(Zt(n[i],{structs:t,type:"constructor"}));return{type:"constructor",stateMutability:r.stateMutability??"nonpayable",inputs:o}}function Lx(e){let t=hl(e);if(!t)throw new Wt({signature:e,type:"fallback"});return{type:"fallback",stateMutability:t.stateMutability??"nonpayable"}}function Zt(e,t){let r=El(e,t?.type,t?.structs);if(dc.has(r))return dc.get(r);let n=sc.test(e),o=Rt(n?Mx:Ux,e);if(!o)throw new Ui({param:e});if(o.name&&zx(o.name))throw new Mi({param:e,name:o.name});let s=o.name?{name:o.name}:{},i=o.modifier==="indexed"?{indexed:!0}:{},a=t?.structs??{},c,f={};if(n){c="tuple";let d=ht(o.type),p=[],l=d.length;for(let m=0;m<l;m++)p.push(Zt(d[m],{structs:a}));f={components:p}}else if(o.type in a)c="tuple",f={components:a[o.type]};else if(Fx.test(o.type))c=`${o.type}256`;else if(o.type==="address payable")c="address";else if(c=o.type,t?.type!=="struct"&&!e0(c))throw new cc({type:c});if(o.modifier){if(!t?.modifiers?.has?.(o.modifier))throw new Fi({param:e,type:t?.type,modifier:o.modifier});if(ac.has(o.modifier)&&!jx(c,!!o.array))throw new _i({param:e,type:t?.type,modifier:o.modifier})}let u={type:`${c}${o.array??""}`,...s,...i,...f};return dc.set(r,u),u}function ht(e,t=[],r="",n=0){let o=e.trim().length;for(let s=0;s<o;s++){let i=e[s],a=e.slice(s+1);switch(i){case",":return n===0?ht(a,[...t,r.trim()]):ht(a,t,`${r}${i}`,n);case"(":return ht(a,t,`${r}${i}`,n+1);case")":return ht(a,t,`${r}${i}`,n-1);default:return ht(a,t,`${r}${i}`,n)}}if(r==="")return t;if(n!==0)throw new qi({current:r,depth:n});return t.push(r.trim()),t}function e0(e){return e==="address"||e==="bool"||e==="function"||e==="string"||Zu.test(e)||Yu.test(e)}function zx(e){return e==="address"||e==="bool"||e==="function"||e==="string"||e==="tuple"||Zu.test(e)||Yu.test(e)||_x.test(e)}function jx(e,t){return t||e==="bytes"||e==="string"||e==="tuple"}var Ux,Mx,Fx,_x,Zo=k(()=>{$i();fc();uc();Qu();wl();vl();Wo();Ux=/^(?<type>[a-zA-Z$_][a-zA-Z0-9$_]*(?:\spayable)?)(?<array>(?:\[\d*?\])+?)?(?:\s(?<modifier>calldata|indexed|memory|storage{1}))?(?:\s(?<name>[a-zA-Z$_][a-zA-Z0-9$_]*))?$/,Mx=/^\((?<type>.+?)\)(?<array>(?:\[\d*?\])+?)?(?:\s(?<modifier>calldata|indexed|memory|storage{1}))?(?:\s(?<name>[a-zA-Z$_][a-zA-Z0-9$_]*))?$/,Fx=/^u?int$/;_x=/^(?:after|alias|anonymous|apply|auto|byte|calldata|case|catch|constant|copyof|default|defined|error|event|external|false|final|function|immutable|implements|in|indexed|inline|internal|let|mapping|match|memory|mutable|null|of|override|partial|private|promise|public|pure|reference|relocatable|return|returns|sizeof|static|storage|struct|super|supports|switch|this|true|try|typedef|typeof|var|view|virtual)$/});function Yo(e){let t={},r=e.length;for(let i=0;i<r;i++){let a=e[i];if(!mn(a))continue;let c=ul(a);if(!c)throw new Wt({signature:a,type:"struct"});let f=c.properties.split(";"),u=[],d=f.length;for(let p=0;p<d;p++){let m=f[p].trim();if(!m)continue;let h=Zt(m,{type:"struct"});u.push(h)}if(!u.length)throw new Di({signature:a});t[c.name]=u}let n={},o=Object.entries(t),s=o.length;for(let i=0;i<s;i++){let[a,c]=o[i];n[a]=Al(c,t)}return n}function Al(e=[],t={},r=new Set){let n=[],o=e.length;for(let s=0;s<o;s++){let i=e[s];if(sc.test(i.type))n.push(i);else{let c=Rt(Dx,i.type);if(!c?.type)throw new zi({abiParameter:i});let{array:f,type:u}=c;if(u in t){if(r.has(u))throw new Gi({type:u});n.push({...i,type:`tuple${f??""}`,components:Al(t[u],t,new Set([...r,u]))})}else if(e0(u))n.push(i);else throw new Oi({type:u})}}return n}var Dx,pc=k(()=>{$i();fc();uc();Qu();gl();Wo();Zo();Dx=/^(?<type>[a-zA-Z$_][a-zA-Z0-9$_]*)(?<array>(?:\[\d*?\])+?)?$/});function co(e){let t=Yo(e),r=[],n=e.length;for(let o=0;o<n;o++){let s=e[o];mn(s)||r.push(Vi(s,t))}return r}var Bl=k(()=>{Wo();pc();Zo()});function Ki(e){let t;if(typeof e=="string")t=Vi(e);else{let r=Yo(e),n=e.length;for(let o=0;o<n;o++){let s=e[o];if(!mn(s)){t=Vi(s,r);break}}}if(!t)throw new Ni({signature:e});return t}var Tl=k(()=>{fc();Wo();pc();Zo()});function Wi(e){let t=[];if(typeof e=="string"){let r=ht(e),n=r.length;for(let o=0;o<n;o++)t.push(Zt(r[o],{modifiers:Ju}))}else{let r=Yo(e),n=e.length;for(let o=0;o<n;o++){let s=e[o];if(mn(s))continue;let i=ht(s),a=i.length;for(let c=0;c<a;c++)t.push(Zt(i[c],{modifiers:Ju,structs:r}))}}if(t.length===0)throw new Li({params:e});return t}var Il=k(()=>{uc();Wo();pc();Zo();Zo()});var fo=k(()=>{Qp();Xu();Bl();Tl();Il()});function Fe(e,{includeName:t=!1}={}){if(e.type!=="function"&&e.type!=="event"&&e.type!=="error")throw new lc(e.type);return`${e.name}(${Zi(e.inputs,{includeName:t})})`}function Zi(e,{includeName:t=!1}={}){return e?e.map(r=>Gx(r,{includeName:t})).join(t?", ":","):""}function Gx(e,{includeName:t}){return e.type.startsWith("tuple")?`(${Zi(e.components,{includeName:t})})${e.type.slice(5)}`:e.type+(t&&e.name?` ${e.name}`:"")}var Cr=k(()=>{Pe()});function Ae(e,{even:t=!1,strict:r=!0}={}){return!e||typeof e!="string"||t&&e.length%2!==0?!1:r?/^0x[0-9a-fA-F]*$/.test(e):e.startsWith("0x")}var Yt=k(()=>{});function J(e){return Ae(e,{strict:!1})?Math.ceil((e.length-2)/2):e.length}var yt=k(()=>{Yt()});var t0,Sl=k(()=>{t0="2.57.17"});function kl(e,t){return t?.(e)?e:e&&typeof e=="object"&&"cause"in e&&e.cause!==void 0?kl(e.cause,t):t?null:e}var r0,T,Z=k(()=>{Sl();r0={getDocsUrl:({docsBaseUrl:e,docsPath:t="",docsSlug:r})=>t?`${e??"https://viem.sh"}${t}${r?`#${r}`:""}`:void 0,version:`viem@${t0}`},T=class e extends Error{constructor(t,r={}){let n=r.cause instanceof e?r.cause.details:r.cause?.message?r.cause.message:r.details,o=r.cause instanceof e&&r.cause.docsPath||r.docsPath,s=r0.getDocsUrl?.({...r,docsPath:o}),i=[t||"An error occurred.","",...r.metaMessages?[...r.metaMessages,""]:[],...s?[`Docs: ${s}`]:[],...n?[`Details: ${n}`]:[],...r0.version?[`Version: ${r0.version}`]:[]].join(`
 `);super(i,r.cause?{cause:r.cause}:void 0),Object.defineProperty(this,"details",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"docsPath",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"metaMessages",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"shortMessage",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"version",{enumerable:!0,configurable:!0,writable:!0,value:void 0}),Object.defineProperty(this,"name",{enumerable:!0,configurable:!0,writable:!0,value:"BaseError"}),this.details=n,this.docsPath=o,this.metaMessages=r.metaMessages,this.name=r.name??this.name,this.shortMessage=t,this.version=t0}walk(t){return kl(this,t)}}});var mc,Yi,Xo,Lt,bc,hc,Jo,yc,Xi,Qo,bn,hn,Ji,Xt,es,xc,gc,ts,$r,yn,wc,Ec,rs,lc,vc,Pe=k(()=>{Cr();yt();Z();mc=class extends T{constructor({docsPath:t}){super(["A constructor was not found on the ABI.","Make sure you are using the correct ABI and that the constructor exists on it."].join(`

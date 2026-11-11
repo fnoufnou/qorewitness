@@ -1,70 +1,52 @@
 <!doctype html><html><head><meta charset="utf-8"><style>
-@font-face{font-family:Fredoka;src:url(../site/fonts/fredoka.woff2) format("woff2");font-weight:300 700}
-@font-face{font-family:Nunito;src:url(../site/fonts/nunito.woff2) format("woff2");font-weight:200 1000}
+@font-face{font-family:"IBM Plex Sans";src:url(../site/fonts/plex-sans.woff2) format("woff2");font-weight:100 700}
+@font-face{font-family:"IBM Plex Mono";src:url(../site/fonts/plex-mono-400.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"IBM Plex Mono";src:url(../site/fonts/plex-mono-500.woff2) format("woff2");font-weight:500}
 html,body{margin:0;width:1600px;height:900px;overflow:hidden}
-body{background:#F7F1E6;color:#22332D;font-family:Nunito;position:relative}
-.blob{position:absolute;left:880px;top:90px;width:640px;height:640px;border-radius:50%;background:#FFFBF4}
-.left{position:absolute;left:110px;top:0;height:900px;display:flex;flex-direction:column;justify-content:center;width:760px}
-.mark{display:flex;align-items:center;gap:14px;font:600 26px Fredoka;color:#5F6B64;margin-bottom:26px}
-h1{font:600 132px/1 Fredoka;letter-spacing:-2px;margin:0 0 26px}
-.sub{font:600 44px/1.25 Nunito;color:#5F6B64;margin:0 0 44px}
-.chips{display:flex;gap:16px}
-.chips span{white-space:nowrap;font:800 28px Nunito;padding:12px 26px;border-radius:999px;color:#22332D}
-.foot{position:absolute;left:110px;bottom:64px;font:700 28px Nunito;color:#8A8F86}
-.foot b{color:#B84A22;font-weight:800}
-svg.art{position:absolute;left:870px;top:60px}
+body{font-family:"IBM Plex Sans";color:#13201C;background:linear-gradient(180deg,#F1F6F4,#FFFFFF);position:relative}
+.left{position:absolute;left:96px;top:88px;width:780px;height:724px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:16px;font-weight:600;font-size:40px;letter-spacing:-.5px}
+.brand svg{width:56px;height:56px}
+.eyebrow{margin:120px 0 22px;font:500 22px/1 "IBM Plex Mono";letter-spacing:2px;text-transform:uppercase;color:#B3451C}
+h1{margin:0 0 28px;font-weight:600;font-size:84px;line-height:1.06;letter-spacing:-2px}
+.sub{margin:0;font-size:30px;line-height:1.4;color:#5A6661}
+.foot{margin-top:auto;display:flex;gap:28px;font:500 22px "IBM Plex Mono";color:#5A6661}
+.foot b{color:#17483A;font-weight:500}
+.panel{position:absolute;right:0;top:0;width:620px;height:900px;background:#17483A}
+.panel:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.09) 1.5px,transparent 1.5px);background-size:28px 28px}
+.receipt{position:absolute;left:870px;top:180px;width:560px;background:#fff;border-radius:16px;box-shadow:0 2px 4px rgba(0,0,0,.08),0 30px 60px rgba(8,28,22,.35);overflow:hidden}
+.head{display:flex;align-items:center;gap:16px;padding:26px 30px;background:#E6F2EC;border-bottom:1px solid #DCE1DD}
+.head svg{width:40px;height:40px;color:#1E7A50}
+.head b{display:block;color:#1E7A50;font-size:25px}
+.head span{font-size:18px;color:#5A6661}
+ul{list-style:none;margin:0;padding:8px 30px}
+li{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid #DCE1DD;font-size:21px}
+li:last-child{border-bottom:0}
+li span:first-child{display:flex;align-items:center;gap:12px}
+li svg{width:20px;height:20px;color:#1E7A50}
+li .v{font:400 17px "IBM Plex Mono";color:#5A6661}
+.rf{padding:18px 30px;background:#F6F7F5;border-top:1px solid #DCE1DD;font:400 17px "IBM Plex Mono";color:#5A6661}
+.dot{position:absolute;left:1408px;top:158px;width:44px;height:44px;border-radius:50%;background:#E8663D;border:6px solid #17483A}
 </style></head><body>
-<div class="blob"></div>
+<div class="panel"></div>
 <div class="left">
-  <h1>QoreWitness</h1>
-  <p class="sub">Post-quantum evidence anchor<br>for camera footage</p>
-  <div class="chips"><span style="background:#BFD9A8">ML-DSA-87</span><span style="background:#F6D98B">Merkle roots</span><span style="background:#F4A99A">Verify in browser</span></div>
+  <div class="brand"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#17483A"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="16" cy="16" r="3" fill="#fff"/><circle cx="25.5" cy="6.5" r="3" fill="#E8663D"/></svg>QoreWitness</div>
+  <p class="eyebrow">Post-quantum evidence for camera footage</p>
+  <h1>Video evidence you can trust again.</h1>
+  <p class="sub">Provably untampered from the moment the camera records. Powered by QoreChain.</p>
+  <div class="foot"><b>#BuildBeforeQDay</b><span>qorewitness.fnoufnou.com</span></div>
 </div>
-<div class="foot"><b>#BuildBeforeQDay</b> · qorewitness.fnoufnou.com</div>
-
-<svg class="art" width="660" height="780" viewBox="0 0 660 780">
-  <!-- merkle sprout -->
-  <g stroke="#22332D" stroke-opacity=".28" stroke-width="5" stroke-linecap="round" fill="none">
-    <path d="M330 220 L270 160 M330 220 L390 160"/>
-    <path d="M270 160 L235 110 M270 160 L300 110 M390 160 L360 110 M390 160 L425 110"/>
-    <path d="M330 244 L330 336" stroke-dasharray="1 13"/>
-  </g>
-  <circle cx="235" cy="104" r="14" fill="#BFD9A8"/>
-  <circle cx="300" cy="104" r="14" fill="#F6D98B"/>
-  <circle cx="360" cy="104" r="14" fill="#F4A99A"/>
-  <circle cx="425" cy="104" r="14" fill="#BFD9A8"/>
-  <circle cx="270" cy="160" r="16" fill="#FFFBF4" stroke="#9CC384" stroke-width="5"/>
-  <circle cx="390" cy="160" r="16" fill="#FFFBF4" stroke="#9CC384" stroke-width="5"/>
-  <circle cx="330" cy="222" r="19" fill="#EF7B4F"/>
-  <!-- sparkles -->
-  <path d="M120 150 q6 22 28 28 q-22 6 -28 28 q-6 -22 -28 -28 q22 -6 28 -28z" fill="#F6D98B"/>
-  <path d="M560 250 q4 14 18 18 q-14 4 -18 18 q-4 -14 -18 -18 q14 -4 18 -18z" fill="#F4A99A"/>
-  <path d="M110 560 q4 14 18 18 q-14 4 -18 18 q-4 -14 -18 -18 q14 -4 18 -18z" fill="#BFD9A8"/>
-  <!-- mascot, scale 2 -->
-  <g transform="translate(70 230) scale(2)">
-    <ellipse cx="130" cy="214" rx="80" ry="9" fill="#22332D" opacity=".08"/>
-    <rect x="52" y="34" width="62" height="40" rx="16" fill="#9CC384"/>
-    <rect x="24" y="56" width="212" height="150" rx="58" fill="#BFD9A8"/>
-    <circle cx="196" cy="88" r="9" fill="#F6D98B"/>
-    <circle cx="130" cy="132" r="54" fill="#EF7B4F"/>
-    <circle cx="130" cy="132" r="41" fill="#FFFBF4"/>
-    <circle cx="115" cy="128" r="5.5" fill="#22332D"/>
-    <circle cx="145" cy="128" r="5.5" fill="#22332D"/>
-    <circle cx="116.8" cy="126.2" r="1.6" fill="#fff"/>
-    <circle cx="146.8" cy="126.2" r="1.6" fill="#fff"/>
-    <path d="M122 142q4 5 8 0q4 5 8 0" fill="none" stroke="#22332D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <ellipse cx="62" cy="152" rx="12" ry="7" fill="#F4A99A"/>
-    <ellipse cx="198" cy="152" rx="12" ry="7" fill="#F4A99A"/>
-  </g>
-  <!-- chain pebbles -->
-  <g font-family="ui-monospace,Menlo,monospace" font-size="21" fill="#5F6B64">
-    <path d="M190 700 H470" stroke="#E8DCC8" stroke-width="5" stroke-dasharray="2 12" stroke-linecap="round"/>
-    <rect x="40" y="670" width="170" height="60" rx="22" fill="#FFFBF4" stroke="#E8DCC8" stroke-width="4"/>
-    <text x="125" y="707" text-anchor="middle">#9 899 325</text>
-    <rect x="240" y="664" width="180" height="72" rx="26" fill="#FFFBF4" stroke="#EF7B4F" stroke-width="5"/>
-    <text x="330" y="707" text-anchor="middle" fill="#22332D" font-weight="700">#9 899 327 ✓</text>
-    <rect x="450" y="670" width="170" height="60" rx="22" fill="#FFFBF4" stroke="#E8DCC8" stroke-width="4"/>
-    <text x="535" y="707" text-anchor="middle">#9 899 329</text>
-  </g>
-</svg>
+<div class="receipt">
+  <div class="head">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><b>Verified: original file</b><span>camera demo-testpattern</span></div>
+  </div>
+  <ul>
+    <li><span><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>File fingerprint</span><span class="v">03d22bb8…0e6691</span></li>
+    <li><span><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Merkle path</span><span class="v">valid</span></li>
+    <li><span><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>ML-DSA-87 signature</span><span class="v">post-quantum</span></li>
+    <li><span><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Recorded on QoreChain</span><span class="v">block 9,899,327</span></li>
+  </ul>
+  <div class="rf">Existed before 2026-11-11 15:38:13 UTC</div>
+</div>
 </body></html>

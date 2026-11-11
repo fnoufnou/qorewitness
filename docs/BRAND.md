@@ -1,63 +1,58 @@
 # QoreWitness brand
 
-Friendly and calm. Minimal layouts, soft round shapes, warm colours. A small hint of kawaii through the mascot. No black backgrounds and no purple-to-blue gradients.
+Solid, calm and trustworthy. QoreWitness protects ordinary people against threats they cannot see, such as AI edits and quantum computers. The design looks like a security product: clear structure, plain language, real product evidence. No black backgrounds and no purple-to-blue gradients.
 
-## Mascot: Witt
+## Logo
 
-A round pistachio camera with a persimmon lens. The lens is the face.
+A rounded pine square with a white lens ring and a persimmon "recording" dot in the top right corner. Wordmark: "QoreWitness" in IBM Plex Sans 600.
 
-| Mood | Where | Face |
-|---|---|---|
-| Idle | Default, logo, banner | Dot eyes, small "w" mouth |
-| Happy | Verifier: verified | Closed "^ ^" eyes, open smile |
-| Worried | Verifier: not verified | Raised brows, wavy mouth, sweat drop |
-
-Rules:
-
-- Keep the shapes flat. No outlines, no gradients, no gloss.
-- Blush cheeks only in sizes of 48 px and up. The favicon uses eyes only.
-- Use Witt once or twice per page. Do not use it as a background pattern.
-
-Source: the `<symbol id="witt">` in `web/site/index.html`. Favicon: `web/site/favicon.svg`.
+- Source: `<symbol id="logo">` in `web/site/index.html`. Favicon: `web/site/favicon.svg`.
+- Minimum size 20 px. Keep clear space of half the mark width around it.
 
 ## Colours
 
 | Token | Hex | Use |
 |---|---|---|
-| Oat | `#F7F1E6` | Page background |
-| Cream | `#FFFBF4` | Cards, lens |
-| Line | `#E8DCC8` | Borders (2 px) |
-| Pine | `#22332D` | Text. Use this, not black. |
-| Muted | `#5F6B64` | Secondary text |
-| Persimmon | `#EF7B4F` | Brand colour: lens ring, highlights, focus ring |
-| Persimmon deep | `#B84A22` | Primary buttons and links on light (white text, AA) |
-| Pistachio | `#BFD9A8` | Mascot body, first chip |
-| Pistachio deep | `#9CC384` | Viewfinder, tree nodes |
-| Moss | `#3E7A4A` | "Verified" text |
-| Butter | `#F6D98B` | Second chip, bullets, sparkles |
-| Blush | `#F4A99A` | Cheeks, third chip |
-| Berry | `#B23A48` | "Not verified" text |
+| Pine 900 | `#0E2F26` | Footer, button hover |
+| Pine 800 | `#17483A` | Brand colour: logo, primary buttons, banner panel |
+| Pine 700 | `#1F5C4B` | Links |
+| Pine 100 | `#E4EEEA` | Icon tiles |
+| Pine 50 | `#F1F6F4` | Hero gradient, notes |
+| Signal | `#E8663D` | Recording dot, focus ring, list markers. Use sparingly. |
+| Signal ink | `#B3451C` | Eyebrow labels on white (AA contrast) |
+| Ink | `#13201C` | Body text |
+| Stone 500 | `#5A6661` | Secondary text |
+| Stone 200 | `#DCE1DD` | Borders (1 px) |
+| Stone 50 | `#F6F7F5` | Alternate section background |
+| OK | `#1E7A50` on `#E6F2EC` | Verified states |
+| Bad | `#B42318` on `#FBEAE7` | Failed states |
 
-Dark mode is warm cocoa, not black: background `#231D1A`, cards `#2E2622`, text `#F4ECE0`, accent `#FF9A6E`.
-
-Chip and step order is always pistachio, butter, blush, persimmon.
+Dark mode uses deep pine (`#0F211C`, surfaces `#152B25`), never black.
 
 ## Type
 
-- Display: Fredoka (variable, weight 600). Headings and the wordmark.
-- Body: Nunito (variable, weights 400 to 800).
-- Code and hashes: the system monospace font.
+- IBM Plex Sans (variable). Headings 600, body 400, UI labels 500 to 600.
+- IBM Plex Mono 400 and 500 for hashes, block numbers and eyebrow labels (upper case, letter spacing 0.08 em).
 - Both fonts are self-hosted in `web/site/fonts/` under the SIL Open Font License.
 
-## Shapes
+## Layout and components
 
-- Cards: radius 24 px, 2 px border in Line, no shadow.
-- Buttons and chips: full pill radius, weight 800.
-- Block numbers: small rounded "pebbles" in monospace. The anchored block has a persimmon border.
+- Max content width 72 rem. Sections with 88 px vertical padding. Alternate sections on Stone 50.
+- Cards and tiles: radius 8 px, 1 px border, no shadow. Only the product card (receipt) has a shadow.
+- Buttons: radius 8 px. Primary in Pine 800 with white text. Secondary white with a border.
+- Icons: 24 px line icons, 1.8 px stroke, in a Pine 100 tile.
+- Show the product. The hero uses a real verification result of the demo clip.
+
+## Voice
+
+- Short, active sentences. Speak to "you".
+- Explain the threat in plain words first, then the technology.
+- Be honest about status. Call it a pilot. List the limits.
+- No em dashes, no hype words, no claims the code does not support.
 
 ## Featured image
 
-`docs/assets/qorewitness-featured.png` (1600 x 900). Source: `web/brand/banner.html`. Render it with Playwright:
+`docs/assets/qorewitness-featured.png` (1600 x 900). Source: `web/brand/banner.html`. Render with Playwright:
 
 ```bash
 node web/brand/render.cjs web/brand/banner.html docs/assets/qorewitness-featured.png 1600 900 1
