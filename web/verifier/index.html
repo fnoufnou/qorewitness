@@ -4,43 +4,114 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QoreWitness Verifier</title>
+<meta name="theme-color" content="#F7F1E6">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
-  :root { --bg:#0d1117; --fg:#e6edf3; --muted:#8b949e; --card:#161b22; --line:#30363d; --ok:#3fb950; --bad:#f85149; --accent:#a371f7; }
-  @media (prefers-color-scheme: light) { :root { --bg:#f6f8fa; --fg:#1f2328; --muted:#59636e; --card:#fff; --line:#d1d9e0; --ok:#1a7f37; --bad:#cf222e; --accent:#8250df; } }
-  * { box-sizing: border-box; }
-  body { margin:0; font:16px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
-  main { max-width:720px; margin:0 auto; padding:32px 16px; }
-  h1 { margin:0 0 4px; font-size:28px; } h1 span { color:var(--accent); }
+  @font-face { font-family:"Fredoka"; src:url(fonts/fredoka.woff2) format("woff2"); font-weight:300 700; font-display:swap; }
+  @font-face { font-family:"Nunito"; src:url(fonts/nunito.woff2) format("woff2"); font-weight:200 1000; font-display:swap; }
+  /* QoreWitness design tokens. See docs/BRAND.md */
+  :root {
+    --bg:#F7F1E6; --card:#FFFBF4; --line:#E8DCC8; --fg:#22332D; --muted:#5F6B64;
+    --persimmon:#EF7B4F; --accent:#B84A22; --pistachio:#BFD9A8; --butter:#F6D98B; --blush:#F4A99A;
+    --ok:#3E7A4A; --ok-bg:#E3F0D8; --bad:#B23A48; --bad-bg:#FBE3E0; --warn:#8A6512;
+    --font-display:"Fredoka",ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif;
+    --font-body:"Nunito",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --bg:#231D1A; --card:#2E2622; --line:#433832; --fg:#F4ECE0; --muted:#B9AD9F;
+    --accent:#FF9A6E; --ok:#A9CF8E; --ok-bg:#2F3A28; --bad:#FF8A93; --bad-bg:#45272A; --warn:#F6D98B;
+  } }
+  * { box-sizing:border-box; }
+  body { margin:0; font:17px/1.6 var(--font-body); background:var(--bg); color:var(--fg); }
+  main { max-width:720px; margin:0 auto; padding:20px 16px 40px; }
+  a { color:var(--accent); text-underline-offset:3px; }
+  .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--fg); font:600 22px/1 var(--font-display); }
+  .brand svg { width:40px; height:36px; }
+  .back { font-weight:700; font-size:15px; color:var(--muted); text-decoration:none; }
+  h1 { margin:0 0 6px; font:600 2.2rem/1.15 var(--font-display); letter-spacing:-.01em; }
   p.lead { color:var(--muted); margin:0 0 24px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
-  label { display:block; font-weight:600; margin:12px 0 6px; }
-  input[type=file] { width:100%; }
-  button { margin-top:16px; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 18px; font-size:16px; cursor:pointer; }
-  .verdict { font-weight:600; font-size:18px; }
-  .verdict.ok { color:var(--ok); } .verdict.bad { color:var(--bad); }
-  ol#steps { padding-left:20px; } ol#steps li { margin:6px 0; }
-  li.pass::marker { content:"✔ "; color:var(--ok); } li.fail::marker { content:"✘ "; color:var(--bad); } li.info::marker { content:"ℹ "; color:var(--muted); } li.warn::marker { content:"⚠ "; color:#d29922; }
-  button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); margin-left:8px; }
+  .card { background:var(--card); border:2px solid var(--line); border-radius:24px; padding:22px 24px; margin-bottom:16px; }
+  label { display:block; font-weight:800; margin:14px 0 6px; }
+  label:first-child { margin-top:0; }
+  input[type=file] { width:100%; font:inherit; font-size:15px; color:var(--muted); background:var(--bg); border:2px dashed var(--line); border-radius:16px; padding:10px; }
+  input[type=file]::file-selector-button { font:800 14px var(--font-body); color:#22332D; background:var(--pistachio); border:0; border-radius:999px; padding:7px 14px; margin-right:12px; cursor:pointer; }
+  .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+  button { font:800 16px var(--font-body); background:var(--accent); color:#fff; border:2px solid var(--accent); border-radius:999px; padding:10px 22px; cursor:pointer; }
+  @media (prefers-color-scheme: dark) { button { color:#22332D; } }
+  button.secondary { background:transparent; color:var(--accent); }
   button:disabled { opacity:.4; cursor:default; }
-  #note { color:var(--muted); font-size:14px; margin-top:8px; }
-  footer { color:var(--muted); font-size:13px; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline:3px solid var(--persimmon); outline-offset:2px; }
+  #note { color:var(--muted); font-size:14px; margin-top:10px; }
+  .result { display:grid; grid-template-columns:96px 1fr; gap:18px; align-items:start; }
+  .result svg { width:96px; height:85px; }
+  .face { display:none; }
+  .result .face-idle { display:inline; }
+  .result:has(.verdict.ok) .face-idle, .result:has(.verdict.bad) .face-idle { display:none; }
+  .result:has(.verdict.ok) .face-ok { display:inline; }
+  .result:has(.verdict.bad) .face-bad { display:inline; }
+  .verdict { font:600 1.2rem/1.35 var(--font-display); padding:2px 0 6px; }
+  .verdict.ok { color:var(--ok); } .verdict.bad { color:var(--bad); }
+  .card:has(.verdict.ok) { background:var(--ok-bg); border-color:transparent; }
+  .card:has(.verdict.bad) { background:var(--bad-bg); border-color:transparent; }
+  ol#steps { padding-left:22px; margin:6px 0 0; } ol#steps li { margin:6px 0; font-size:15px; }
+  li.pass::marker { content:"✔  "; color:var(--ok); } li.fail::marker { content:"✘  "; color:var(--bad); } li.info::marker { content:"ℹ  "; color:var(--muted); } li.warn::marker { content:"⚠  "; color:var(--warn); }
+  footer { color:var(--muted); font-size:14px; margin-top:24px; }
+  @media (max-width:480px) { .result { grid-template-columns:1fr; } .result svg { width:72px; height:64px; } h1 { font-size:1.8rem; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Qore<span>Witness</span> Verifier</h1>
+  <div class="top">
+    <a class="brand" href="./" aria-label="QoreWitness home">
+      <svg viewBox="0 0 260 230" aria-hidden="true"><rect x="52" y="34" width="62" height="40" rx="16" fill="#9CC384"/><rect x="24" y="56" width="212" height="150" rx="58" fill="#BFD9A8"/><circle cx="130" cy="132" r="54" fill="#EF7B4F"/><circle cx="130" cy="132" r="41" fill="#FFFBF4"/><circle cx="115" cy="128" r="7" fill="#22332D"/><circle cx="145" cy="128" r="7" fill="#22332D"/><path d="M122 143q4 5 8 0q4 5 8 0" fill="none" stroke="#22332D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      QoreWitness
+    </a>
+    <a class="back" href="./">About the demo</a>
+  </div>
+  <h1>Verifier</h1>
   <p class="lead">Check that a camera recording existed before a known time. Post-quantum signatures (ML-DSA-87), anchored on QoreChain. Your video stays in this browser.</p>
   <div class="card">
     <label for="video">Video segment</label>
     <input id="video" type="file" accept="video/*,.mp4,.ts">
     <label for="receipt">Receipt (.json)</label>
     <input id="receipt" type="file" accept=".json,application/json">
-    <button id="go">Verify</button><button id="tamper" class="secondary" disabled title="Verify the original first">Change one byte and verify again</button>
+    <div class="actions">
+      <button id="go">Verify</button>
+      <button id="tamper" class="secondary" disabled title="Verify the original first">Change one byte and verify again</button>
+    </div>
     <div id="note"></div>
   </div>
   <div class="card">
-    <div id="verdict" class="verdict">Choose a file and its receipt.</div>
-    <ol id="steps"></ol>
+    <div class="result">
+      <svg viewBox="0 0 260 230" aria-hidden="true">
+        <rect x="52" y="34" width="62" height="40" rx="16" fill="#9CC384"/>
+        <rect x="24" y="56" width="212" height="150" rx="58" fill="#BFD9A8"/>
+        <circle cx="196" cy="88" r="9" fill="#F6D98B"/>
+        <circle cx="130" cy="132" r="54" fill="#EF7B4F"/>
+        <circle cx="130" cy="132" r="41" fill="#FFFBF4"/>
+        <ellipse cx="62" cy="152" rx="12" ry="7" fill="#F4A99A"/>
+        <ellipse cx="198" cy="152" rx="12" ry="7" fill="#F4A99A"/>
+        <g class="face face-idle" fill="none" stroke="#22332D" stroke-width="4" stroke-linecap="round">
+          <circle cx="115" cy="128" r="3" fill="#22332D"/><circle cx="145" cy="128" r="3" fill="#22332D"/>
+          <path d="M123 145h14"/>
+        </g>
+        <g class="face face-ok" fill="none" stroke="#22332D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M107 130q8 -9 16 0"/><path d="M137 130q8 -9 16 0"/>
+          <path d="M120 142q10 10 20 0"/>
+        </g>
+        <g class="face face-bad" fill="none" stroke="#22332D" stroke-width="4" stroke-linecap="round">
+          <path d="M106 121l11 -4"/><path d="M154 121l-11 -4"/>
+          <circle cx="115" cy="132" r="3" fill="#22332D"/><circle cx="145" cy="132" r="3" fill="#22332D"/>
+          <path d="M120 150q5 -5 10 0q5 5 10 0"/>
+          <path d="M166 108q5 8 0 11q-5 -3 0 -11z" fill="#9FD3E8" stroke="none"/>
+        </g>
+      </svg>
+      <div>
+        <div id="verdict" class="verdict">Choose a file and its receipt.</div>
+        <ol id="steps"></ol>
+      </div>
+    </div>
   </div>
   <footer>QoreChain testnet (diana, chain ID 9800). A blockchain anchor is not an eIDAS qualified timestamp. It proves the file existed at a time. It does not prove who recorded it or that the camera was honest.</footer>
 </main>
