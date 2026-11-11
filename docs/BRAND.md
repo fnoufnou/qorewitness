@@ -47,7 +47,7 @@ Dark mode uses deep pine (`#0F211C`, surfaces `#152B25`), never black.
 
 - Short, active sentences. Speak to "you".
 - Explain the threat in plain words first, then the technology.
-- Be honest about status. Call it a pilot. List the limits.
+- Be honest about status. Call it an alpha pilot. List the limits.
 - No em dashes, no hype words, no claims the code does not support.
 
 ## Featured image
