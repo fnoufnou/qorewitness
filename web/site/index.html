@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QoreWitness</title>
+<meta name="description" content="Post-quantum evidence anchor for camera footage on QoreChain.">
+<style>
+:root{--bg:#f7f7f5;--fg:#17191c;--muted:#5b616b;--card:#fff;--line:#e2e2de;--accent:#3a5bd9}
+@media (prefers-color-scheme:dark){:root{--bg:#121417;--fg:#e8e9eb;--muted:#9aa1ab;--card:#1a1d21;--line:#2a2e34;--accent:#8ea6ff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:46rem;margin:0 auto;padding:3rem 1rem 4rem}
+h1{font-size:2rem;margin:0 0 .25rem}h2{font-size:1.15rem;margin:2.25rem 0 .5rem}
+.lead{color:var(--muted);margin:0 0 1.5rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin:.75rem 0}
+ol{padding-left:1.25rem}li{margin:.35rem 0}
+a{color:var(--accent)}code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all}
+.btns{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+.btn{display:inline-block;padding:.55rem .9rem;border-radius:8px;border:1px solid var(--line);background:var(--card);text-decoration:none;color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.small{font-size:.9rem;color:var(--muted)}
+pre{white-space:pre-wrap;margin:0}
+</style>
+</head>
+<body>
+<main>
+<h1>QoreWitness</h1>
+<p class="lead">A post-quantum evidence anchor for camera footage on QoreChain.</p>
+
+<p>QoreWitness hashes every video segment from a home camera. Every 10 minutes it builds a Merkle root of the hashes, signs the root with ML-DSA-87 and stores it on QoreChain. The contract checks the post-quantum signature on chain. Later, anyone can prove that a clip existed before a known time and was not changed.</p>
+
+<h2>Try it yourself</h2>
+<div class="card">
+<ol>
+<li>Download the demo clip and its receipt.</li>
+<li>Open the verifier. It runs in your browser. The clip does not leave your computer.</li>
+<li>Drop both files on the verifier. It checks the hash, the Merkle path, the camera key, the ML-DSA-87 signature and the record on chain.</li>
+<li>Change one byte of the clip, or trim it, and verify again. The check fails.</li>
+</ol>
+<div class="btns">
+<a class="btn" href="demo-clip.mp4" download>Demo clip (MP4, 3.3 MB)</a>
+<a class="btn" href="demo-receipt.json" download>Receipt (JSON)</a>
+<a class="btn primary" href="verifier.html">Open the verifier</a>
+</div>
+<p class="small">The demo clip is a generated test pattern. It was anchored on the qorechain-diana testnet in block 9,899,327 on 11 Nov 2026.</p>
+</div>
+
+<h2>On chain</h2>
+<div class="card small">
+<pre>Network     qorechain-diana testnet (EVM chain ID 9800)
+Registry    <code>0x1854EeE2A659F4f39A05d5832cceC405E8045336</code>
+Demo device demo-testpattern</pre>
+</div>
+
+<h2>Check the verifier itself</h2>
+<p class="small">The verifier is one static HTML file. Its SHA-256 is:<br><code>64eb719cb4d54d2de274a03bb92cc4a08e95a9b821448f72e6197bbb50323862</code><br>Build it from the source with <code>pnpm build:verifier</code> and compare.</p>
+
+<h2>Limits</h2>
+<ul class="small">
+<li>Proof of concept for Build Before Q-Day, the QoreChain Developer Fest. Testnet only.</li>
+<li>An anchor shows that a file existed before a time. It does not show that the scene in front of the camera was real.</li>
+<li>A blockchain anchor is not an eIDAS qualified timestamp.</li>
+</ul>
+
+<p class="small" style="margin-top:2.5rem">Source and licence (Apache-2.0): <a href="https://github.com/fnoufnou/qorewitness">github.com/fnoufnou/qorewitness</a> · #BuildBeforeQDay</p>
+</main>
+</body>
+</html>
