@@ -22,6 +22,9 @@ contract AnchorRegistry is DeviceRegistry {
     /// @notice Max allowed clock skew between the device and the chain, in seconds.
     uint64 public constant MAX_FUTURE_SKEW = 120;
 
+    /// @notice Max window length, in seconds (1 day). Audit QCAI ETH-001.
+    uint32 public constant MAX_WINDOW_SECONDS = 86_400;
+
     struct Anchor {
         bytes32 root; // Merkle root over the segment hashes of the window
         bytes32 sigHash; // keccak256 of the ML-DSA-87 signature (full signature is in the tx input)
@@ -69,6 +72,7 @@ contract AnchorRegistry is DeviceRegistry {
 
     error EmptyWindow();
     error WindowInFuture(uint64 windowEnd, uint64 blockTime);
+    error WindowTooLong(uint32 windowSeconds, uint32 maxSeconds);
     error WindowOverlap(uint64 windowStart, uint64 nextAllowed);
     error BadSignature();
     error UnknownAnchor(bytes32 anchorId);
@@ -132,12 +136,13 @@ contract AnchorRegistry is DeviceRegistry {
         emit Anchored(anchorId, msg.sender, deviceId, windowStart, windowSeconds, leafCount, root, sigHash);
     }
 
-    /// @dev Window rules: not empty, not in the future, after the previous window of the device.
+    /// @dev Window rules: not empty, at most 1 day long, not in the future, after the previous window of the device.
     function _checkWindow(bytes32 deviceId, uint64 windowStart, uint32 windowSeconds, uint32 leafCount)
         private
         view
     {
         if (windowSeconds == 0 || leafCount == 0) revert EmptyWindow();
+        if (windowSeconds > MAX_WINDOW_SECONDS) revert WindowTooLong(windowSeconds, MAX_WINDOW_SECONDS);
         uint64 windowEnd = windowStart + windowSeconds;
         if (windowEnd > uint64(block.timestamp) + MAX_FUTURE_SKEW) {
             revert WindowInFuture(windowEnd, uint64(block.timestamp));

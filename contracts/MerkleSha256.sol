@@ -7,6 +7,9 @@ pragma solidity ^0.8.28;
 ///         An odd last node moves up one level without hashing (no duplication).
 /// @dev Must match src/core/merkle.ts byte for byte.
 library MerkleSha256 {
+    /// @notice Max proof length. A uint32 leaf count gives at most 32 tree levels. Audit QCAI ETH-004.
+    uint256 internal constant MAX_PROOF_LENGTH = 32;
+
     function leaf(bytes32 segmentHash) internal pure returns (bytes32) {
         return sha256(abi.encodePacked(bytes1(0x00), segmentHash));
     }
@@ -20,7 +23,7 @@ library MerkleSha256 {
         pure
         returns (bool)
     {
-        if (index >= size) return false;
+        if (index >= size || proof.length > MAX_PROOF_LENGTH) return false;
         bytes32 h = leafHash;
         uint256 p = 0;
         while (size > 1) {

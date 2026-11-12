@@ -35,11 +35,13 @@ Two keys, two layers of post-quantum protection:
 
 | What | Address or tx |
 |---|---|
-| Registry v2 (devices, rotation, `verifyAnchor`) | `0x1854EeE2A659F4f39A05d5832cceC405E8045336` |
+| Registry v3 (12 Nov, audit fixes, live) | `0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2` |
+| Registry v2 (9 to 12 Nov, devices, rotation, `verifyAnchor`) | `0x1854EeE2A659F4f39A05d5832cceC405E8045336` |
 | Registry v1 (9 Nov, anchors by account key) | `0xA73d4347b50C2A373533915d698Bf03a01c65aAF` |
 | Owner and agent account | `0xD6C6bDfBE567BcE731907789800205Df0B78ca52` |
 
-- A home camera records 60-second segments. The agent anchors every 10-minute window on v2.
+- A home camera records 60-second segments. The agent anchors every 10-minute window. It used v2 from 9 Nov and v3 since 12 Nov, 07:01 UTC.
+- Audit: two-stage QCAI audit, reports and changelog in `docs/AUDIT.md`.
 - Gas and tx hashes: `docs/TESTNET_FINDINGS.md`.
 - Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`. The page has a tamper demo: it changes one byte in a copy in memory and checks again.
 

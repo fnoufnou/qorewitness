@@ -385,6 +385,25 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
     it("rejects windows that end in the future", async () => {
       await assert.rejects(anchorWindow((await now()) + 600n), /WindowInFuture/);
     });
+
+    it("rejects windows longer than one day (audit ETH-001)", async () => {
+      const start = (await now()) - 200_000n;
+      await viem.assertions.revertWithCustomError(
+        ctx.registry.write.anchor([deviceId, start, 86_401, 1, toHex(new Uint8Array(32)), deviceKey, "0x"]), ctx.registry, "WindowTooLong",
+      );
+      await viem.assertions.revertWithCustomError(
+        ctx.registry.write.anchor([deviceId, start, 4_294_967_295, 1, toHex(new Uint8Array(32)), deviceKey, "0x"]), ctx.registry, "WindowTooLong",
+      );
+      assert.equal(await ctx.registry.read.MAX_WINDOW_SECONDS(), 86_400);
+    });
+
+    it("rejects Merkle proofs longer than 32 hashes (audit ETH-004)", async () => {
+      const { segs, anchorId } = await anchorWindow((await now()) - 1000n, 4);
+      const good = merkleProof(segs, 1).map((p) => toHex(p));
+      assert.equal(await ctx.registry.read.verifySegment([anchorId, toHex(segs[1]), 1n, good]), true);
+      const long = [...good, ...Array<Hex>(33 - good.length).fill(toHex(new Uint8Array(32)))];
+      assert.equal(await ctx.registry.read.verifySegment([anchorId, toHex(segs[1]), 1n, long]), false);
+    });
   });
 
   // ---- T4: verifyAnchor -------------------------------------------------------------------

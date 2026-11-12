@@ -11,7 +11,7 @@
     "window": "tsx --env-file=.env scripts/window.ts",
     "probe:pqc": "tsx scripts/probe-pqc.ts",
     "probe:keystatus": "tsx scripts/probe-keystatus.ts",
-    "deploy:testnet": "hardhat ignition deploy ignition/modules/AnchorRegistry.ts --network qorechainTestnet --deployment-id qorewitness-v2",
+    "deploy:testnet": "hardhat ignition deploy ignition/modules/AnchorRegistry.ts --network qorechainTestnet --deployment-id qorewitness-v3",
     "build:verifier": "node scripts/build-verifier.mjs",
     "device": "tsx --env-file=.env scripts/device.ts",
     "drill": "tsx scripts/qday-drill.ts"

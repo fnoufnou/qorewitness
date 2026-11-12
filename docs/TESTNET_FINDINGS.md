@@ -44,6 +44,22 @@ Script: `scripts/probe-keystatus.ts`.
 - First anchor: 3 files, tx `0x0048aee4ca79a9a499d50a855415fdb50b7594efcc33a423e830db5e47157d40`, block 9790419, **340,949 gas** (about 0.034 QOR at 0.1 uqor per gas).
 - `scripts/verify-receipt.ts`: all 8 checks pass for the original file. A file with one extra byte fails the first check.
 
+## Registry v3 with audit fixes (12 Nov 2026)
+
+v3 adds two limits from the QCAI audit (`docs/AUDIT.md`): a window is at most 1 day long, and a Merkle proof has at most 32 hashes. The rest is the same as v2.
+
+- `AnchorRegistry` v3: `0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2`, `requirePossessionProof = true`. Deploy tx `0x7912aedff98616e783b4a7894930a55f358433c60063825c415b2266fd2c091c`, block 9938126, 2,201,200 gas.
+- Deploy: unscoped EVM window (600 blocks, 5 txs). The agent then opened its own window scoped to v3.
+
+| Action | Signatures checked on chain | Gas | Tx |
+|---|---|---|---|
+| `registerDevice` (lsc-indoor) | owner key + device key | 479,954 | `0x8cf6ad5b90b148e4d3b36c7dcd4ba25183b0348fc79ef2573fb044319e57251c` |
+| `registerDevice` (demo-testpattern) | owner key + device key | 463,034 | `0x919dfcb9fcbbd12f7911432211e4043f8a4fdbcbd4378f8e021f305e8cfb8bca` |
+| `anchor`, demo clip, first anchor of the device | device key | 404,549 | `0x18dbc7a0f0be01700120ea829616a43e2a16b7cb74dc1898ae509df36eb7cd2b` |
+| `anchor`, 10 segments, first agent window on v3 | device key | 404,669 | `0x3a74939ce64ca3a6d5420f4f2150ad51d5cc0f546163c138515690c4deccdb5c` |
+
+The first anchor of a device costs about 35,000 gas more, because it writes new storage slots.
+
 ## Registry v2 with DeviceRegistry (9 Nov 2026, evening)
 
 Contract `AnchorRegistry` v2 inherits `DeviceRegistry`. Each camera has its own ML-DSA-87 key. All checks below ran on chain with the real `pqcVerify` precompile.

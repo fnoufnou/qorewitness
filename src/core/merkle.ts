@@ -71,8 +71,11 @@ export function merkleProof(segmentHashes: Hash[], index: number): Hash[] {
   return proof;
 }
 
+/** Max proof length, same as MerkleSha256.MAX_PROOF_LENGTH (32 levels for a uint32 leaf count). */
+export const MAX_PROOF_LENGTH = 32;
+
 export function verifyProof(root: Hash, segmentHash: Hash, index: number, size: number, proof: Hash[]): boolean {
-  if (index < 0 || index >= size) return false;
+  if (index < 0 || index >= size || proof.length > MAX_PROOF_LENGTH) return false;
   let h = leafHash(segmentHash);
   let p = 0;
   let i = index;
