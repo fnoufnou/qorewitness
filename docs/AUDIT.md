@@ -23,6 +23,19 @@ v3 keeps the signed message format of v2 (domain tag `QoreWitness/AnchorRegistry
 
 Registry v3: `0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2` on qorechain-diana, deployed 12 Nov 2026 in block 9,938,126. Tests: 43 passing.
 
-## Stage 2
+## Stage 2 (13 Nov 2026)
 
-Input: `contracts/` of registry v3, same order. Report link follows.
+- Report: https://qorechain-audit-reports-362958365954.s3.amazonaws.com/audits/QCAIA-1794552433002-3DE3CBCB/report.html
+- Audit id: `QCAIA-1794552433002-3DE3CBCB`
+- Input: `contracts/` at commit `404010e` (registry v3, `0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2`), flattened in the same order. Chain setting: Ethereum (EVM/Solidity).
+- Result: score 72, risk MEDIUM. 5 findings: 1 high, 2 medium, 1 low, 1 info.
+
+| Id | Severity | Finding | Our assessment | Change |
+|---|---|---|---|---|
+| ETH-001 | High | Window overlap: `nextWindowStart` "can be manipulated" through overlapping anchors | Likely a false positive. The pointer is keyed by `msg.sender`, so an account can only move its own pointer. It only moves forward. `_checkWindow` reverts `WindowOverlap` for any start before it, and a window cannot end later than block time plus 120 s. Tests cover overlap and future windows. | No code change. Explain here. |
+| ETH-002 | Medium | No access control beyond device key verification | Same as stage 1 ETH-002. By design. | No change. |
+| ETH-003 | Medium | Overflow in `windowStart + windowSeconds` | Fixed in v3: `windowSeconds` is at most `MAX_WINDOW_SECONDS` (1 day) and Solidity 0.8 checks arithmetic. The auditor did not pick up the fix. | Done in v3 (stage 1 ETH-001). |
+| ETH-004 | Low | Unbounded proof length in `MerkleSha256.verify` | Fixed in v3: proofs longer than `MAX_PROOF_LENGTH` (32) return false before the loop. The auditor did not pick up the fix. | Done in v3 (stage 1 ETH-004). |
+| ETH-005 | Info | No ERC standard | Not applicable. | No change. |
+
+Note: the stage 2 score is lower than stage 1 (72 against 82), with the same code fixes in place. To our knowledge the auditor output varies per run. The report also shows quantum readiness "0%", although every anchor and key action is checked on chain with `pqcVerify` (ML-DSA-87). The API returns `quantumReadiness: null`, so this is likely a missing value and not a result.
