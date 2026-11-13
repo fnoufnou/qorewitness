@@ -1,0 +1,7 @@
+[Unit]
+Description=QoreWitness retention for %i (delete old segments, keep receipts)
+
+[Service]
+Type=oneshot
+User=dev
+ExecStart=/opt/qorewitness/deploy/qw-retention.sh /etc/qorewitness/%i.env

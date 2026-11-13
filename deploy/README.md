@@ -9,3 +9,5 @@
 4. `cp deploy/qw-*.service /etc/systemd/system/ && systemctl daemon-reload`
 5. `systemctl enable --now qw-recorder@<name> qw-agent@<name>`
 6. Logs: `journalctl -u qw-agent@<name> -f`. Receipts land in `QW_RECEIPT_DIR`.
+7. Retention: `cp deploy/qw-retention@.* /etc/systemd/system/ && systemctl enable --now qw-retention@<name>.timer`. Deletes segments older than `QW_RETENTION_DAYS` (default 14). Receipts stay.
+8. Health check on the Proxmox host: copy `deploy/qw-health.sh` to `/usr/local/bin/qw-health`, add a root cron line `*/15 * * * * /usr/local/bin/qw-health`. It sends a Telegram message when anchoring stops, the volume fills up or the agent runs low on test QOR.
