@@ -43,7 +43,7 @@ Two keys, two layers of post-quantum protection:
 - A home camera records 60-second segments. The agent anchors every 10-minute window. It used v2 from 9 Nov and v3 since 12 Nov, 07:01 UTC.
 - Audit: two-stage QCAI audit, reports and changelog in `docs/AUDIT.md`.
 - Gas and tx hashes: `docs/TESTNET_FINDINGS.md`.
-- Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`. The page has a tamper demo: it changes one byte in a copy in memory and checks again.
+- Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`. Without any QoreWitness code: `python3 tools/verify_receipt.py <receipt> <file>` (standard library only). The exact rules, and how to replay a check with third-party tools, are in `docs/SPEC.md`. The page has a tamper demo: it changes one byte in a copy in memory and checks again.
 
 ## Contract rules
 

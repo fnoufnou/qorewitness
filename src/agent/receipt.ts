@@ -6,6 +6,7 @@
 import { merkleProof, type Hash } from "../core/merkle.js";
 import { hex } from "../core/message.js";
 import type { Window } from "./window.js";
+import { generator, type Generator } from "./version.js";
 import type { Address, Hex } from "viem";
 
 export const RECEIPT_FORMAT = "qorewitness-receipt/v2";
@@ -22,6 +23,10 @@ export interface Receipt {
   root: Hex;
   signature: Hex; // ML-DSA-87 by the device key, 4,627 bytes
   segments: { file: string; sha256: Hex; size: number; index: number; proof: Hex[] }[];
+  /** Tool, release, commit and spec that made this receipt (added 14 Nov 2026). */
+  generator?: Generator;
+  /** Settings that shape the computation. Fixed by the spec version, recorded for replay. */
+  settings?: { fileHash: "sha256"; merkle: "rfc6962-sha256-promote-odd"; signature: "ml-dsa-87-empty-context" };
   opentimestamps?: { calendar: string; ots: string /* base64 */ }[];
 }
 
@@ -32,6 +37,8 @@ export function buildReceipt(
   const hashes: Hash[] = w.segments.map((s) => s.sha256);
   return {
     format: RECEIPT_FORMAT,
+    generator: generator(),
+    settings: { fileHash: "sha256", merkle: "rfc6962-sha256-promote-odd", signature: "ml-dsa-87-empty-context" },
     ...base,
     windowStart: w.windowStart.toString(),
     windowSeconds: w.windowSeconds,

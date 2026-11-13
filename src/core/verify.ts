@@ -20,6 +20,7 @@ export interface ReceiptV2 {
   root: Hex;
   signature: Hex;
   segments: { file: string; sha256: Hex; size: number; index: number; proof: Hex[] }[];
+  generator?: { name: string; version: string; commit: string; spec: string };
 }
 
 export const VERIFY_ABI = parseAbi([
@@ -105,6 +106,9 @@ export async function verifyReceipt(pub: PublicClient, r: ReceiptV2, fileHash: U
 
   if (v.deviceStatus === 2) {
     add("warn", `The owner revoked this camera at ${iso(v.deviceRevokedAt)}. The anchor was made before that, while the camera was active. Check why it was revoked.`);
+  }
+  if (r.generator) {
+    add("info", `Made by ${r.generator.name} ${r.generator.version} (commit ${r.generator.commit.slice(0, 12)}), rules ${r.generator.spec}. Replay steps: docs/SPEC.md.`);
   }
   add("info", `Camera "${r.deviceLabel}" claims recording between ${iso(v.windowStart)} and ${iso(v.windowStart + BigInt(v.windowSeconds))}.`);
 
