@@ -33,6 +33,7 @@ export interface Receipt {
     // Segment chain (spec/2)
     prevLink: Hex; link: Hex; startMs: string; durationMs: number; sourceFp: Hex; source: string;
     gapBeforeMs?: number; // time between the end of the previous segment and this one, if more than 2 s
+    overlapMs?: number; // this segment starts more than 2 s before the previous one ends
     sourceChanged?: boolean; // stream description differs from the previous segment
   }[];
   /** Tool, release, commit and spec that made this receipt (added 14 Nov 2026). */
@@ -75,6 +76,7 @@ export function buildReceipt(
         sourceFp: hex(s.sourceFp ?? new Uint8Array(32)),
         source: s.source ?? "",
         ...(gap > 2000 ? { gapBeforeMs: gap } : {}),
+        ...(gap < -2000 ? { overlapMs: -gap } : {}),
         ...(prev && (prev.source ?? "") !== (s.source ?? "") ? { sourceChanged: true } : {}),
       };
     }),

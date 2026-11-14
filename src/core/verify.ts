@@ -28,7 +28,7 @@ export interface ReceiptV3 {
   segments: {
     file: string; sha256: Hex; size: number; index: number; proof: Hex[];
     prevLink: Hex; link: Hex; startMs: string; durationMs: number; sourceFp: Hex; source: string;
-    gapBeforeMs?: number; sourceChanged?: boolean;
+    gapBeforeMs?: number; overlapMs?: number; sourceChanged?: boolean;
   }[];
   generator?: { name: string; version: string; commit: string; spec: string };
 }
@@ -145,6 +145,7 @@ async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8A
 
   // 4. What the stream shows.
   if (seg.gapBeforeMs) add("warn", `${(seg.gapBeforeMs / 1000).toFixed(1)} s of recording are missing before this segment.`);
+  if (seg.overlapMs) add("warn", `This segment overlaps the previous one by ${(seg.overlapMs / 1000).toFixed(1)} s: two recordings claim the same time.`);
   if (seg.sourceChanged) add("warn", "The stream description changed at this segment (codec, size, frame rate or encoder settings).");
   if (v.deviceStatus === 2) {
     add("warn", `The owner revoked this camera at ${iso(v.deviceRevokedAt)}. The anchor was made before that, while the camera was active. Check why it was revoked.`);
