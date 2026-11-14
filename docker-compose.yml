@@ -1,0 +1,28 @@
+# QoreWitness: one camera. Run the setup once, then start:
+#   docker compose run --rm agent setup
+#   docker compose up -d
+# All state (account, device key, segments, receipts) lives in ./data.
+services:
+  recorder:
+    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-latest}
+    build:
+      context: .
+      args: { QW_COMMIT: "${QW_COMMIT:-unknown}" }
+    command: recorder
+    restart: unless-stopped
+    env_file:
+      - path: ./data/camera.env
+        required: false
+    volumes: ["./data:/data"]
+  agent:
+    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-latest}
+    build:
+      context: .
+      args: { QW_COMMIT: "${QW_COMMIT:-unknown}" }
+    command: agent
+    restart: unless-stopped
+    env_file:
+      - path: ./data/camera.env
+        required: false
+    volumes: ["./data:/data"]
+    depends_on: [recorder]

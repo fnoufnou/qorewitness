@@ -1,0 +1,13 @@
+node_modules
+artifacts
+cache
+types
+coverage
+ignition/deployments
+.env
+*.key
+keys
+data
+receipts
+.git
+web/site

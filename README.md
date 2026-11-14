@@ -69,6 +69,16 @@ Two keys, two layers of post-quantum protection:
 | `test/` | Contract and Merkle tests (Hardhat 3, node:test, viem) |
 | `docs/` | Architecture, threat model, testnet findings |
 
+## Install (Docker, early alpha)
+
+On a Linux machine with Docker (Debian, Ubuntu, Raspberry Pi OS 64-bit) and an RTSP camera:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash
+```
+
+The setup asks for a camera name and its RTSP URL. It creates a testnet account from a fresh mnemonic, waits until you claim test QOR from the faucet, registers the account's ML-DSA-87 key and the camera key, and starts the recorder and the agent. Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
+
 ## Quick start
 
 ```bash

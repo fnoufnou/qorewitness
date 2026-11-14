@@ -11,6 +11,9 @@ import type { Address, Hex } from "viem";
 
 export const RECEIPT_FORMAT = "qorewitness-receipt/v2";
 
+/** Read once at start: the commit of the code that runs, not of a later checkout. */
+const GENERATOR = generator();
+
 export interface Receipt {
   format: typeof RECEIPT_FORMAT;
   chain: { evmChainId: number; registry: Address; txHash?: Hex; anchorId?: Hex; blockNumber?: string };
@@ -37,7 +40,7 @@ export function buildReceipt(
   const hashes: Hash[] = w.segments.map((s) => s.sha256);
   return {
     format: RECEIPT_FORMAT,
-    generator: generator(),
+    generator: GENERATOR,
     settings: { fileHash: "sha256", merkle: "rfc6962-sha256-promote-odd", signature: "ml-dsa-87-empty-context" },
     ...base,
     windowStart: w.windowStart.toString(),
