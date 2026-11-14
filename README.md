@@ -61,6 +61,11 @@ Two keys, two layers of post-quantum protection:
 - `verifyAnchor(owner, device, windowStart, segmentHash, index, path)` gives a third party one answer: found, included, anchor time, signing key and version, device status now. It never reverts.
 - `requirePossessionProof`: the owner key must have a proof of possession on chain.
 
+## Drills
+
+- **Q-Day Drill dry run** (keys): 13 attacks with only the ECDSA key, 0 succeeded. `docs/TESTNET_FINDINGS.md`.
+- **Custody drill** (input): 10 attacks on the footage itself. All 5 attacks after anchoring are rejected. 4 of 5 substitutions before hashing are flagged. A substitution with the camera's own settings is not caught: that is the trust boundary. `docs/CUSTODY_DRILL.md`.
+
 ## Repository
 
 | Path | Content |
