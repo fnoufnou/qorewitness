@@ -51,6 +51,8 @@ Two keys, two layers of post-quantum protection:
 - Devices belong to the account that registered them. Register: the owner key and the new device key sign (proof of possession). Revoke: the owner key signs. Final, a revoked device id cannot come back. Rotate: the old and the new device key sign. A nonce per owner stops replays.
 - Anchor: only the owner account can send it, and the current device key must sign. Anchors from a revoked device or with an old key fail.
 - Windows per (owner, device) must move forward and must not overlap. A later anchor cannot fill a gap in the past.
+- Since v4, each window commits to the previous root of its camera, and each segment to the previous segment. A removed, replaced or re-recorded piece breaks the chain. Gaps are stored on chain.
+- Since v4, the camera signs the hash of a recent block: the root was signed after that block and anchored before the anchor block.
 - A window must end before the block time (120 s skew allowed).
 - Every signed message is domain-separated: tag, chain ID, registry address, owner, device and the action data.
 - `verifyAnchor(owner, device, windowStart, segmentHash, index, path)` gives a third party one answer: found, included, anchor time, signing key and version, device status now. It never reverts.

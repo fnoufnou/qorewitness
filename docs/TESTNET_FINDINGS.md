@@ -124,3 +124,20 @@ Conclusions:
 - Calls to an in-scope target are admitted, then revert. Each one used a window slot and charged 450,000 gas, which is half of the 900,000 gas limit. So an attacker with the ECDSA key can burn the open window: slots and fees, up to its `maxValue`. The attacker cannot take value or change state.
 - Mitigation for the drill: keep no EVM window open on 18 Nov, or a very small one. Make the "normal tx" a hybrid native-lane tx, which needs no window.
 - The RPC error text for A4 and A5 does not name the window. Still to confirm that it is the scope rule and not a malformed request.
+
+## Registry v4: chain of custody (14 Nov 2026)
+
+After feedback from the QoreChain team on chain of custody and time bounds. Rules: `docs/SPEC.md` (qorewitness-spec/2).
+
+- `AnchorRegistry` v4: `0xa1378D6558B32e1f8d37b68cf90e3C93839Da365`, `requirePossessionProof = true`.
+- `registerDevice` (lsc-indoor): 480,117 gas, tx `0x4d58338623ad2e87ae87eb66dfde59eb472fee008e71f70b0804e0f42e6e55b6`.
+- First chained anchor, 10 segments: block 10,078,095, **437,049 gas**, tx `0x9c7f9680053819a4f61722ebd20c4c911ebccf5c2db4619728088507493a8c15`. About 67,000 gas more than v3, for the chain head, the reference block and the gap field.
+- Signed after block 10,078,092 (14:23:40 UTC), anchored in block 10,078,095 (14:23:44 UTC): a time window of 4 seconds for the signature.
+- `verify-receipt.ts` and `tools/verify_receipt.py` pass every check on a live v3 receipt.
+
+### Finding: BLOCKHASH returns 0 on qorechain-diana
+
+- An `eth_call` with a state override that runs `BLOCKHASH(NUMBER - 1)` and `BLOCKHASH(NUMBER - 10)` returns 0.
+- The first v4 deploy (`0x95BA116CC13cDd058E0622E7eCfE001f7b85c102`) required `blockhash(refBlock) != 0` and refused every anchor. It is not used.
+- Fix: the device signs the block hash it read from the RPC. The contract checks that the block is one of the last 256, and compares the hash only where the EVM knows it. Verifiers compare the signed hash with the chain's block. The lower time bound holds, because nobody knows a block hash before the block exists.
+- Question for the team: is BLOCKHASH meant to return 0 on the EVM lane?
