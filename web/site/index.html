@@ -118,6 +118,13 @@ section.alt{background:var(--surface);border-top:1px solid var(--line);border-bo
 .note{margin:32px 0 0;padding:18px 22px;border-radius:var(--r);background:var(--pine-50);border:1px solid var(--line);font-size:15px}
 
 .audience .tile{border-top:3px solid var(--brand)}
+.road .tile ul{margin:0;padding:0 0 0 1.1rem}
+.road .tile li{margin:0 0 10px;font-size:15px;color:var(--muted)}
+.road .tile li::marker{color:var(--brand)}
+.road .tile .pill{margin-bottom:14px}
+.road .tile .pill.now{background:var(--pine-100);color:var(--brand)}
+.road .tile .pill.next,.road .tile .pill.later{background:transparent;color:var(--muted);border:1px solid var(--line)}
+
 
 .demo{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
 .demo ol{margin:0 0 28px;padding:0;list-style:none;counter-reset:d}
@@ -193,6 +200,7 @@ footer .brand{color:#fff}
       <a href="#how">How it works</a>
       <a href="#demo">Demo</a>
       <a href="#status">Status</a>
+      <a href="#roadmap">Roadmap</a>
       <a href="https://github.com/fnoufnou/qorewitness">GitHub</a>
     </nav>
     <a class="btn primary sm" href="verifier.html">Open the verifier</a>
@@ -337,7 +345,7 @@ footer .brand{color:#fff}
         <p class="eyebrow">Status</p>
         <h2>Early alpha, running today.</h2>
         <p style="margin:16px 0 0">QoreWitness is in early alpha. It runs as a working pilot on the QoreChain testnet. Since 9 November 2026, a home camera has signed and anchored its footage every 10 minutes, around the clock.</p>
-        <p class="muted">Next on the roadmap: a second, independent timestamp on Bitcoin through OpenTimestamps, and a guided installer for common camera systems.</p>
+        <p class="muted">Next: an unbroken, time-bounded chain of footage, and setup in the browser. See the <a href="#roadmap">roadmap</a>.</p>
       </div>
       <div class="panel">
         <span class="pill"><i></i>Alpha · testnet</span>
@@ -348,6 +356,55 @@ footer .brand{color:#fff}
           <li>A blockchain record is not an eIDAS qualified timestamp. A court weighs it as ordinary evidence.</li>
         </ul>
       </div>
+    </div>
+  </section>
+
+  <section id="roadmap" class="road">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Roadmap</p>
+        <h2>What is done, and what comes next.</h2>
+        <p>Most important first in each column. The plan changes with what we learn from users and the QoreChain community.</p>
+      </div>
+      <ul class="grid4">
+        <li class="tile"><span class="pill"><i></i>Done</span>
+          <ul>
+            <li>Live pilot: a home camera seals its footage every 10 minutes</li>
+            <li>Quantum-safe signatures, checked on chain</li>
+            <li>Free browser verifier with a tamper test</li>
+            <li>A key per camera, which you can replace or revoke</li>
+            <li>Receipts that anyone can check with standard tools</li>
+            <li>Two rounds of review by the QoreChain contract auditor</li>
+            <li>Install with one command (early version)</li>
+          </ul>
+        </li>
+        <li class="tile"><span class="pill now"><i></i>In progress</span>
+          <ul>
+            <li>An unbroken chain of footage: every clip linked to the one before, so a missing or swapped clip shows</li>
+            <li>Time proven from both sides: not before, and not after</li>
+            <li>A fingerprint of the camera stream, so footage from another source stands out</li>
+            <li>Our own tamper drill: we try to slip in false footage and publish what we catch, and what we miss</li>
+          </ul>
+        </li>
+        <li class="tile"><span class="pill next"><i></i>Next</span>
+          <ul>
+            <li>Setup and dashboard in your browser</li>
+            <li>Seal any file: photos, documents, audio and recorder exports</li>
+            <li>Support for more cameras and recorders</li>
+            <li>Share evidence privately with a lawyer or insurer, with quantum-safe encryption</li>
+            <li>Let AI assistants seal and check files</li>
+          </ul>
+        </li>
+        <li class="tile"><span class="pill later"><i></i>Later</span>
+          <ul>
+            <li>Keys inside the camera or in a security chip</li>
+            <li>The QoreChain main network</li>
+            <li>A second fingerprint method for evidence that must last decades</li>
+            <li>Add-ons for Home Assistant and popular recorders</li>
+            <li>An optional extra record on a second blockchain</li>
+          </ul>
+        </li>
+      </ul>
     </div>
   </section>
 </main>
