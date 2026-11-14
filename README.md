@@ -2,7 +2,7 @@
 
 Post-quantum evidence anchor for camera footage on QoreChain.
 
-QoreWitness proves that a video segment existed before a known time. It hashes each recording segment, builds a SHA-256 Merkle tree per time window, signs the root with the camera's own ML-DSA-87 key and stores it in the `AnchorRegistry` contract on QoreChain. The contract checks the ML-DSA signature on chain. The block time is the trusted "existed before" time.
+QoreWitness proves that a video segment existed before a known time. It hashes each recording segment, builds a SHA-256 Merkle tree per time window, signs the root with the camera's own ML-DSA-87 key and stores it in the `AnchorRegistry` contract on QoreChain. The contract checks the ML-DSA signature on chain. The block time is the trusted "existed before" time. Since registry v4, every segment and every window is chained to the one before it, and the camera signs a recent block hash, so the time is bounded on both sides.
 
 Status: proof of concept for the QoreChain Developer Fest (Nov 2026). Testnet only. Do not use it as your only evidence.
 
@@ -35,7 +35,8 @@ Two keys, two layers of post-quantum protection:
 
 | What | Address or tx |
 |---|---|
-| Registry v3 (12 Nov, audit fixes, live) | `0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2` |
+| Registry v4 (14 Nov, chained windows, time bound on both sides, live) | `0xa1378D6558B32e1f8d37b68cf90e3C93839Da365` |
+| Registry v3 (12 Nov, audit fixes, Q-Day Drill) | `0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2` |
 | Registry v2 (9 to 12 Nov, devices, rotation, `verifyAnchor`) | `0x1854EeE2A659F4f39A05d5832cceC405E8045336` |
 | Registry v1 (9 Nov, anchors by account key) | `0xA73d4347b50C2A373533915d698Bf03a01c65aAF` |
 | Owner and agent account | `0xD6C6bDfBE567BcE731907789800205Df0B78ca52` |
@@ -51,6 +52,8 @@ Two keys, two layers of post-quantum protection:
 - Devices belong to the account that registered them. Register: the owner key and the new device key sign (proof of possession). Revoke: the owner key signs. Final, a revoked device id cannot come back. Rotate: the old and the new device key sign. A nonce per owner stops replays.
 - Anchor: only the owner account can send it, and the current device key must sign. Anchors from a revoked device or with an old key fail.
 - Windows per (owner, device) must move forward and must not overlap. A later anchor cannot fill a gap in the past.
+- Since v4, each window commits to the previous root of its camera, and each segment to the previous segment. A removed, replaced or re-recorded piece breaks the chain. Gaps are stored on chain.
+- Since v4, the camera signs the hash of a recent block: the root was signed after that block and anchored before the anchor block.
 - Since v4, each window commits to the previous root of its camera, and each segment to the previous segment. A removed, replaced or re-recorded piece breaks the chain. Gaps are stored on chain.
 - Since v4, the camera signs the hash of a recent block: the root was signed after that block and anchored before the anchor block.
 - A window must end before the block time (120 s skew allowed).
