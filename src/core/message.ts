@@ -4,7 +4,7 @@
  */
 import { encodePacked, keccak256, toBytes, toHex, type Address, type Hex } from "viem";
 
-export const DOMAIN: Hex = keccak256(toBytes("QoreWitness/AnchorRegistry/v2"));
+export const DOMAIN: Hex = keccak256(toBytes("QoreWitness/AnchorRegistry/v3"));
 export const REGISTER_TAG: Hex = keccak256(toBytes("QoreWitness/DeviceRegistry/register/v1"));
 export const REVOKE_TAG: Hex = keccak256(toBytes("QoreWitness/DeviceRegistry/revoke/v1"));
 export const ROTATE_TAG: Hex = keccak256(toBytes("QoreWitness/DeviceRegistry/rotate/v1"));
@@ -15,15 +15,19 @@ export interface WindowClaim {
   windowStart: bigint; // unix seconds
   windowSeconds: number;
   leafCount: number;
-  root: Hex; // bytes32
+  root: Hex; // bytes32, Merkle root over the segment links
+  prevRoot: Hex; // bytes32, root of the previous window of the device, zero for the first
+  refBlock: bigint; // a recent block number
 }
 
-/** Window message, signed by the device key. */
-export function signingMessage(chainId: bigint, registry: Address, w: WindowClaim): Uint8Array {
+export const ZERO32: Hex = `0x${"00".repeat(32)}`;
+
+/** Window message, signed by the device key. 256 bytes. refBlockHash is the hash of refBlock. */
+export function signingMessage(chainId: bigint, registry: Address, w: WindowClaim, refBlockHash: Hex): Uint8Array {
   return toBytes(
     encodePacked(
-      ["bytes32", "uint256", "address", "address", "bytes32", "uint64", "uint32", "uint32", "bytes32"],
-      [DOMAIN, chainId, registry, w.owner, w.deviceId, w.windowStart, w.windowSeconds, w.leafCount, w.root],
+      ["bytes32", "uint256", "address", "address", "bytes32", "uint64", "uint32", "uint32", "bytes32", "bytes32", "uint64", "bytes32"],
+      [DOMAIN, chainId, registry, w.owner, w.deviceId, w.windowStart, w.windowSeconds, w.leafCount, w.root, w.prevRoot, w.refBlock, refBlockHash],
     ),
   );
 }

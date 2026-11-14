@@ -19,7 +19,8 @@ import { loadDeviceKey } from "./device-key.js";
 import { ensureScopedWindow } from "./evm-window.js";
 import { sha256File } from "./hash-file.js";
 import { buildReceipt } from "./receipt.js";
-import { WindowBatcher, type Segment, type Window } from "./window.js";
+import { WindowBatcher, linkWindow, type Segment, type Window } from "./window.js";
+import { probeSegment } from "./source.js";
 import { deviceIdOf } from "../core/message.js";
 
 const env = (k: string, d?: string) => {
@@ -37,16 +38,28 @@ const deviceKey = loadDeviceKey(env("QW_DEVICE_KEY", `/etc/qorewitness/${device}
 const statePath = join(receiptDir, `.state-${device}.json`);
 mkdirSync(receiptDir, { recursive: true });
 
-interface StoredSegment { path: string; sha256: string; size: number; completedAt: number }
+interface StoredSegment {
+  path: string; sha256: string; size: number; completedAt: number;
+  startMs?: number; durationMs?: number; source?: string; sourceFp?: string; prevLink?: string; link?: string;
+}
 interface State {
   seen: string[]; // segment file names already hashed
   open?: StoredSegment[]; // hashed segments in windows that are not closed yet
   pending: { windowStart: string; windowSeconds: number; segments: StoredSegment[] }[];
+  chain?: { registry: string; lastLink: string }; // head of the segment chain for this registry
 }
 const state: State = existsSync(statePath) ? JSON.parse(readFileSync(statePath, "utf8")) : { seen: [], pending: [] };
 const seen = new Set(state.seen);
-const toStored = (s: Segment): StoredSegment => ({ ...s, sha256: Buffer.from(s.sha256).toString("hex") });
-const fromStored = (s: StoredSegment): Segment => ({ ...s, sha256: Uint8Array.from(Buffer.from(s.sha256, "hex")) });
+const hx = (b?: Uint8Array) => (b ? Buffer.from(b).toString("hex") : undefined);
+const bin = (h?: string) => (h ? Uint8Array.from(Buffer.from(h, "hex")) : undefined);
+const toStored = (s: Segment): StoredSegment => ({
+  ...s, sha256: hx(s.sha256)!, sourceFp: hx(s.sourceFp), prevLink: hx(s.prevLink), link: hx(s.link),
+});
+const fromStored = (s: StoredSegment): Segment => ({
+  ...s, sha256: bin(s.sha256)!, sourceFp: bin(s.sourceFp), prevLink: bin(s.prevLink), link: bin(s.link),
+});
+// A new registry starts a new chain.
+if (state.chain?.registry.toLowerCase() !== registry.toLowerCase()) state.chain = { registry, lastLink: "00".repeat(32) };
 const saveState = () => {
   state.seen = [...seen].slice(-5000);
   state.open = batcher.openSegments().map(toStored);
@@ -87,11 +100,13 @@ async function collect(): Promise<void> {
     const path = join(segDir, name);
     if (!existsSync(path)) { seen.add(name); continue; }
     const st = statSync(path);
-    const seg: Segment = { path, sha256: await sha256File(path), size: st.size, completedAt: Math.floor(st.mtimeMs / 1000) };
+    const completedAt = Math.floor(st.mtimeMs / 1000);
+    const seg: Segment = { path, sha256: await sha256File(path), size: st.size, completedAt, ...(await probeSegment(path, completedAt)) };
     batcher.add(seg);
     seen.add(name);
   }
   for (const w of batcher.closeReady(Math.floor(Date.now() / 1000))) {
+    state.chain!.lastLink = hx(linkWindow(w, bin(state.chain!.lastLink)!))!;
     state.pending.push({
       windowStart: w.windowStart.toString(),
       windowSeconds: w.windowSeconds,
@@ -118,6 +133,7 @@ async function anchorPending(): Promise<void> {
           chain: { evmChainId: 9800, registry, txHash: res.txHash, anchorId: res.anchorId, blockNumber: res.blockNumber.toString() },
           owner: client.address, deviceId, deviceLabel: device, devicePubkey: deviceKey.publicKeyHex,
           root: res.root, signature: res.signature,
+          prevRoot: res.prevRoot, refBlock: res.refBlock.toString(), refBlockHash: res.refBlockHash,
         },
         w,
       );

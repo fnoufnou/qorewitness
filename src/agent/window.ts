@@ -1,3 +1,4 @@
+import { segmentLink } from "../core/link.js";
 /**
  * Groups finished recording segments into fixed time windows.
  * A window holds every segment whose file was completed inside
@@ -9,6 +10,13 @@ export interface Segment {
   sha256: Uint8Array; // 32 bytes
   size: number;
   completedAt: number; // unix seconds (local clock)
+  // Segment chain (spec/2). Set by probeSegment and linkWindow.
+  startMs?: number;
+  durationMs?: number;
+  source?: string;
+  sourceFp?: Uint8Array;
+  prevLink?: Uint8Array;
+  link?: Uint8Array;
 }
 
 export interface Window {
@@ -52,4 +60,24 @@ export class WindowBatcher {
     }
     return ready;
   }
+}
+
+/**
+ * Chains the segments of a closed window to each other and to the previous
+ * window (spec/2). Returns the link of the last segment: the prevLink of the
+ * next window.
+ */
+export function linkWindow(w: Window, prevLink: Uint8Array): Uint8Array {
+  let prev = prevLink;
+  for (const s of w.segments) {
+    s.prevLink = prev;
+    s.link = segmentLink(prev, {
+      fileHash: s.sha256,
+      startMs: BigInt(s.startMs ?? s.completedAt * 1000),
+      durationMs: s.durationMs ?? 0,
+      sourceFp: s.sourceFp ?? new Uint8Array(32),
+    });
+    prev = s.link;
+  }
+  return prev;
 }

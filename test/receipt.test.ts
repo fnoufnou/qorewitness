@@ -10,8 +10,12 @@ describe("receipt generator info", () => {
         chain: { evmChainId: 9800, registry: "0x0000000000000000000000000000000000000001" },
         owner: "0x0000000000000000000000000000000000000002", deviceId: `0x${"11".repeat(32)}`, deviceLabel: "t",
         devicePubkey: "0x00", root: `0x${"22".repeat(32)}`, signature: "0x00",
+        prevRoot: `0x${"00".repeat(32)}`, refBlock: "1", refBlockHash: `0x${"33".repeat(32)}`,
       },
-      { windowStart: 600n, windowSeconds: 600, segments: [{ path: "/x/a.mp4", sha256: new Uint8Array(32), size: 1, completedAt: 601 }] },
+      {
+        windowStart: 600n, windowSeconds: 600,
+        segments: [{ path: "/x/a.mp4", sha256: new Uint8Array(32), size: 1, completedAt: 601, prevLink: new Uint8Array(32), link: new Uint8Array(32).fill(1) }],
+      },
     );
     assert.equal(r.generator?.name, "qorewitness");
     assert.equal(r.generator?.spec, SPEC_VERSION);

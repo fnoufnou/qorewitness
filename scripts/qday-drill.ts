@@ -27,7 +27,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { qorechainTestnet, REGISTRY_ABI } from "../src/agent/anchor-client.js";
-import type { ReceiptV2 } from "../src/core/verify.js";
+import type { ReceiptV3 as ReceiptV2 } from "../src/core/verify.js";
 
 const CHAIN_ID = "qorechain-diana";
 const REST = "https://api-testnet.qore.host";
@@ -198,9 +198,15 @@ async function dryrun(): Promise<void> {
     await evmTx("A9 rotate the device to an attacker key (real old key, forged signatures)", registry,
       encodeFunctionData({ abi: REGISTRY_ABI, functionName: "rotateDeviceKey", args: [dev, receipt.devicePubkey, fakeKey, fakeSig, fakeSig] }));
     await evmTx("A10 anchor a fake window with the real device key and a forged signature", registry,
-      encodeFunctionData({ abi: REGISTRY_ABI, functionName: "anchor", args: [dev, now - 60n, 30, 1, keccak256(toBytes("fake")), receipt.devicePubkey, fakeSig] }));
+      encodeFunctionData({ abi: REGISTRY_ABI, functionName: "anchor", args: [
+        { deviceId: dev, windowStart: now - 60n, windowSeconds: 30, leafCount: 1, root: keccak256(toBytes("fake")),
+          prevRoot: (receipt as { root: Hex }).root, refBlock: (await pub.getBlockNumber()) - 1n },
+        receipt.devicePubkey, fakeSig] }));
     await evmTx("A11 replay the last real anchor (same window, real signature)", registry,
-      encodeFunctionData({ abi: REGISTRY_ABI, functionName: "anchor", args: [dev, BigInt(receipt.windowStart), receipt.windowSeconds, receipt.segments.length, receipt.root, receipt.devicePubkey, receipt.signature] }));
+      encodeFunctionData({ abi: REGISTRY_ABI, functionName: "anchor", args: [
+        { deviceId: dev, windowStart: BigInt(receipt.windowStart), windowSeconds: receipt.windowSeconds, leafCount: receipt.segments.length,
+          root: receipt.root, prevRoot: receipt.prevRoot ?? `0x${"00".repeat(32)}`, refBlock: BigInt(receipt.refBlock ?? "1") },
+        receipt.devicePubkey, receipt.signature] }));
   } else {
     record("A9 to A11 device attacks", "SKIPPED", "set DRILL_RECEIPT to a receipt of the drill device");
   }

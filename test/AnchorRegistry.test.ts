@@ -4,7 +4,7 @@ import { network } from "hardhat";
 import { encodePacked, keccak256, toHex, type Address, type Hex } from "viem";
 import { buildLevels, merkleProof, merkleRoot } from "../src/core/merkle.js";
 import {
-  deviceIdOf, keyHashOf, registerMessage, revokeMessage, rotateMessage, signingMessage,
+  deviceIdOf, keyHashOf, registerMessage, revokeMessage, rotateMessage, signingMessage, ZERO32,
 } from "../src/core/message.js";
 
 const PQC_VERIFY: Address = "0x0000000000000000000000000000000000000a01";
@@ -79,19 +79,35 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
     ]);
   }
 
-  async function anchorWindow(windowStart: bigint, n = 5, opts: { key?: Hex; signKey?: Hex; id?: Hex } = {}) {
-    const key = opts.key ?? deviceKey;
+  type AnchorOpts = { key?: Hex; signKey?: Hex; id?: Hex; prevRoot?: Hex; refBlock?: bigint; refHash?: Hex; from?: Address; seconds?: number };
+
+  /** A correctly chained, signed window claim (prevRoot = chain head, refBlock = latest block). */
+  async function claimFor(windowStart: bigint, n: number, opts: AnchorOpts = {}) {
     const id = opts.id ?? deviceId;
-    const windowSeconds = 60;
+    const from = opts.from ?? owner();
     const segs = segments(n);
     const root = toHex(merkleRoot(segs));
-    const msg = signingMessage(ctx.chainId, ctx.registry.address, {
-      owner: owner(), deviceId: id, windowStart, windowSeconds, leafCount: n, root,
-    });
-    await ctx.registry.write.anchor([id, windowStart, windowSeconds, n, root, key, fakeSign(opts.signKey ?? key, msg)]);
-    const anchorId = await ctx.registry.read.anchorIdOf([owner(), id, windowStart]);
+    const prevRoot = opts.prevRoot ?? (await ctx.registry.read.chainHead([from, id]));
+    const latest = await ctx.publicClient.getBlock();
+    const refBlock = opts.refBlock ?? latest.number;
+    const refHash = opts.refHash ?? (await ctx.publicClient.getBlock({ blockNumber: refBlock })).hash!;
+    const w = { deviceId: id, windowStart, windowSeconds: opts.seconds ?? 60, leafCount: n, root, prevRoot, refBlock };
+    const msg = signingMessage(ctx.chainId, ctx.registry.address, { owner: from, ...w }, refHash);
+    return { w, segs, root, sig: fakeSign(opts.signKey ?? opts.key ?? deviceKey, msg) };
+  }
+
+  async function anchorWindow(windowStart: bigint, n = 5, opts: AnchorOpts = {}) {
+    const { w, segs, root, sig } = await claimFor(windowStart, n, opts);
+    await ctx.registry.write.anchor([w, opts.key ?? deviceKey, sig]);
+    const anchorId = await ctx.registry.read.anchorIdOf([owner(), w.deviceId, windowStart]);
     return { segs, root, anchorId };
   }
+
+  /** Anchor call with raw values, for checks that fail before the signature. */
+  const rawAnchor = (windowStart: bigint, windowSeconds: number, leafCount: number) =>
+    ctx.registry.write.anchor([
+      { deviceId, windowStart, windowSeconds, leafCount, root: ZERO32, prevRoot: ZERO32, refBlock: 1n }, deviceKey, "0x",
+    ]);
 
   const now = async () => BigInt(await networkHelpers.time.latest());
 
@@ -101,15 +117,16 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
 
   // ---- message formats ----------------------------------------------------------------
   describe("message formats", () => {
-    it("window message in TypeScript matches the contract", async () => {
-      const claim = {
-        owner: owner(), deviceId, windowStart: 1_700_000_000n, windowSeconds: 60, leafCount: 3,
-        root: toHex(new Uint8Array(32).fill(9)),
+    it("window message in TypeScript matches the contract (256 bytes)", async () => {
+      const w = {
+        deviceId, windowStart: 1_700_000_000n, windowSeconds: 60, leafCount: 3,
+        root: toHex(new Uint8Array(32).fill(9)), prevRoot: toHex(new Uint8Array(32).fill(8)), refBlock: 12345n,
       };
-      const onChain = await ctx.registry.read.signingMessage([
-        claim.owner, claim.deviceId, claim.windowStart, claim.windowSeconds, claim.leafCount, claim.root,
-      ]);
-      assert.equal(onChain, toHex(signingMessage(ctx.chainId, ctx.registry.address, claim)));
+      const refHash = toHex(new Uint8Array(32).fill(7));
+      const onChain = await ctx.registry.read.signingMessage([owner(), w, refHash]);
+      const local = signingMessage(ctx.chainId, ctx.registry.address, { owner: owner(), ...w }, refHash);
+      assert.equal(onChain, toHex(local));
+      assert.equal(local.length, 256);
     });
 
     it("register, revoke and rotate messages in TypeScript match the contract", async () => {
@@ -240,7 +257,7 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
       assert.equal(v.found, true);
       assert.equal(v.included, true);
       assert.equal(v.deviceStatus, REVOKED);
-      assert.ok(v.deviceRevokedAt >= v.anchoredAt);
+      assert.ok(v.deviceRevokedAt >= v.anchor.anchoredAt);
     });
   });
 
@@ -352,24 +369,19 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
 
     it("rejects another account that sends the device key and a valid signature", async () => {
       const t = await now();
-      const segs = segments(2);
-      const root = toHex(merkleRoot(segs));
       // Signature made for the other account, so only the owner binding stops it.
-      const msg = signingMessage(ctx.chainId, ctx.registry.address, {
-        owner: ctx.other.account.address, deviceId, windowStart: t - 100n, windowSeconds: 60, leafCount: 2, root,
-      });
+      const { w, sig } = await claimFor(t - 100n, 2, { from: ctx.other.account.address });
       await viem.assertions.revertWithCustomError(
-        ctx.registry.write.anchor([deviceId, t - 100n, 60, 2, root, deviceKey, fakeSign(deviceKey, msg)], { account: ctx.other.account }),
-        ctx.registry, "DeviceNotActive",
+        ctx.registry.write.anchor([w, deviceKey, sig], { account: ctx.other.account }), ctx.registry, "DeviceNotActive",
       );
     });
 
     it("rejects empty windows", async () => {
       await viem.assertions.revertWithCustomError(
-        ctx.registry.write.anchor([deviceId, 1n, 0, 1, toHex(new Uint8Array(32)), deviceKey, "0x"]), ctx.registry, "EmptyWindow",
+        rawAnchor(1n, 0, 1), ctx.registry, "EmptyWindow",
       );
       await viem.assertions.revertWithCustomError(
-        ctx.registry.write.anchor([deviceId, 1n, 60, 0, toHex(new Uint8Array(32)), deviceKey, "0x"]), ctx.registry, "EmptyWindow",
+        rawAnchor(1n, 60, 0), ctx.registry, "EmptyWindow",
       );
     });
 
@@ -389,10 +401,10 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
     it("rejects windows longer than one day (audit ETH-001)", async () => {
       const start = (await now()) - 200_000n;
       await viem.assertions.revertWithCustomError(
-        ctx.registry.write.anchor([deviceId, start, 86_401, 1, toHex(new Uint8Array(32)), deviceKey, "0x"]), ctx.registry, "WindowTooLong",
+        rawAnchor(start, 86_401, 1), ctx.registry, "WindowTooLong",
       );
       await viem.assertions.revertWithCustomError(
-        ctx.registry.write.anchor([deviceId, start, 4_294_967_295, 1, toHex(new Uint8Array(32)), deviceKey, "0x"]), ctx.registry, "WindowTooLong",
+        rawAnchor(start, 4_294_967_295, 1), ctx.registry, "WindowTooLong",
       );
       assert.equal(await ctx.registry.read.MAX_WINDOW_SECONDS(), 86_400);
     });
@@ -403,6 +415,92 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
       assert.equal(await ctx.registry.read.verifySegment([anchorId, toHex(segs[1]), 1n, good]), true);
       const long = [...good, ...Array<Hex>(33 - good.length).fill(toHex(new Uint8Array(32)))];
       assert.equal(await ctx.registry.read.verifySegment([anchorId, toHex(segs[1]), 1n, long]), false);
+    });
+  });
+
+  // ---- v4: chained windows and time bounds -----------------------------------------------
+  describe("chained windows and time bounds (v4)", () => {
+    beforeEach(async () => {
+      await register();
+    });
+
+    it("links each window to the previous root and moves the chain head", async () => {
+      const t = await now();
+      assert.equal(await ctx.registry.read.chainHead([owner(), deviceId]), ZERO32);
+      const a1 = await anchorWindow(t - 3000n, 2);
+      const a2 = await anchorWindow(t - 2940n, 3);
+      assert.equal((await ctx.registry.read.getAnchor([a1.anchorId])).prevRoot, ZERO32);
+      assert.equal((await ctx.registry.read.getAnchor([a2.anchorId])).prevRoot, a1.root);
+      assert.equal(await ctx.registry.read.chainHead([owner(), deviceId]), a2.root);
+    });
+
+    it("rejects a window that does not link to the chain head (replaced or re-recorded window)", async () => {
+      const t = await now();
+      const a1 = await anchorWindow(t - 3000n, 3); // other leaf count, so another root than a2
+      await anchorWindow(t - 2940n, 2);
+      // Skipping a window or building on an older root breaks the chain.
+      await viem.assertions.revertWithCustomError(anchorWindow(t - 2880n, 2, { prevRoot: a1.root }), ctx.registry, "BrokenChain");
+      await viem.assertions.revertWithCustomError(anchorWindow(t - 2880n, 2, { prevRoot: ZERO32 }), ctx.registry, "BrokenChain");
+    });
+
+    it("the first window of a device must start the chain with a zero root", async () => {
+      await viem.assertions.revertWithCustomError(
+        anchorWindow((await now()) - 500n, 2, { prevRoot: toHex(new Uint8Array(32).fill(1)) }), ctx.registry, "BrokenChain",
+      );
+    });
+
+    it("stores the gap before a window and emits WindowGap", async () => {
+      const t = await now();
+      await anchorWindow(t - 3000n, 2); // ends at t - 2940
+      const a2 = await anchorWindow(t - 2000n, 2); // 940 s later
+      assert.equal((await ctx.registry.read.getAnchor([a2.anchorId])).gapBefore, 940n);
+      const events = await ctx.registry.getEvents.WindowGap();
+      assert.equal(events.length, 1);
+      assert.equal(events[0].args.gapSeconds, 940n);
+      assert.equal(events[0].args.gapStart, t - 2940n);
+      const a3 = await anchorWindow(t - 1940n, 2); // contiguous
+      assert.equal((await ctx.registry.read.getAnchor([a3.anchorId])).gapBefore, 0n);
+    });
+
+    it("records the reference block: signed after it, anchored at or after it", async () => {
+      const { anchorId } = await anchorWindow((await now()) - 500n, 2);
+      const a = await ctx.registry.read.getAnchor([anchorId]);
+      assert.ok(a.refBlock < a.blockNumber);
+    });
+
+    it("rejects a reference block in the future, the current block and one older than 256 blocks", async () => {
+      const latest = await ctx.publicClient.getBlockNumber();
+      const zero = ZERO32;
+      // A future block has no hash yet. The tx is mined in latest + 1, so latest + 1 is the current block.
+      await viem.assertions.revertWithCustomError(
+        anchorWindow((await now()) - 500n, 2, { refBlock: latest + 5n, refHash: zero }), ctx.registry, "BadRefBlock",
+      );
+      await viem.assertions.revertWithCustomError(
+        anchorWindow((await now()) - 500n, 2, { refBlock: latest + 1n, refHash: zero }), ctx.registry, "BadRefBlock",
+      );
+      const old = await ctx.publicClient.getBlock();
+      await networkHelpers.mine(300);
+      await viem.assertions.revertWithCustomError(
+        anchorWindow((await now()) - 500n, 2, { refBlock: old.number, refHash: old.hash! }), ctx.registry, "BadRefBlock",
+      );
+    });
+
+    it("rejects a signature over a different block hash", async () => {
+      await viem.assertions.revertWithCustomError(
+        anchorWindow((await now()) - 500n, 2, { refHash: toHex(new Uint8Array(32).fill(3)) }), ctx.registry, "BadSignature",
+      );
+    });
+
+    it("verifyAnchor returns the chain head and the full record", async () => {
+      const t = await now();
+      const a1 = await anchorWindow(t - 3000n, 3);
+      const a2 = await anchorWindow(t - 2000n, 2);
+      const proof = merkleProof(a1.segs, 1).map((p) => toHex(p));
+      const v = await ctx.registry.read.verifyAnchor([owner(), deviceId, t - 3000n, toHex(a1.segs[1]), 1n, proof]);
+      assert.equal(v.included, true);
+      assert.equal(v.chainHead, a2.root);
+      assert.equal(v.anchor.prevRoot, ZERO32);
+      assert.equal(v.anchor.gapBefore, 0n);
     });
   });
 
@@ -418,11 +516,11 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
         assert.equal(v.found, true);
         assert.equal(v.included, true, `i=${i}`);
         assert.equal(v.anchorId, anchorId);
-        assert.equal(v.root, root);
-        assert.equal(v.leafCount, 7);
-        assert.equal(v.windowSeconds, 60);
-        assert.equal(v.deviceKeyHash, keyHashOf(deviceKey));
-        assert.equal(v.deviceKeyVersion, 1);
+        assert.equal(v.anchor.root, root);
+        assert.equal(v.anchor.leafCount, 7);
+        assert.equal(v.anchor.windowSeconds, 60);
+        assert.equal(v.anchor.deviceKeyHash, keyHashOf(deviceKey));
+        assert.equal(v.anchor.deviceKeyVersion, 1);
         assert.equal(v.deviceStatus, ACTIVE);
         assert.equal(v.deviceRevokedAt, 0n);
       }

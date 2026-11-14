@@ -8,7 +8,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /** Version of docs/SPEC.md: hashing, Merkle tree, signed message and receipt rules. */
-export const SPEC_VERSION = "qorewitness-spec/1";
+export const SPEC_VERSION = "qorewitness-spec/2";
 
 export interface Generator {
   name: "qorewitness";
