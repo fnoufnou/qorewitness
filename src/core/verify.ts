@@ -95,7 +95,7 @@ async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8A
   else add("fail", "The segment's chain link does not match. Its time, stream or position was changed.");
 
   const chainOk = r.segments.every((s, i) => i === 0 || s.prevLink === r.segments[i - 1].link);
-  if (chainOk) add("pass", `The ${r.segments.length} segments of this window form one unbroken chain.`);
+  if (chainOk) add("pass", r.segments.length === 1 ? "The window has one segment, linked to the previous one." : `The ${r.segments.length} segments of this window form one unbroken chain.`);
   else add("fail", "The segment chain inside this window is broken: a segment was removed, added or moved.");
 
   if (verifyProof(toBytes(r.root), toBytes(link), seg.index, r.segments.length, seg.proof.map((p) => toBytes(p)))) {
