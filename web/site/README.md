@@ -9,7 +9,7 @@ Files on the server:
 - `favicon.svg`, `fonts/` (IBM Plex Sans and IBM Plex Mono, SIL Open Font License), `qorewitness-featured.png` (link preview image)
 - `demo-clip.mp4` and `demo-receipt.json`
 
-The demo clip is a generated test pattern (ffmpeg testsrc2, 20 s), anchored by device `demo-testpattern` on qorechain-diana, block 9,938,157 (registry v3). Verify it with:
+The demo clip is a generated test pattern (ffmpeg testsrc2, 20 s), anchored by device `demo-testpattern` on qorechain-diana, block 10,078,733 (registry v4, receipt v3). Earlier record: block 9,938,157 on registry v3. Verify it with:
 
 ```bash
 pnpm tsx scripts/verify-receipt.ts demo-receipt.json demo-clip.mp4
