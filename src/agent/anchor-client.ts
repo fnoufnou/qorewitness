@@ -28,7 +28,7 @@ export const qorechainTestnet = defineChain({
 
 export const REGISTRY_ABI = parseAbi([
   "struct Device { bytes32 keyHash; uint32 keyVersion; uint8 status; uint64 registeredAt; uint64 revokedAt; }",
-  "struct WindowClaim { bytes32 deviceId; uint64 windowStart; uint32 windowSeconds; uint32 leafCount; bytes32 root; bytes32 prevRoot; uint64 refBlock; }",
+  "struct WindowClaim { bytes32 deviceId; uint64 windowStart; uint32 windowSeconds; uint32 leafCount; bytes32 root; bytes32 prevRoot; uint64 refBlock; bytes32 refBlockHash; }",
   "struct Anchor { bytes32 root; bytes32 sigHash; bytes32 deviceKeyHash; bytes32 prevRoot; address owner; uint32 deviceKeyVersion; uint64 windowStart; uint32 windowSeconds; uint32 leafCount; uint64 anchoredAt; uint64 blockNumber; uint64 refBlock; uint64 gapBefore; }",
   "struct Verification { bool found; bool included; bytes32 anchorId; Anchor anchor; uint8 deviceStatus; uint64 deviceRevokedAt; bytes32 chainHead; }",
   "function anchor(WindowClaim w, bytes devicePubkey, bytes signature) returns (bytes32)",
@@ -176,9 +176,9 @@ export class AnchorClient {
     const refBlockHash = (await this.pub.getBlock({ blockNumber: refBlock })).hash!;
     const claim = {
       deviceId, windowStart: w.windowStart, windowSeconds: w.windowSeconds, leafCount: w.segments.length,
-      root, prevRoot, refBlock,
+      root, prevRoot, refBlock, refBlockHash,
     };
-    const msg = signingMessage(await this.chainId(), this.registry, { owner: this.address, ...claim }, refBlockHash);
+    const msg = signingMessage(await this.chainId(), this.registry, { owner: this.address, ...claim });
     const signature = signChecked(device.publicKey, device.secretKey, msg);
     const tx = await this.send("anchor", [claim, device.publicKeyHex, signature]);
     const anchorId = await this.pub.readContract({

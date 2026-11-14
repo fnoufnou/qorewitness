@@ -133,8 +133,8 @@ async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8A
   if (ref.hash !== r.refBlockHash) add("fail", `The reference block hash in the receipt differs from block ${a.refBlock} on chain.`);
   const msg = signingMessage(BigInt(chainId), r.chain.registry, {
     owner: r.owner, deviceId: r.deviceId, windowStart: a.windowStart, windowSeconds: a.windowSeconds,
-    leafCount: a.leafCount, root: a.root, prevRoot: a.prevRoot, refBlock: a.refBlock,
-  }, ref.hash!);
+    leafCount: a.leafCount, root: a.root, prevRoot: a.prevRoot, refBlock: a.refBlock, refBlockHash: ref.hash!,
+  });
   if (mldsa.verify(toBytes(r.devicePubkey), msg, toBytes(r.signature))) {
     add("pass", "The ML-DSA-87 (post-quantum) signature over the root is valid (checked locally).");
   } else add("fail", "The ML-DSA-87 signature is not valid.");

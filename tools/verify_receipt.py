@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 
 SEL_GET_ANCHOR = "7feb51d9"  # keccak256("getAnchor(bytes32)")[:4]
 SEL_ANCHOR_V2 = "7220498d"  # anchor(bytes32,uint64,uint32,uint32,bytes32,bytes,bytes)
-SEL_ANCHOR_V3 = "4aae1d6a"  # anchor((bytes32,uint64,uint32,uint32,bytes32,bytes32,uint64),bytes,bytes)
+SEL_ANCHOR_V3 = "b813aa2a"  # anchor((bytes32,uint64,uint32,uint32,bytes32,bytes32,uint64,bytes32),bytes,bytes)
 MAX_PROOF_LENGTH = 32
 
 failed = False

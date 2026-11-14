@@ -10,9 +10,11 @@ import {DeviceRegistry} from "./DeviceRegistry.sol";
 ///         ML-DSA-87 signature by the device key that the owner registered in the
 ///         DeviceRegistry. The contract checks the signature on chain with the
 ///         pqcVerify precompile.
-///         Time is bounded on both sides: the device signs a recent block hash, so the
-///         root was signed after that block, and the anchor block shows it existed
-///         before the anchor time.
+///         Time is bounded on both sides: the device signs the hash of a recent block,
+///         which nobody knows before that block exists. So the root was signed after
+///         that block, and the anchor block shows it existed before the anchor time.
+///         Verifiers compare the signed hash with the chain. The contract compares it
+///         too where the EVM gives block hashes (BLOCKHASH returns 0 on qorechain-diana).
 ///         Windows of a device form a chain: each window commits to the root of the
 ///         previous one. A replaced, removed or re-recorded window breaks the chain.
 ///         A time gap between windows is stored on chain.
@@ -37,7 +39,8 @@ contract AnchorRegistry is DeviceRegistry {
         uint32 leafCount; // number of segments in the window
         bytes32 root; // Merkle root over the segment links of the window
         bytes32 prevRoot; // root of the previous window of this device, 0 for the first
-        uint64 refBlock; // a recent block. Its hash is part of the signed message.
+        uint64 refBlock; // a recent block
+        bytes32 refBlockHash; // its hash, part of the signed message
     }
 
     struct Anchor {
@@ -98,14 +101,10 @@ contract AnchorRegistry is DeviceRegistry {
     constructor(bool requirePossessionProof_) DeviceRegistry(requirePossessionProof_) {}
 
     /// @notice The exact bytes the device signs with ML-DSA-87 (empty context). 256 bytes.
-    function signingMessage(address owner, WindowClaim memory w, bytes32 refBlockHash)
-        public
-        view
-        returns (bytes memory)
-    {
+    function signingMessage(address owner, WindowClaim memory w) public view returns (bytes memory) {
         return abi.encodePacked(
             abi.encodePacked(DOMAIN, block.chainid, address(this), owner, w.deviceId),
-            abi.encodePacked(w.windowStart, w.windowSeconds, w.leafCount, w.root, w.prevRoot, w.refBlock, refBlockHash)
+            abi.encodePacked(w.windowStart, w.windowSeconds, w.leafCount, w.root, w.prevRoot, w.refBlock, w.refBlockHash)
         );
     }
 
@@ -116,7 +115,7 @@ contract AnchorRegistry is DeviceRegistry {
 
     /// @notice Anchors the Merkle root of one recording window.
     /// @param w The window claim. `prevRoot` must be the current chain head of the device.
-    ///        `refBlock` must be one of the last 256 blocks.
+    ///        `refBlock` must be one of the last 256 blocks, `refBlockHash` its hash.
     /// @param devicePubkey Current ML-DSA-87 key of the device (2,592 bytes).
     /// @param signature ML-DSA-87 signature by the device key over signingMessage.
     function anchor(WindowClaim calldata w, bytes calldata devicePubkey, bytes calldata signature)
@@ -126,12 +125,10 @@ contract AnchorRegistry is DeviceRegistry {
         uint64 gap = _checkWindow(w);
         bytes32 head = chainHead[msg.sender][w.deviceId];
         if (w.prevRoot != head) revert BrokenChain(head, w.prevRoot);
-        // blockhash is 0 for the current block, future blocks and blocks older than 256.
-        bytes32 refHash = w.refBlock < block.number ? blockhash(w.refBlock) : bytes32(0);
-        if (refHash == bytes32(0)) revert BadRefBlock(w.refBlock);
+        _checkRefBlock(w);
 
         Device storage d = _activeDeviceKey(msg.sender, w.deviceId, devicePubkey);
-        if (!QorePqc.verify(devicePubkey, signature, signingMessage(msg.sender, w, refHash))) revert BadSignature();
+        if (!QorePqc.verify(devicePubkey, signature, signingMessage(msg.sender, w))) revert BadSignature();
 
         anchorId = _store(w, d, keccak256(signature), gap);
     }
@@ -161,6 +158,16 @@ contract AnchorRegistry is DeviceRegistry {
         chainHead[msg.sender][w.deviceId] = w.root;
         if (gap > 0) emit WindowGap(msg.sender, w.deviceId, w.windowStart - gap, gap);
         emit Anchored(anchorId, msg.sender, w.deviceId, w.windowStart, w.windowSeconds, w.leafCount, w.root, sigHash);
+    }
+
+    /// @dev The reference block must be one of the last 256 blocks and have a hash. Where the EVM
+    ///      knows the block hash, it must match the signed one.
+    function _checkRefBlock(WindowClaim calldata w) private view {
+        if (w.refBlock >= block.number || block.number - w.refBlock > 256 || w.refBlockHash == bytes32(0)) {
+            revert BadRefBlock(w.refBlock);
+        }
+        bytes32 known = blockhash(w.refBlock);
+        if (known != bytes32(0) && known != w.refBlockHash) revert BadRefBlock(w.refBlock);
     }
 
     /// @dev Window rules: not empty, at most 1 day long, not in the future, after the

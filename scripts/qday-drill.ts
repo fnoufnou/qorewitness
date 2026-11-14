@@ -200,12 +200,12 @@ async function dryrun(): Promise<void> {
     await evmTx("A10 anchor a fake window with the real device key and a forged signature", registry,
       encodeFunctionData({ abi: REGISTRY_ABI, functionName: "anchor", args: [
         { deviceId: dev, windowStart: now - 60n, windowSeconds: 30, leafCount: 1, root: keccak256(toBytes("fake")),
-          prevRoot: (receipt as { root: Hex }).root, refBlock: (await pub.getBlockNumber()) - 1n },
+          prevRoot: (receipt as { root: Hex }).root, refBlock: (await pub.getBlockNumber()) - 1n, refBlockHash: keccak256(toBytes("guess")) },
         receipt.devicePubkey, fakeSig] }));
     await evmTx("A11 replay the last real anchor (same window, real signature)", registry,
       encodeFunctionData({ abi: REGISTRY_ABI, functionName: "anchor", args: [
         { deviceId: dev, windowStart: BigInt(receipt.windowStart), windowSeconds: receipt.windowSeconds, leafCount: receipt.segments.length,
-          root: receipt.root, prevRoot: receipt.prevRoot ?? `0x${"00".repeat(32)}`, refBlock: BigInt(receipt.refBlock ?? "1") },
+          root: receipt.root, prevRoot: receipt.prevRoot ?? `0x${"00".repeat(32)}`, refBlock: BigInt(receipt.refBlock ?? "1"), refBlockHash: receipt.refBlockHash ?? `0x${"00".repeat(32)}` },
         receipt.devicePubkey, receipt.signature] }));
   } else {
     record("A9 to A11 device attacks", "SKIPPED", "set DRILL_RECEIPT to a receipt of the drill device");

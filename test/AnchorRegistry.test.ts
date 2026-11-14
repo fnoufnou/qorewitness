@@ -91,8 +91,8 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
     const latest = await ctx.publicClient.getBlock();
     const refBlock = opts.refBlock ?? latest.number;
     const refHash = opts.refHash ?? (await ctx.publicClient.getBlock({ blockNumber: refBlock })).hash!;
-    const w = { deviceId: id, windowStart, windowSeconds: opts.seconds ?? 60, leafCount: n, root, prevRoot, refBlock };
-    const msg = signingMessage(ctx.chainId, ctx.registry.address, { owner: from, ...w }, refHash);
+    const w = { deviceId: id, windowStart, windowSeconds: opts.seconds ?? 60, leafCount: n, root, prevRoot, refBlock, refBlockHash: refHash };
+    const msg = signingMessage(ctx.chainId, ctx.registry.address, { owner: from, ...w });
     return { w, segs, root, sig: fakeSign(opts.signKey ?? opts.key ?? deviceKey, msg) };
   }
 
@@ -106,7 +106,7 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
   /** Anchor call with raw values, for checks that fail before the signature. */
   const rawAnchor = (windowStart: bigint, windowSeconds: number, leafCount: number) =>
     ctx.registry.write.anchor([
-      { deviceId, windowStart, windowSeconds, leafCount, root: ZERO32, prevRoot: ZERO32, refBlock: 1n }, deviceKey, "0x",
+      { deviceId, windowStart, windowSeconds, leafCount, root: ZERO32, prevRoot: ZERO32, refBlock: 1n, refBlockHash: ZERO32 }, deviceKey, "0x",
     ]);
 
   const now = async () => BigInt(await networkHelpers.time.latest());
@@ -121,10 +121,10 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
       const w = {
         deviceId, windowStart: 1_700_000_000n, windowSeconds: 60, leafCount: 3,
         root: toHex(new Uint8Array(32).fill(9)), prevRoot: toHex(new Uint8Array(32).fill(8)), refBlock: 12345n,
+        refBlockHash: toHex(new Uint8Array(32).fill(7)),
       };
-      const refHash = toHex(new Uint8Array(32).fill(7));
-      const onChain = await ctx.registry.read.signingMessage([owner(), w, refHash]);
-      const local = signingMessage(ctx.chainId, ctx.registry.address, { owner: owner(), ...w }, refHash);
+      const onChain = await ctx.registry.read.signingMessage([owner(), w]);
+      const local = signingMessage(ctx.chainId, ctx.registry.address, { owner: owner(), ...w });
       assert.equal(onChain, toHex(local));
       assert.equal(local.length, 256);
     });
@@ -485,10 +485,19 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
       );
     });
 
-    it("rejects a signature over a different block hash", async () => {
+    it("rejects a block hash that differs from the chain, and an empty one", async () => {
       await viem.assertions.revertWithCustomError(
-        anchorWindow((await now()) - 500n, 2, { refHash: toHex(new Uint8Array(32).fill(3)) }), ctx.registry, "BadSignature",
+        anchorWindow((await now()) - 500n, 2, { refHash: toHex(new Uint8Array(32).fill(3)) }), ctx.registry, "BadRefBlock",
       );
+      await viem.assertions.revertWithCustomError(
+        anchorWindow((await now()) - 500n, 2, { refHash: ZERO32 }), ctx.registry, "BadRefBlock",
+      );
+    });
+
+    it("rejects a signature over another block hash than the claim", async () => {
+      const { w } = await claimFor((await now()) - 500n, 2);
+      const other = await claimFor((await now()) - 500n, 2, { refHash: toHex(new Uint8Array(32).fill(4)) });
+      await viem.assertions.revertWithCustomError(ctx.registry.write.anchor([w, deviceKey, other.sig]), ctx.registry, "BadSignature");
     });
 
     it("verifyAnchor returns the chain head and the full record", async () => {

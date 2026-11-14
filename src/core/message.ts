@@ -18,16 +18,17 @@ export interface WindowClaim {
   root: Hex; // bytes32, Merkle root over the segment links
   prevRoot: Hex; // bytes32, root of the previous window of the device, zero for the first
   refBlock: bigint; // a recent block number
+  refBlockHash: Hex; // its hash: nobody knows it before the block exists
 }
 
 export const ZERO32: Hex = `0x${"00".repeat(32)}`;
 
-/** Window message, signed by the device key. 256 bytes. refBlockHash is the hash of refBlock. */
-export function signingMessage(chainId: bigint, registry: Address, w: WindowClaim, refBlockHash: Hex): Uint8Array {
+/** Window message, signed by the device key. 256 bytes. */
+export function signingMessage(chainId: bigint, registry: Address, w: WindowClaim): Uint8Array {
   return toBytes(
     encodePacked(
       ["bytes32", "uint256", "address", "address", "bytes32", "uint64", "uint32", "uint32", "bytes32", "bytes32", "uint64", "bytes32"],
-      [DOMAIN, chainId, registry, w.owner, w.deviceId, w.windowStart, w.windowSeconds, w.leafCount, w.root, w.prevRoot, w.refBlock, refBlockHash],
+      [DOMAIN, chainId, registry, w.owner, w.deviceId, w.windowStart, w.windowSeconds, w.leafCount, w.root, w.prevRoot, w.refBlock, w.refBlockHash],
     ),
   );
 }
