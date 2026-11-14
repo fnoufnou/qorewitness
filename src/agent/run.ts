@@ -60,6 +60,13 @@ const fromStored = (s: StoredSegment): Segment => ({
 });
 // A new registry starts a new chain.
 if (state.chain?.registry.toLowerCase() !== registry.toLowerCase()) state.chain = { registry, lastLink: "00".repeat(32) };
+// Windows closed by an older agent have no segment links yet: link them in order now.
+for (const p of state.pending) {
+  if (p.segments.every((s) => s.link)) continue;
+  const w: Window = { windowStart: BigInt(p.windowStart), windowSeconds: p.windowSeconds, segments: p.segments.map(fromStored) };
+  state.chain.lastLink = hx(linkWindow(w, bin(state.chain.lastLink)!))!;
+  p.segments = w.segments.map(toStored);
+}
 const saveState = () => {
   state.seen = [...seen].slice(-5000);
   state.open = batcher.openSegments().map(toStored);
