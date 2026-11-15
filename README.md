@@ -81,13 +81,24 @@ Two keys, two layers of post-quantum protection:
 
 ## Install (Docker, early alpha)
 
-On a Linux machine with Docker (Debian, Ubuntu, Raspberry Pi OS 64-bit) and an RTSP camera:
+On a Linux machine with Docker (Debian, Ubuntu, Raspberry Pi OS 64-bit) and a camera stream:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash
 ```
 
-The setup asks for a camera name and its RTSP URL. It creates a testnet account from a fresh mnemonic, waits until you claim test QOR from the faucet, registers the account's ML-DSA-87 key and the camera key, and starts the recorder and the agent. Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
+The setup asks for a camera name and its stream URL. It creates a testnet account from a fresh mnemonic, waits until you claim test QOR from the faucet, registers the account's ML-DSA-87 key and the camera key, and starts the recorder and the agent. Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
+
+Stream types (`QW_STREAM_URL` in `data/camera.env`):
+
+| URL | Use |
+|---|---|
+| `rtsp://` `rtsps://` | Most home cameras. QoreWitness pulls the stream. |
+| `rtmp://` `rtmps://` | Pull from an RTMP server or camera. |
+| `http://` `https://` | Pull an HLS (`.m3u8`) or HTTP-FLV stream. |
+| `rtmp://0.0.0.0:1935/live/<secret>` with `QW_STREAM_LISTEN=1` | The camera or an app pushes to this machine. Open port 1935 in `docker-compose.yml`, on the camera network only: anyone who reaches the port and knows the path can push video. |
+
+The `retention` service deletes segments older than `QW_RETENTION_DAYS` (default 14). Receipts stay. Export the clips you need as evidence first.
 
 ## Quick start
 

@@ -10,6 +10,8 @@ services:
       args: { QW_COMMIT: "${QW_COMMIT:-unknown}" }
     command: recorder
     restart: unless-stopped
+    # RTMP push only (QW_STREAM_LISTEN=1): open the port, on the camera network only.
+    # ports: ["1935:1935"]
     env_file:
       - path: ./data/camera.env
         required: false
@@ -26,3 +28,11 @@ services:
         required: false
     volumes: ["./data:/data"]
     depends_on: [recorder]
+  retention:
+    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-latest}
+    command: retention
+    restart: unless-stopped
+    env_file:
+      - path: ./data/camera.env
+        required: false
+    volumes: ["./data:/data"]

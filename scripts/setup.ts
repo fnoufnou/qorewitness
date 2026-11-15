@@ -8,8 +8,8 @@
  *   4. ML-DSA-87 key        -> registered on chain with proof of possession
  *   5. Device key           -> /data/keys/<camera>.key (mode 600), registered in the registry
  *
- * Usage (Docker): docker compose run --rm agent setup [--camera front-door] [--rtsp rtsp://...]
- * Env: QW_DATA (default /data), QORE_REGISTRY (default: the public v3 registry).
+ * Usage (Docker): docker compose run --rm agent setup [--camera front-door] [--stream rtsp://...]
+ * Env: QW_DATA (default /data), QORE_REGISTRY (default: the public v4 registry).
  */
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -26,7 +26,7 @@ import { ensureScopedWindow, TESTNET_WINDOW } from "../src/agent/evm-window.js";
 import { deviceIdOf } from "../src/core/message.js";
 
 const DATA = process.env.QW_DATA ?? "/data";
-const PUBLIC_REGISTRY_V3 = "0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2";
+const PUBLIC_REGISTRY_V4 = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 const FAUCET = "https://dashboard.qorechain.io";
 const MIN_UQOR = 2_000_000n; // enough for key registration, a window and the device registration
 
@@ -64,10 +64,11 @@ async function main(): Promise<void> {
   const cam = readEnv(camPath);
   const label = cam.QW_DEVICE ?? arg("camera") ?? ((await rl.question("Camera name (letters, digits, dashes) [camera]: ")).trim() || "camera");
   if (!/^[a-z0-9-]{1,40}$/.test(label)) throw new Error("use lower-case letters, digits and dashes for the camera name");
-  const rtsp = cam.QW_RTSP_URL ?? arg("rtsp") ?? (await rl.question("RTSP URL of the camera (rtsp://...): ")).trim();
-  if (!/^rtsps?:\/\//.test(rtsp)) throw new Error("the stream URL must start with rtsp:// or rtsps://");
+  const stream = cam.QW_STREAM_URL ?? cam.QW_RTSP_URL ?? arg("stream") ?? arg("rtsp") ??
+    (await rl.question("Stream URL of the camera (rtsp://, rtmp:// or https://): ")).trim();
+  if (!/^(rtsps?|rtmps?|https?):\/\//.test(stream)) throw new Error("the stream URL must start with rtsp(s)://, rtmp(s):// or http(s)://");
   writeEnv(camPath, {
-    QW_DEVICE: label, QW_RTSP_URL: rtsp,
+    QW_DEVICE: label, QW_STREAM_URL: stream,
     QW_SEGMENT_SECONDS: cam.QW_SEGMENT_SECONDS ?? "60", QW_WINDOW_SECONDS: cam.QW_WINDOW_SECONDS ?? "600",
     QW_RETENTION_DAYS: cam.QW_RETENTION_DAYS ?? "14",
   }, false);
@@ -80,7 +81,7 @@ async function main(): Promise<void> {
     acc.QORE_MNEMONIC = generateMnemonic(256);
     say("  new account created (from a fresh mnemonic, so the ECDSA key alone never gives the ML-DSA key)");
   }
-  acc.QORE_REGISTRY ??= process.env.QORE_REGISTRY ?? PUBLIC_REGISTRY_V3;
+  acc.QORE_REGISTRY ??= process.env.QORE_REGISTRY ?? PUBLIC_REGISTRY_V4;
   acc.QORE_NETWORK = "testnet";
   writeEnv(accPath, acc, true);
   const owner = await deriveUnifiedAccount(acc.QORE_MNEMONIC, 0);
