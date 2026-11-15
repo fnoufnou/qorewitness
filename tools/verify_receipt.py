@@ -123,7 +123,10 @@ def main(argv):
         file_sha3 = None
         if "sha3_256" in seg:
             file_sha3 = hashlib.sha3_256(data).digest()
-            check(file_sha3 == b(seg["sha3_256"]), "second fingerprint (SHA3-256) matches the receipt")
+            if not check(file_sha3 == b(seg["sha3_256"]), "second fingerprint (SHA3-256) matches the receipt"):
+                print("hint  SHA-256 matches but SHA3-256 does not. Recompute it with a second tool (openssl dgst -sha3-256). If the mismatch stays, the file is not the anchored file. See docs/SPEC.md, 'Which fingerprint decides'.")
+        else:
+            print("info  this segment has one fingerprint (SHA-256, spec/2)")
         link = segment_link(b(seg["prevLink"]), file_hash, seg["startMs"], seg["durationMs"], b(seg["sourceFp"]), file_sha3)
         check(link == b(seg["link"]), "segment chain link matches file, start time, length, stream and previous segment")
         segs = receipt["segments"]

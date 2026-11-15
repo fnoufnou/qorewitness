@@ -46,7 +46,8 @@ export type StepState = "pass" | "fail" | "info" | "warn";
 export interface Step { state: StepState; text: string }
 
 export interface VerifyResult {
-  ok: boolean;
+  ok: boolean; // every check passed, both fingerprints included (spec/3)
+  partial?: boolean; // no check failed, but a fingerprint in the receipt was not checked
   steps: Step[];
   anchoredAt?: Date; // existed no later than
   signedAfter?: Date; // signed no earlier than (spec/2)
@@ -56,7 +57,10 @@ export interface VerifyResult {
 
 const iso = (s: bigint | number) => new Date(Number(s) * 1000).toISOString();
 
-/** fileSha3 is the SHA3-256 of the file. Without it, a spec/3 receipt passes with a warning. */
+/**
+ * fileSha3 is the SHA3-256 of the file. For a spec/3 segment both fingerprints decide:
+ * without fileSha3 the result is partial, never ok.
+ */
 export async function verifyReceipt(pub: PublicClient, r: ReceiptV3 | ReceiptV2, fileHash: Uint8Array, fileSha3?: Uint8Array): Promise<VerifyResult> {
   if (r.format === "qorewitness-receipt/v2") return verifyReceiptV2(pub, r as ReceiptV2, fileHash);
   return verifyReceiptV3(pub, r as ReceiptV3, fileHash, fileSha3);
@@ -90,10 +94,15 @@ async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8A
     return done();
   }
   add("pass", `File fingerprint found in the receipt (segment ${seg.index + 1} of ${r.segments.length}).`);
+  let partial = false;
   if (seg.sha3_256) {
-    if (!fileSha3) add("warn", "The receipt has a second fingerprint (SHA3-256). This verifier did not check it.");
-    else if (toHex(fileSha3) === seg.sha3_256) add("pass", "The second fingerprint (SHA3-256) of the file also matches.");
-    else add("fail", "The second fingerprint (SHA3-256) of the file does not match the receipt.");
+    if (!fileSha3) {
+      partial = true;
+      add("warn", "The receipt has a second fingerprint (SHA3-256) that was not checked. Full verification needs both fingerprints.");
+    } else if (toHex(fileSha3) === seg.sha3_256) add("pass", "The second fingerprint (SHA3-256) of the file also matches.");
+    else add("fail", "The second fingerprint (SHA3-256) does not match, although SHA-256 matches. Recompute it with another tool (openssl dgst -sha3-256). If the mismatch stays, the file is not the anchored file. See docs/SPEC.md, 'Which fingerprint decides'.");
+  } else {
+    add("info", "This segment has one fingerprint (SHA-256). It was recorded before the second fingerprint was added (spec/2).");
   }
 
   const link = toHex(segmentLink(toBytes(seg.prevLink), {
@@ -167,7 +176,7 @@ async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8A
   add("info", `Camera "${r.deviceLabel}" says this segment starts at ${new Date(start).toISOString()} and lasts ${(seg.durationMs / 1000).toFixed(1)} s. Stream: ${seg.source || "unknown"}.`);
 
   return {
-    ok, steps,
+    ok: ok && !partial, partial: ok && partial, steps,
     anchoredAt: new Date(Number(a.anchoredAt) * 1000),
     signedAfter: new Date(Number(ref.timestamp) * 1000),
     windowStart: new Date(Number(a.windowStart) * 1000),

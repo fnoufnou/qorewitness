@@ -36,12 +36,17 @@ Run it yourself: `scripts/custody-drill.ts` (needs ffmpeg, a funded test account
 
 ## How we shrink the remaining risk
 
+S1 is a question of the signing boundary: which part of the capture path sits inside the part that signs. Today the boundary is the recorder. The camera, its firmware, the network and the stream are outside it. A measure only closes S1 if it moves the boundary toward the image sensor.
+
 | Measure | Effect on S1 | Status |
 |---|---|---|
-| Cameras on their own network, with a password on the stream | Fewer people can reach the stream | Planned for the home pilot |
-| Recorder hardening (separate user, keys mode 600, no inbound ports) | Fewer people can reach the folder | Done |
+| Cameras on their own network, with a password on the stream | Fewer people can reach the stream. The boundary stays at the recorder. | Planned for the home pilot |
+| Recorder hardening (separate user, keys mode 600, no inbound ports) | Fewer people can reach the folder. The boundary stays at the recorder. | Done |
 | Shorter windows (a higher anchoring rhythm) | Less time to prepare a fake. Costs more gas. | Configurable (`QW_WINDOW_SECONDS`) |
-| Keys in a TPM on the recorder, measured boot | Shows that the recording software was not changed | Roadmap |
-| Capture-time signing in the camera (C2PA) | Moves the starting point of the chain into the camera | Roadmap |
+| The camera signs its own encoded video (for example ONVIF media signing or a vendor's signed video). QoreWitness anchors those signatures. | Moves the boundary into the camera. A swapped stream no longer carries a valid camera signature. Frames that the camera firmware itself fakes stay outside. | Roadmap, first hardware step |
+| Signing in a secure capture path next to the sensor (C2PA-capable devices) | Moves the boundary as close to the sensor as the hardware allows | Roadmap, depends on hardware |
+| Keys in a TPM on the recorder, measured boot | Does not close S1. It proves that the recorder signed and ran unchanged software, not that the frames were real. Useful later to protect the device key. | Later, small extra |
+
+The QoreChain founder pointed out this TPM limit on X (14 Nov 2026).
 
 Untested in this run: a fake RTSP server that feeds fabricated video from the start. It falls in the same class as S1: undetected if it matches the camera's settings, flagged if it does not.

@@ -3,7 +3,8 @@
  * Usage: pnpm tsx scripts/verify-receipt.ts <receipt.json> <file>
  * Checks: file hash, Merkle path, verifyAnchor on chain, device key hash on chain,
  * ML-DSA-87 signature (locally) and the signature hash stored on chain.
- * Exit code 0 only if every check passes.
+ * Exit code 0 only if every check passes, both fingerprints included.
+ * Exit code 2: partly verified (a fingerprint in the receipt was not checked).
  */
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
@@ -26,6 +27,9 @@ if (seg === undefined) console.log(`note  file name is not in the receipt, the h
 for (const s of res.steps) console.log(`${s.state.toUpperCase().padEnd(5)} ${s.text}`);
 if (res.ok && res.anchoredAt) {
   console.log(`\nVerified: the file existed before ${res.anchoredAt.toISOString()}.`);
+} else if (res.partial) {
+  console.log("\nPartly verified: no check failed, but not every fingerprint was checked.");
+  process.exitCode = 2;
 } else {
   console.log("\nNot verified.");
   process.exitCode = 1;

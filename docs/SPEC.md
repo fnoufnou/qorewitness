@@ -11,7 +11,22 @@ This document defines every byte that QoreWitness computes. Anyone can re-implem
 - Windows: `Get-FileHash clip.mp4 -Algorithm SHA256`. For SHA3-256 use Python or OpenSSL.
 - Python: `hashlib.sha256` and `hashlib.sha3_256`
 
-The two functions have different designs (Merkle-Damgard and Keccak sponge). To swap a file without a trace, a forger must find a collision in both at once. This keeps a receipt useful if one of them weakens over the years.
+The two functions have different designs (Merkle-Damgard and Keccak sponge). To swap a file without a trace, a forger must find a collision in both at once. This keeps a receipt useful if one of them weakens over the years. (Two hashes of the same design, such as SHA-256 and SHA-512, add less: Joux's multicollision attack works across them.)
+
+### Which fingerprint decides
+
+Both decide. A spec/3 segment is **verified** only when SHA-256 and SHA3-256 of the file both match the receipt. A verifier that accepts either one inherits the weaker of the two, so QoreWitness verifiers never do that.
+
+| Result | Meaning |
+|---|---|
+| Verified | Both fingerprints match and every other check passes. |
+| Partly verified | No check failed, but the verifier did not compute SHA3-256 (for example an older tool). Not enough on its own. CLI exit code 2. |
+| Not verified | A check failed. |
+| One fingerprint | A spec/2 segment has SHA-256 only. It is verified on SHA-256, and the verifier says so. |
+
+If SHA-256 matches and SHA3-256 does not, there are two possible causes: a fault in one hash implementation, or a file made to collide with the original under SHA-256. The second is the attack that SHA3-256 is there to catch. Today a fault is far more likely, because no practical SHA-256 collision is known. The file and the receipt do not change, so a fault in a tool does not destroy evidence. Recompute both values with a second, independent tool (section 1, for example OpenSSL and Python). If both tools confirm the mismatch, the file is not verified. The QoreWitness verifiers are tested against the FIPS 180-4 and FIPS 202 test vectors.
+
+The segment links and the Merkle tree above the files use SHA-256 only. Their inputs are hash outputs that an attacker cannot shape freely, so a structural attack on SHA-256 is likely much harder there than on a raw file. A full break of SHA-256 would need a new spec version.
 
 ## 2. Segment chain (spec/2, spec/3)
 
