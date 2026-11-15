@@ -39,3 +39,20 @@ Registry v3: `0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2` on qorechain-diana, de
 | ETH-005 | Info | No ERC standard | Not applicable. | No change. |
 
 Note: the stage 2 score is lower than stage 1 (72 against 82), with the same code fixes in place. To our knowledge the auditor output varies per run. The report also shows quantum readiness "0%", although every anchor and key action is checked on chain with `pqcVerify` (ML-DSA-87). The API returns `quantumReadiness: null`, so this is likely a missing value and not a result.
+
+## Stage 3: registry v4 (15 Nov 2026)
+
+Registry v4 adds the chain of custody (chained windows, reference block, gaps on chain). New code, so a new audit run.
+
+- Report: https://qorechain-audit-reports-362958365954.s3.amazonaws.com/audits/QCAIA-1794725697151-41DCDCA7/report.html (public, `QCAIA-1794725697151-41DCDCA7`).
+- Input: `docs/audit/AnchorRegistry.v4.flat.sol` (Hardhat flatten of commit 6fccf05, SHA-256 `2e532218a16cd111fbb4bf96fc4cd52b66f936801ef44ad8291f00a0efdd2080`). Deployed at `0xa1378D6558B32e1f8d37b68cf90e3C93839Da365`.
+- Chain setting "QoreChain (CosmWasm + PQC)". With this setting the auditor returns a quantum readiness value: **QUANTUM-SAFE**. (The report page still shows "0%". The API value is text, so this is likely a display issue.) It also labels the code as Rust, which it is not.
+- Score 78, risk medium. 1 high, 2 medium, 1 low, 1 info.
+
+| Finding | Severity | Our assessment | Action |
+|---|---|---|---|
+| Missing quantum resistance in a Solidity contract | High | Not applicable. Every state change needs an ML-DSA-87 signature that the contract checks on chain with `pqcVerify`. The finding is generic and likely comes from the CosmWasm chain setting. | No change. |
+| Reentrancy risk in device registration | Medium | Not applicable. `registerDevice` checks both signatures before it writes any state, and the only external calls are `staticcall`s to precompiles, which cannot re-enter. | No change. |
+| Insufficient validation of the reference block hash | Medium | Partly right in spirit, wrong in detail. A zero hash is refused (`BadRefBlock`). The real limit is different: on qorechain-diana `BLOCKHASH` returns 0, so the contract cannot compare the hash itself. Verifiers compare it with the chain (`docs/SPEC.md`, section 4). | Documented. |
+| Inconsistent error handling in the PQC library | Low | By design: a failed call returns false (bad signature), an empty or short answer reverts (precompile missing). Fail closed. | No change. |
+| ML-DSA key length assumption | Info | By design: the registry accepts ML-DSA-87 only and checks the algorithm id and key length. A new algorithm means a new registry version. | No change. |
