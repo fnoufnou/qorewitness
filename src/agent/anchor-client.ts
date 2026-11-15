@@ -8,7 +8,8 @@
  */
 import { deriveUnifiedAccount, type UnifiedAccount } from "@qorechain/sdk";
 import {
-  createPublicClient, createWalletClient, defineChain, http, parseAbi, toHex, type Address, type Hex,
+  createPublicClient, createWalletClient, decodeFunctionData, defineChain, http, keccak256, parseAbi, toHex,
+  type Address, type Hex,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { merkleRoot } from "../core/merkle.js";
@@ -81,6 +82,17 @@ export interface AnchorResult extends TxResult {
   refBlock: bigint;
   refBlockHash: Hex;
 }
+
+/**
+ * Result of looking up a window on chain after a crash:
+ * - none:  no anchor for this window start
+ * - other: an anchor exists, with another root (other segments were anchored)
+ * - found: the anchor matches the local window, with everything a receipt needs
+ */
+export type Recovery =
+  | { status: "none" }
+  | { status: "other"; anchorId: Hex; root: Hex; localRoot: Hex }
+  | { status: "found"; result: AnchorResult };
 
 export class AnchorClient {
   private constructor(
@@ -185,5 +197,55 @@ export class AnchorClient {
       address: this.registry, abi: REGISTRY_ABI, functionName: "anchorIdOf", args: [this.address, deviceId, w.windowStart],
     });
     return { ...tx, anchorId, root, signature, prevRoot, refBlock, refBlockHash };
+  }
+
+  /**
+   * Rebuilds the anchor result of a window from the chain: the record (getAnchor),
+   * the Anchored event (tx hash) and the anchor call in that tx (signature, claim).
+   * Used when the agent stopped after the tx was mined but before the receipt was
+   * written. Needs only public data.
+   */
+  async recoverAnchor(deviceId: Hex, w: Window): Promise<Recovery> {
+    const links = w.segments.map((s) => {
+      if (!s.link) throw new Error("segments are not linked (spec/2)");
+      return s.link;
+    });
+    const localRoot = toHex(merkleRoot(links));
+    const anchorId = await this.pub.readContract({
+      address: this.registry, abi: REGISTRY_ABI, functionName: "anchorIdOf", args: [this.address, deviceId, w.windowStart],
+    });
+    let a;
+    try {
+      a = await this.pub.readContract({ address: this.registry, abi: REGISTRY_ABI, functionName: "getAnchor", args: [anchorId] });
+    } catch (e) {
+      if (/UnknownAnchor/.test((e as Error).message)) return { status: "none" };
+      throw e;
+    }
+    if (a.root !== localRoot) return { status: "other", anchorId, root: a.root, localRoot };
+    const logs = await this.pub.getContractEvents({
+      address: this.registry, abi: REGISTRY_ABI, eventName: "Anchored", args: { anchorId },
+      fromBlock: a.blockNumber, toBlock: a.blockNumber,
+    });
+    if (logs.length !== 1) throw new Error(`expected one Anchored event for ${anchorId} in block ${a.blockNumber}, got ${logs.length}`);
+    const txHash = logs[0].transactionHash!;
+    const [tx, rcpt] = await Promise.all([
+      this.pub.getTransaction({ hash: txHash }),
+      this.pub.getTransactionReceipt({ hash: txHash }),
+    ]);
+    const call = decodeFunctionData({ abi: REGISTRY_ABI, data: tx.input });
+    if (call.functionName !== "anchor") throw new Error(`tx ${txHash} does not call anchor`);
+    const [claim, , signature] = call.args as readonly [
+      { root: Hex; prevRoot: Hex; refBlock: bigint; refBlockHash: Hex }, Hex, Hex,
+    ];
+    if (claim.root !== localRoot || keccak256(signature) !== a.sigHash) {
+      throw new Error(`tx ${txHash} does not carry the recorded root and signature`);
+    }
+    return {
+      status: "found",
+      result: {
+        txHash, blockNumber: a.blockNumber, blockTime: a.anchoredAt, gasUsed: rcpt.gasUsed,
+        anchorId, root: localRoot, signature, prevRoot: claim.prevRoot, refBlock: claim.refBlock, refBlockHash: claim.refBlockHash,
+      },
+    };
   }
 }

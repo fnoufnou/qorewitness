@@ -1,10 +1,12 @@
 /**
  * QoreWitness agent: watches the segment list that ffmpeg writes, groups finished
  * segments into windows, anchors each window on QoreChain and writes a receipt.
+ * Crash safe: state is saved before every anchor, and a window whose tx was mined
+ * before a crash gets its receipt rebuilt from the chain (recoverAnchor).
  *
  * Env:
  *   QORE_MNEMONIC     owner account (testnet only)
- *   QORE_REGISTRY     AnchorRegistry address (v2, with DeviceRegistry)
+ *   QORE_REGISTRY     AnchorRegistry address (v4)
  *   QW_DEVICE_KEY     device key file (default /etc/qorewitness/<device>.key)
  *   QW_DEVICE         device label, e.g. lsc-indoor
  *   QW_SEGMENT_DIR    folder with segments and segments.csv (ffmpeg -segment_list)
@@ -14,7 +16,7 @@
 import { existsSync, readFileSync, statSync, writeFileSync, mkdirSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import type { Address } from "viem";
-import { AnchorClient, DEVICE_STATUS } from "./anchor-client.js";
+import { AnchorClient, DEVICE_STATUS, type AnchorResult } from "./anchor-client.js";
 import { loadDeviceKey } from "./device-key.js";
 import { ensureScopedWindow } from "./evm-window.js";
 import { hashFile } from "./hash-file.js";
@@ -136,23 +138,24 @@ async function anchorPending(): Promise<void> {
     if (await ensureScopedWindow(client.account, registry)) log("opened a new scoped EVM window");
     try {
       const res = await client.anchorWindow(deviceId, deviceKey, w);
-      const receipt = buildReceipt(
-        {
-          chain: { evmChainId: 9800, registry, txHash: res.txHash, anchorId: res.anchorId, blockNumber: res.blockNumber.toString() },
-          owner: client.address, deviceId, deviceLabel: device, devicePubkey: deviceKey.publicKeyHex,
-          root: res.root, signature: res.signature,
-          prevRoot: res.prevRoot, refBlock: res.refBlock.toString(), refBlockHash: res.refBlockHash,
-        },
-        w,
-      );
-      writeFileSync(join(receiptDir, `${device}-${p.windowStart}.json`), JSON.stringify(receipt, null, 2));
+      writeReceipt(p.windowStart, w, res);
       log(`anchored ${w.segments.length} segments, window ${p.windowStart}, block ${res.blockNumber}, gas ${res.gasUsed}, tx ${res.txHash}`);
       state.pending.shift();
       saveState();
     } catch (err) {
       const msg = (err as Error).message;
       if (/WindowOverlap/.test(msg)) {
-        log(`window ${p.windowStart} overlaps an existing anchor, dropping it`);
+        // Likely the agent stopped after this window's tx was mined and before the
+        // receipt was written. The chain has everything to rebuild the receipt.
+        const rec = await client.recoverAnchor(deviceId, w);
+        if (rec.status === "found") {
+          writeReceipt(p.windowStart, w, rec.result);
+          log(`recovered the receipt of window ${p.windowStart} from chain (block ${rec.result.blockNumber}, tx ${rec.result.txHash})`);
+        } else {
+          // Keep the hashes of what could not be anchored, for the owner to inspect.
+          writeFileSync(join(receiptDir, `unanchored-${device}-${p.windowStart}.json`), JSON.stringify({ reason: rec, window: p }, (_, v) => (typeof v === "bigint" ? v.toString() : v), 2));
+          log(`window ${p.windowStart} cannot be anchored (${rec.status === "other" ? `chain has another root ${rec.root}` : "a later window is anchored"}). Kept as unanchored-${device}-${p.windowStart}.json`);
+        }
         state.pending.shift();
         saveState();
         continue;
@@ -161,6 +164,21 @@ async function anchorPending(): Promise<void> {
       return;
     }
   }
+}
+
+function writeReceipt(windowStart: string, w: Window, res: AnchorResult): void {
+  const receipt = buildReceipt(
+    {
+      chain: { evmChainId: 9800, registry, txHash: res.txHash, anchorId: res.anchorId, blockNumber: res.blockNumber.toString() },
+      owner: client.address, deviceId, deviceLabel: device, devicePubkey: deviceKey.publicKeyHex,
+      root: res.root, signature: res.signature,
+      prevRoot: res.prevRoot, refBlock: res.refBlock.toString(), refBlockHash: res.refBlockHash,
+    },
+    w,
+  );
+  const file = join(receiptDir, `${device}-${windowStart}.json`);
+  writeFileSync(file + ".tmp", JSON.stringify(receipt, null, 2));
+  renameSync(file + ".tmp", file); // never a half-written receipt
 }
 
 let stopping = false;
