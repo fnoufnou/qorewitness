@@ -18,6 +18,7 @@ import { join } from "node:path";
 import type { Address } from "viem";
 import { AnchorClient, type AnchorResult } from "../src/agent/anchor-client.js";
 import { loadDeviceKey } from "../src/agent/device-key.js";
+import { ensureScopedWindow } from "../src/agent/evm-window.js";
 import { hashFile } from "../src/agent/hash-file.js";
 import { buildReceipt } from "../src/agent/receipt.js";
 import { probeSegment } from "../src/agent/source.js";
@@ -54,6 +55,7 @@ const w: Window = { windowStart: BigInt(start), windowSeconds: WIN, segments };
 linkWindow(w, new Uint8Array(32));
 
 console.log(`owner ${client.address}, device ${label}, window ${start}`);
+if (await ensureScopedWindow(client.account, registry)) console.log("0. opened an EVM window scoped to the registry");
 const sent = await client.anchorWindow(deviceId, key, w);
 console.log(`1. anchored in block ${sent.blockNumber}, tx ${sent.txHash}. Receipt not written (simulated crash).`);
 
