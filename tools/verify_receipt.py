@@ -3,9 +3,10 @@
 
 It does not use any QoreWitness code. It follows docs/SPEC.md. Receipt v3
 (qorewitness-spec/2) adds the segment chain, the window chain and a lower time
-bound. Receipt v2 (spec/1) is still checked as before.
+bound. spec/3 adds a second file hash (SHA3-256) to the segment link. Receipt v2 (spec/1) is still checked as before.
 
-  1. SHA-256 of the file is listed in the receipt.
+  1. SHA-256 of the file is listed in the receipt. If the receipt has it, the
+     SHA3-256 of the file matches too.
   2. The Merkle path leads from the file to the root in the receipt.
   3. The registry contract returns the same root for this anchor (getAnchor).
   4. The anchor transaction on the public chain carries the same root in its input,
@@ -53,9 +54,13 @@ def node(left, right):
     return h(b"\x01" + left + right)
 
 
-def segment_link(prev_link, file_hash, start_ms, duration_ms, source_fp):
-    """spec/2: SHA-256(0x02 || prevLink || fileHash || startMs u64 BE || durationMs u32 BE || sourceFp)"""
-    return h(b"\x02" + prev_link + file_hash + int(start_ms).to_bytes(8, "big") + int(duration_ms).to_bytes(4, "big") + source_fp)
+def segment_link(prev_link, file_hash, start_ms, duration_ms, source_fp, file_sha3=None):
+    """spec/2: SHA-256(0x02 || prevLink || fileHash || startMs u64 BE || durationMs u32 BE || sourceFp)
+    spec/3: SHA-256(0x03 || prevLink || fileHash || fileSha3 || startMs || durationMs || sourceFp)"""
+    times = int(start_ms).to_bytes(8, "big") + int(duration_ms).to_bytes(4, "big") + source_fp
+    if file_sha3 is not None:
+        return h(b"\x03" + prev_link + file_hash + file_sha3 + times)
+    return h(b"\x02" + prev_link + file_hash + times)
 
 
 def verify_proof(root, seg, index, size, proof):
@@ -115,7 +120,11 @@ def main(argv):
     v3 = receipt["format"] == "qorewitness-receipt/v3"
     leaf_input = file_hash
     if v3:
-        link = segment_link(b(seg["prevLink"]), file_hash, seg["startMs"], seg["durationMs"], b(seg["sourceFp"]))
+        file_sha3 = None
+        if "sha3_256" in seg:
+            file_sha3 = hashlib.sha3_256(data).digest()
+            check(file_sha3 == b(seg["sha3_256"]), "second fingerprint (SHA3-256) matches the receipt")
+        link = segment_link(b(seg["prevLink"]), file_hash, seg["startMs"], seg["durationMs"], b(seg["sourceFp"]), file_sha3)
         check(link == b(seg["link"]), "segment chain link matches file, start time, length, stream and previous segment")
         segs = receipt["segments"]
         check(all(segs[i]["prevLink"] == segs[i - 1]["link"] for i in range(1, len(segs))), "segments of the window form one unbroken chain")

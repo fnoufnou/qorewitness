@@ -20,7 +20,7 @@ import { join } from "node:path";
 import { createPublicClient, http, type Address, type PublicClient } from "viem";
 import { AnchorClient, qorechainTestnet, REGISTRY_ABI } from "../src/agent/anchor-client.js";
 import { loadDeviceKey } from "../src/agent/device-key.js";
-import { sha256File } from "../src/agent/hash-file.js";
+import { hashFile } from "../src/agent/hash-file.js";
 import { buildReceipt, type Receipt } from "../src/agent/receipt.js";
 import { probeSegment } from "../src/agent/source.js";
 import { linkWindow, type Segment } from "../src/agent/window.js";
@@ -81,7 +81,8 @@ async function window(tag: string, before?: (files: string[], start: number) => 
   const segments: Segment[] = [];
   for (const f of files) {
     const completedAt = Math.floor(statSync(f).mtimeMs / 1000);
-    segments.push({ path: f, sha256: await sha256File(f), size: statSync(f).size, completedAt, ...(await probeSegment(f, completedAt)) });
+    const h = await hashFile(f);
+    segments.push({ path: f, sha256: h.sha256, sha3: h.sha3, size: statSync(f).size, completedAt, ...(await probeSegment(f, completedAt)) });
   }
   const w = { windowStart: BigInt(start), windowSeconds: WIN, segments };
   prevLink = linkWindow(w, prevLink);
@@ -101,7 +102,8 @@ type Outcome = "DETECTED" | "FLAGGED" | "MISSED";
 const results: { id: string; attack: string; when: string; outcome: Outcome; evidence: string; expected: Outcome }[] = [];
 
 async function score(id: string, attack: string, when: string, expected: Outcome, receipt: Receipt | ReceiptV3, clip: string) {
-  const r = await verifyReceipt(pub, receipt as ReceiptV3, await sha256File(clip));
+  const h = await hashFile(clip);
+  const r = await verifyReceipt(pub, receipt as ReceiptV3, h.sha256, h.sha3);
   const fails = r.steps.filter((s) => s.state === "fail").map((s) => s.text);
   const warns = (receipt as ReceiptV3).segments.flatMap((s) =>
     [s.gapBeforeMs ? `gap ${(s.gapBeforeMs / 1000).toFixed(0)} s before segment ${s.index + 1}` : "",

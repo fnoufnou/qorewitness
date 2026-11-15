@@ -17,7 +17,7 @@ import type { Address } from "viem";
 import { AnchorClient, DEVICE_STATUS } from "./anchor-client.js";
 import { loadDeviceKey } from "./device-key.js";
 import { ensureScopedWindow } from "./evm-window.js";
-import { sha256File } from "./hash-file.js";
+import { hashFile } from "./hash-file.js";
 import { buildReceipt } from "./receipt.js";
 import { WindowBatcher, linkWindow, type Segment, type Window } from "./window.js";
 import { probeSegment } from "./source.js";
@@ -39,7 +39,7 @@ const statePath = join(receiptDir, `.state-${device}.json`);
 mkdirSync(receiptDir, { recursive: true });
 
 interface StoredSegment {
-  path: string; sha256: string; size: number; completedAt: number;
+  path: string; sha256: string; sha3?: string; size: number; completedAt: number;
   startMs?: number; durationMs?: number; source?: string; sourceFp?: string; prevLink?: string; link?: string;
 }
 interface State {
@@ -53,10 +53,10 @@ const seen = new Set(state.seen);
 const hx = (b?: Uint8Array) => (b ? Buffer.from(b).toString("hex") : undefined);
 const bin = (h?: string) => (h ? Uint8Array.from(Buffer.from(h, "hex")) : undefined);
 const toStored = (s: Segment): StoredSegment => ({
-  ...s, sha256: hx(s.sha256)!, sourceFp: hx(s.sourceFp), prevLink: hx(s.prevLink), link: hx(s.link),
+  ...s, sha256: hx(s.sha256)!, sha3: hx(s.sha3), sourceFp: hx(s.sourceFp), prevLink: hx(s.prevLink), link: hx(s.link),
 });
 const fromStored = (s: StoredSegment): Segment => ({
-  ...s, sha256: bin(s.sha256)!, sourceFp: bin(s.sourceFp), prevLink: bin(s.prevLink), link: bin(s.link),
+  ...s, sha256: bin(s.sha256)!, sha3: bin(s.sha3), sourceFp: bin(s.sourceFp), prevLink: bin(s.prevLink), link: bin(s.link),
 });
 // A new registry starts a new chain.
 if (state.chain?.registry.toLowerCase() !== registry.toLowerCase()) state.chain = { registry, lastLink: "00".repeat(32) };
@@ -108,7 +108,8 @@ async function collect(): Promise<void> {
     if (!existsSync(path)) { seen.add(name); continue; }
     const st = statSync(path);
     const completedAt = Math.floor(st.mtimeMs / 1000);
-    const seg: Segment = { path, sha256: await sha256File(path), size: st.size, completedAt, ...(await probeSegment(path, completedAt)) };
+    const h = await hashFile(path);
+    const seg: Segment = { path, sha256: h.sha256, sha3: h.sha3, size: st.size, completedAt, ...(await probeSegment(path, completedAt)) };
     batcher.add(seg);
     seen.add(name);
   }

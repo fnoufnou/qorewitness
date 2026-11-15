@@ -9,7 +9,7 @@ import { basename } from "node:path";
 import type { Address } from "viem";
 import { AnchorClient } from "../src/agent/anchor-client.js";
 import { loadDeviceKey } from "../src/agent/device-key.js";
-import { sha256File } from "../src/agent/hash-file.js";
+import { hashFile } from "../src/agent/hash-file.js";
 import { buildReceipt } from "../src/agent/receipt.js";
 import { linkWindow, type Segment } from "../src/agent/window.js";
 import { probeSegment } from "../src/agent/source.js";
@@ -28,7 +28,8 @@ const segments: Segment[] = [];
 for (const f of files) {
   const st = statSync(f);
   const completedAt = Math.floor(st.mtimeMs / 1000);
-  segments.push({ path: f, sha256: await sha256File(f), size: st.size, completedAt, ...(await probeSegment(f, completedAt)) });
+  const h = await hashFile(f);
+  segments.push({ path: f, sha256: h.sha256, sha3: h.sha3, size: st.size, completedAt, ...(await probeSegment(f, completedAt)) });
 }
 // The segment chain continues from the last run for this label and registry (spec/2).
 mkdirSync("receipts", { recursive: true });

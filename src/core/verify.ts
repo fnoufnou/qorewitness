@@ -1,8 +1,9 @@
 /**
  * Receipt verification, shared by the CLI (scripts/verify-receipt.ts) and the
- * browser verifier. Needs only the file hash, the receipt and a public RPC.
- * Runs in Node and in browsers. Receipt v3 (spec/2): segment chain, window chain
- * and a time bound on both sides. Older v2 receipts go to verify-v2.ts.
+ * browser verifier. Needs only the file hashes, the receipt and a public RPC.
+ * Runs in Node and in browsers. Receipt v3 (spec/2 and spec/3): segment chain,
+ * window chain and a time bound on both sides. spec/3 adds a second file hash
+ * (SHA3-256) to the segment link. Older v2 receipts go to verify-v2.ts.
  */
 import { mldsa } from "@qorechain/pqc";
 import { keccak256, parseAbi, toBytes, toHex, type Address, type Hex, type PublicClient } from "viem";
@@ -27,6 +28,7 @@ export interface ReceiptV3 {
   refBlockHash: Hex;
   segments: {
     file: string; sha256: Hex; size: number; index: number; proof: Hex[];
+    sha3_256?: Hex;
     prevLink: Hex; link: Hex; startMs: string; durationMs: number; sourceFp: Hex; source: string;
     gapBeforeMs?: number; overlapMs?: number; sourceChanged?: boolean;
   }[];
@@ -54,12 +56,13 @@ export interface VerifyResult {
 
 const iso = (s: bigint | number) => new Date(Number(s) * 1000).toISOString();
 
-export async function verifyReceipt(pub: PublicClient, r: ReceiptV3 | ReceiptV2, fileHash: Uint8Array): Promise<VerifyResult> {
+/** fileSha3 is the SHA3-256 of the file. Without it, a spec/3 receipt passes with a warning. */
+export async function verifyReceipt(pub: PublicClient, r: ReceiptV3 | ReceiptV2, fileHash: Uint8Array, fileSha3?: Uint8Array): Promise<VerifyResult> {
   if (r.format === "qorewitness-receipt/v2") return verifyReceiptV2(pub, r as ReceiptV2, fileHash);
-  return verifyReceiptV3(pub, r as ReceiptV3, fileHash);
+  return verifyReceiptV3(pub, r as ReceiptV3, fileHash, fileSha3);
 }
 
-async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8Array): Promise<VerifyResult> {
+async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8Array, fileSha3?: Uint8Array): Promise<VerifyResult> {
   const steps: Step[] = [];
   let ok = true;
   const add = (state: StepState, text: string) => {
@@ -87,11 +90,18 @@ async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8A
     return done();
   }
   add("pass", `File fingerprint found in the receipt (segment ${seg.index + 1} of ${r.segments.length}).`);
+  if (seg.sha3_256) {
+    if (!fileSha3) add("warn", "The receipt has a second fingerprint (SHA3-256). This verifier did not check it.");
+    else if (toHex(fileSha3) === seg.sha3_256) add("pass", "The second fingerprint (SHA3-256) of the file also matches.");
+    else add("fail", "The second fingerprint (SHA3-256) of the file does not match the receipt.");
+  }
 
   const link = toHex(segmentLink(toBytes(seg.prevLink), {
-    fileHash, startMs: BigInt(seg.startMs), durationMs: seg.durationMs, sourceFp: toBytes(seg.sourceFp),
+    fileHash, fileSha3: seg.sha3_256 ? toBytes(seg.sha3_256) : undefined, startMs: BigInt(seg.startMs), durationMs: seg.durationMs, sourceFp: toBytes(seg.sourceFp),
   }));
-  if (link === seg.link) add("pass", "The segment's chain link matches its file, start time, length, stream and previous segment.");
+  if (link === seg.link) add("pass", seg.sha3_256
+    ? "The segment's chain link matches both file fingerprints, start time, length, stream and previous segment."
+    : "The segment's chain link matches its file, start time, length, stream and previous segment.");
   else add("fail", "The segment's chain link does not match. Its time, stream or position was changed.");
 
   const chainOk = r.segments.every((s, i) => i === 0 || s.prevLink === r.segments[i - 1].link);

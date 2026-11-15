@@ -7,6 +7,7 @@
  * the same checks. The first check fails at once.
  */
 import { createPublicClient, defineChain, http, type PublicClient } from "viem";
+import { sha3_256 } from "@noble/hashes/sha3.js";
 import { verifyReceipt, type ReceiptV2, type Step } from "../../src/core/verify.js";
 
 const chain = defineChain({
@@ -23,6 +24,9 @@ const verdict = $("verdict");
 const tamper = $<HTMLButtonElement>("tamper");
 const note = $("note");
 
+function sha3(bytes: ArrayBuffer): Uint8Array {
+  return sha3_256(new Uint8Array(bytes));
+}
 async function sha256(bytes: ArrayBuffer): Promise<Uint8Array> {
   return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 }
@@ -48,7 +52,7 @@ async function run(bytes: ArrayBuffer, receiptFile: File, label: string): Promis
   setVerdict("", "Checking…");
   try {
     const r = JSON.parse(await receiptFile.text()) as ReceiptV2;
-    const res = await verifyReceipt(pub, r, await sha256(bytes));
+    const res = await verifyReceipt(pub, r, await sha256(bytes), sha3(bytes));
     show(res.steps);
     if (res.ok && res.anchoredAt) {
       setVerdict("ok", `Verified (${label}): this exact file existed before ${res.anchoredAt.toLocaleString()} (${res.anchoredAt.toISOString()}).`);

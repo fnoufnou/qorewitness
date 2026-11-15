@@ -30,6 +30,7 @@ export interface Receipt {
   refBlockHash: Hex;
   segments: {
     file: string; sha256: Hex; size: number; index: number; proof: Hex[];
+    sha3_256?: Hex; // second file hash, bound into the link (spec/3)
     // Segment chain (spec/2)
     prevLink: Hex; link: Hex; startMs: string; durationMs: number; sourceFp: Hex; source: string;
     gapBeforeMs?: number; // time between the end of the previous segment and this one, if more than 2 s
@@ -39,7 +40,7 @@ export interface Receipt {
   /** Tool, release, commit and spec that made this receipt (added 14 Nov 2026). */
   generator?: Generator;
   /** Settings that shape the computation. Fixed by the spec version, recorded for replay. */
-  settings?: { fileHash: "sha256"; merkle: "rfc6962-sha256-promote-odd"; signature: "ml-dsa-87-empty-context" };
+  settings?: { fileHash: "sha256" | "sha256+sha3-256"; merkle: "rfc6962-sha256-promote-odd"; signature: "ml-dsa-87-empty-context" };
   opentimestamps?: { calendar: string; ots: string /* base64 */ }[];
 }
 
@@ -54,7 +55,7 @@ export function buildReceipt(
   return {
     format: RECEIPT_FORMAT,
     generator: GENERATOR,
-    settings: { fileHash: "sha256", merkle: "rfc6962-sha256-promote-odd", signature: "ml-dsa-87-empty-context" },
+    settings: { fileHash: w.segments.every((s) => s.sha3) ? "sha256+sha3-256" : "sha256", merkle: "rfc6962-sha256-promote-odd", signature: "ml-dsa-87-empty-context" },
     ...base,
     windowStart: w.windowStart.toString(),
     windowSeconds: w.windowSeconds,
@@ -66,6 +67,7 @@ export function buildReceipt(
       return {
         file: s.path.split(/[\\/]/).pop()!,
         sha256: hex(s.sha256),
+        ...(s.sha3 ? { sha3_256: hex(s.sha3) } : {}),
         size: s.size,
         index,
         proof: merkleProof(links, index).map(hex),

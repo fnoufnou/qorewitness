@@ -22,6 +22,25 @@ describe("receipt generator info", () => {
     assert.match(r.generator?.version ?? "", /^\d+\.\d+\.\d+/);
     assert.match(r.generator?.commit ?? "", /^([0-9a-f]{40}|unknown)$/);
     assert.equal(r.settings?.merkle, "rfc6962-sha256-promote-odd");
+    assert.equal(r.settings?.fileHash, "sha256");
+    assert.equal(r.segments[0].sha3_256, undefined);
+  });
+
+  it("records the second file hash (spec/3)", () => {
+    const r = buildReceipt(
+      {
+        chain: { evmChainId: 9800, registry: "0x0000000000000000000000000000000000000001" },
+        owner: "0x0000000000000000000000000000000000000002", deviceId: `0x${"11".repeat(32)}`, deviceLabel: "t",
+        devicePubkey: "0x00", root: `0x${"22".repeat(32)}`, signature: "0x00",
+        prevRoot: `0x${"00".repeat(32)}`, refBlock: "1", refBlockHash: `0x${"33".repeat(32)}`,
+      },
+      {
+        windowStart: 600n, windowSeconds: 600,
+        segments: [{ path: "/x/a.mp4", sha256: new Uint8Array(32), sha3: new Uint8Array(32).fill(0xab), size: 1, completedAt: 601, prevLink: new Uint8Array(32), link: new Uint8Array(32).fill(1) }],
+      },
+    );
+    assert.equal(r.settings?.fileHash, "sha256+sha3-256");
+    assert.equal(r.segments[0].sha3_256, `0x${"ab".repeat(32)}`);
   });
 
   it("reads the commit of this checkout", () => {

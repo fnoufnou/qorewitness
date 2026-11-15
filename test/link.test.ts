@@ -38,3 +38,20 @@ describe("segment chain (spec/2)", () => {
     assert.throws(() => segmentLink(ZERO_LINK, { ...meta(1), durationMs: 1.5 }));
   });
 });
+
+describe("segment chain (spec/3, second file hash)", () => {
+  const m3 = (b: number, s3: number) => ({ ...meta(b), fileSha3: new Uint8Array(32).fill(s3) });
+  it("binds the SHA3-256 hash into the link", () => {
+    const a = segmentLink(ZERO_LINK, m3(1, 7));
+    assert.notDeepEqual(a, segmentLink(ZERO_LINK, m3(1, 8)));
+    assert.notDeepEqual(a, segmentLink(ZERO_LINK, meta(1)));
+  });
+  it("matches the spec/3 byte layout (cross-checked with Python hashlib)", () => {
+    // python3: sha256(b"\x03" + 32*b"\0" + 32*b"\1" + 32*b"\7" + startMs u64 + durationMs u32 + 32*b"\x09")
+    const hex = Buffer.from(segmentLink(ZERO_LINK, m3(1, 7))).toString("hex");
+    assert.equal(hex, "327e3d62bd697b6144e8cd8305e77cbb6e7ed4cbd5aace6998da11b070aee254");
+  });
+  it("refuses a SHA3 hash of the wrong length", () => {
+    assert.throws(() => segmentLink(ZERO_LINK, { ...meta(1), fileSha3: new Uint8Array(31) }));
+  });
+});

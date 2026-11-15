@@ -8,7 +8,7 @@
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import { createPublicClient, http, type PublicClient } from "viem";
-import { sha256File } from "../src/agent/hash-file.js";
+import { hashFile } from "../src/agent/hash-file.js";
 import { qorechainTestnet } from "../src/agent/anchor-client.js";
 import { verifyReceipt, type ReceiptV2 } from "../src/core/verify.js";
 
@@ -19,7 +19,8 @@ if (!receiptPath || !filePath) {
 }
 const r = JSON.parse(readFileSync(receiptPath, "utf8")) as ReceiptV2;
 const pub = createPublicClient({ chain: qorechainTestnet, transport: http() }) as PublicClient;
-const res = await verifyReceipt(pub, r, await sha256File(filePath));
+const h = await hashFile(filePath);
+const res = await verifyReceipt(pub, r, h.sha256, h.sha3);
 const seg = r.segments.find((s) => s.file === basename(filePath));
 if (seg === undefined) console.log(`note  file name is not in the receipt, the hash decides`);
 for (const s of res.steps) console.log(`${s.state.toUpperCase().padEnd(5)} ${s.text}`);

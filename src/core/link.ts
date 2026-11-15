@@ -5,6 +5,12 @@
  *
  *   link = SHA-256(0x02 || prevLink || fileHash || startMs (uint64 BE) || durationMs (uint32 BE) || sourceFp)
  *
+ * spec/3 adds a second, independent file hash (SHA3-256, FIPS 202). A forger must
+ * then break SHA-256 and SHA3-256 at the same time:
+ *
+ *   link = SHA-256(0x03 || prevLink || fileHash || fileSha3 || startMs || durationMs || sourceFp)
+ *
+ * A segment without fileSha3 uses the spec/2 form. Both forms can sit in one chain.
  * prevLink is 32 zero bytes for the first segment of a device. sourceFp is the
  * SHA-256 of the stream description (codec, size, frame rate, encoder settings),
  * or 32 zero bytes when the file is not a video stream.
@@ -13,14 +19,16 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 
 export interface SegmentMeta {
-  fileHash: Uint8Array; // 32 bytes
+  fileHash: Uint8Array; // 32 bytes, SHA-256
+  fileSha3?: Uint8Array; // 32 bytes, SHA3-256 (spec/3)
   startMs: bigint; // unix milliseconds of the first frame (recorder clock)
   durationMs: number;
   sourceFp: Uint8Array; // 32 bytes
 }
 
 export const ZERO_LINK = new Uint8Array(32);
-const TAG = Uint8Array.of(0x02);
+const TAG_V2 = Uint8Array.of(0x02);
+const TAG_V3 = Uint8Array.of(0x03);
 
 function be(value: bigint, bytes: number): Uint8Array {
   const out = new Uint8Array(bytes);
@@ -35,8 +43,10 @@ function be(value: bigint, bytes: number): Uint8Array {
 
 export function segmentLink(prevLink: Uint8Array, m: SegmentMeta): Uint8Array {
   if (prevLink.length !== 32 || m.fileHash.length !== 32 || m.sourceFp.length !== 32) throw new Error("hashes must be 32 bytes");
+  if (m.fileSha3 && m.fileSha3.length !== 32) throw new Error("hashes must be 32 bytes");
   if (m.startMs < 0n || !Number.isInteger(m.durationMs) || m.durationMs < 0) throw new Error("bad time values");
-  const parts = [TAG, prevLink, m.fileHash, be(m.startMs, 8), be(BigInt(m.durationMs), 4), m.sourceFp];
+  const head = m.fileSha3 ? [TAG_V3, prevLink, m.fileHash, m.fileSha3] : [TAG_V2, prevLink, m.fileHash];
+  const parts = [...head, be(m.startMs, 8), be(BigInt(m.durationMs), 4), m.sourceFp];
   const buf = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
   let o = 0;
   for (const p of parts) {

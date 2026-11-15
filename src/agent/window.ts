@@ -8,6 +8,7 @@ import { segmentLink } from "../core/link.js";
 export interface Segment {
   path: string;
   sha256: Uint8Array; // 32 bytes
+  sha3?: Uint8Array; // 32 bytes, SHA3-256 (spec/3)
   size: number;
   completedAt: number; // unix seconds (local clock)
   // Segment chain (spec/2). Set by probeSegment and linkWindow.
@@ -73,6 +74,7 @@ export function linkWindow(w: Window, prevLink: Uint8Array): Uint8Array {
     s.prevLink = prev;
     s.link = segmentLink(prev, {
       fileHash: s.sha256,
+      fileSha3: s.sha3,
       startMs: BigInt(s.startMs ?? s.completedAt * 1000),
       durationMs: s.durationMs ?? 0,
       sourceFp: s.sourceFp ?? new Uint8Array(32),
