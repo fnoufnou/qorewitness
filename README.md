@@ -65,6 +65,7 @@ Two keys, two layers of post-quantum protection:
 
 - **Q-Day Drill dry run** (keys): 13 attacks with only the ECDSA key, 0 succeeded. `docs/TESTNET_FINDINGS.md`.
 - **Custody drill** (input): 10 attacks on the footage itself. All 5 attacks after anchoring are rejected. 4 of 5 substitutions before hashing are flagged. A substitution with the camera's own settings is not caught: that is the trust boundary. `docs/CUSTODY_DRILL.md`.
+- **Recovery drill** (crash): the agent stops after the anchor tx is mined and before the receipt is written. After a restart, the receipt is rebuilt from public chain data and verifies. Every field equals the lost result (15 Nov 2026, block 10,133,808). `scripts/recovery-drill.ts`.
 
 ## Repository
 
