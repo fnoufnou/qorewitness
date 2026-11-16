@@ -97,6 +97,7 @@ Conclusions:
 - So for an account made from a raw private key (the `PRIVATE_KEY` path of the template helper `pnpm window`), the ECDSA key is enough to rebuild the ML-DSA key. The post-quantum protection is then likely void for that account.
 - `deriveUnifiedAccount(mnemonic)` uses the mnemonic as the secret. The ECDSA key alone does not give the ML-DSA key, because the BIP-32 path is one-way.
 - Rule for the Q-Day Drill: create the drill account from a fresh mnemonic. Hand over only its ECDSA private key.
+- Fixed upstream in `@qorechain/sdk` 0.13.0 (10 Nov 2026), confirmed by the QoreChain team on 15 Nov. Check of 16 Nov: with 0.14.0, our three accounts (all from mnemonics) derive the same addresses and ML-DSA-87 keys as with 0.12.0. The update follows after the drill (`CHANGELOG.md`).
 
 ## Q-Day Drill dry run (9 Nov 2026, 23:45 UTC)
 

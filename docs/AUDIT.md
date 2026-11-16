@@ -56,3 +56,23 @@ Registry v4 adds the chain of custody (chained windows, reference block, gaps on
 | Insufficient validation of the reference block hash | Medium | Partly right in spirit, wrong in detail. A zero hash is refused (`BadRefBlock`). The real limit is different: on qorechain-diana `BLOCKHASH` returns 0, so the contract cannot compare the hash itself. Verifiers compare it with the chain (`docs/SPEC.md`, section 4). | Documented. |
 | Inconsistent error handling in the PQC library | Low | By design: a failed call returns false (bad signature), an empty or short answer reverts (precompile missing). Fail closed. | No change. |
 | ML-DSA key length assumption | Info | By design: the registry accepts ML-DSA-87 only and checks the algorithm id and key length. A new algorithm means a new registry version. | No change. |
+
+## Where QoreWitness calls the PQC precompiles
+
+The quantum-safe part of QoreWitness runs on chain. Every state change needs an ML-DSA-87 signature that the contract checks itself. The auditor's EVM setting gives no quantum readiness score ("Not scored" is expected, team answer of 16 Nov 2026), so this section shows it.
+
+All calls go through `contracts/QorePqc.sol`. It uses `staticcall` only, so a precompile cannot change state or call back into the registry.
+
+| Call | Where | What it protects | Tests (`test/AnchorRegistry.test.ts`) |
+|---|---|---|---|
+| `pqcVerify` (0x...0a01) | `DeviceRegistry.registerDevice` | Only the owner (registered ML-DSA-87 key) can add a camera, and the camera proves it holds its key | "registers a device with owner and device signatures", "rejects a bad owner signature", "rejects a missing device proof of possession", "rejects a replayed register signature (nonce)" |
+| `pqcVerify` | `DeviceRegistry.revokeDevice` | Only the owner can revoke a camera | "revokes a device with the owner signature, final", "rejects revoke with a bad owner signature, or with the device key", "rejects a replayed revoke signature" |
+| `pqcVerify` | `DeviceRegistry.rotateDeviceKey` | A key changes only with signatures from the old and the new key | "rotates with signatures from the old and the new key", "rejects rotation without a valid old-key signature", "rejects rotation without a valid new-key signature", "rejects a replayed rotation (nonce)" |
+| `pqcVerify` | `AnchorRegistry.anchor` | A window root is accepted only with the camera's signature over the full claim (owner, window, root, previous root, reference block) | "rejects a bad device signature", "rejects a signature by the owner key instead of the device key", "rejects another account that sends the device key and a valid signature", "rejects a signature over another block hash than the claim" |
+| `pqcKeyStatus` (0x...0a02) | `DeviceRegistry._ownerKey` | The owner must have an ML-DSA-87 key on chain (2,592 bytes, algorithm 1), with proof of possession where required | "rejects an owner without a PQC key on chain", "rejects an owner key without proof of possession when required", "accepts the 3-value pqcKeyStatus form when no proof of possession is required" |
+| Both | `QorePqc` wrapper | Fail closed: an empty or short answer from a precompile reverts (`PqcPrecompileInactive`). An anchor is never accepted without a real check. | "refuses to register a device when pqcVerify answers nothing", "refuses to anchor when pqcVerify answers nothing, and keeps no record", "refuses to register a device when pqcKeyStatus answers nothing" |
+
+The local tests use mock precompiles. Real ML-DSA-87 verification is checked against testnet with `pnpm probe:pqc`, and every live anchor since 9 Nov 2026 passed `pqcVerify` on chain.
+
+The stage 3 low finding ("inconsistent error handling in the PQC library") maps to the fail-closed row above: the behaviour is by design, now covered by three regression tests (16 Nov 2026).
+

@@ -419,6 +419,28 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
   });
 
   // ---- v4: chained windows and time bounds -----------------------------------------------
+  // ---- fail closed (audit: "inconsistent error handling", stage 3) ----------------------
+  describe("fails closed when a PQC precompile is missing", () => {
+    it("refuses to register a device when pqcVerify answers nothing", async () => {
+      await networkHelpers.setCode(PQC_VERIFY, "0x");
+      await viem.assertions.revertWithCustomError(register(), ctx.registry, "PqcPrecompileInactive");
+    });
+
+    it("refuses to anchor when pqcVerify answers nothing, and keeps no record", async () => {
+      await register();
+      const start = (await now()) - 100n;
+      const { w, sig } = await claimFor(start, 2);
+      await networkHelpers.setCode(PQC_VERIFY, "0x");
+      await viem.assertions.revertWithCustomError(ctx.registry.write.anchor([w, deviceKey, sig]), ctx.registry, "PqcPrecompileInactive");
+      assert.equal(await ctx.registry.read.chainHead([owner(), deviceId]), ZERO32);
+    });
+
+    it("refuses to register a device when pqcKeyStatus answers nothing", async () => {
+      await networkHelpers.setCode(PQC_KEY_STATUS, "0x");
+      await viem.assertions.revertWithCustomError(register(), ctx.registry, "PqcPrecompileInactive");
+    });
+  });
+
   describe("chained windows and time bounds (v4)", () => {
     beforeEach(async () => {
       await register();
