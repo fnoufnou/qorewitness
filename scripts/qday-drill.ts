@@ -5,6 +5,9 @@
  *   export-ecdsa <file>         write the ECDSA private key of the QORE_MNEMONIC account (mode 600).
  *                               This is the key the drill bot gets. Use it ONLY for a throwaway drill account.
  *   dryrun                      act as the drill bot: use ONLY the ECDSA key and try every attack
+ *   self-send                   drill-day normal transaction: 1 uqor from the QORE_MNEMONIC account to itself,
+ *                               hybrid signed, no EVM window, lowest safe fee (a hybrid MsgSend uses about
+ *                               190,000 gas, minimum gas price 0.1 uqor: 250,000 gas, 0.025 QOR)
  *
  * dryrun env:
  *   DRILL_ECDSA_KEY_FILE  file with the 0x... ECDSA key (nothing else is used)
@@ -78,6 +81,28 @@ async function fund(to: string, qor: string): Promise<void> {
     const signer = new EthNativeSigner(from, { signMode: "hybrid", rest: REST });
     const r = await signer.bankSend(transport, to, amount, { chainId: CHAIN_ID, ...(await accountSequence(from.cosmos)), fee: FEE });
     console.log(`sent ${qor} QOR from ${from.cosmos} to ${to}: code ${r.code} tx ${r.transactionHash}`);
+  } finally {
+    transport.disconnect();
+  }
+}
+
+const FEE_SELF_SEND = { amount: [{ denom: "uqor", amount: "25000" }], gas: "250000" };
+
+async function selfSend(): Promise<void> {
+  const from = await mnemonicAccount();
+  const before = await balanceUqor(from.cosmos);
+  const transport = await StargateClient.connect(RPC);
+  try {
+    const signer = new EthNativeSigner(from, { signMode: "hybrid", rest: REST });
+    const r = await signer.bankSend(transport, from.cosmos, [{ denom: "uqor", amount: "1" }], {
+      chainId: CHAIN_ID, ...(await accountSequence(from.cosmos)), fee: FEE_SELF_SEND,
+    });
+    console.log(`self-send from ${from.cosmos}: code ${r.code} tx ${r.transactionHash}`);
+    if (r.code !== 0) throw new Error(`self-send failed: code ${r.code}`);
+    const fin = await finalCode(r.transactionHash);
+    console.log(`final: ${fin ? `code ${fin.code}${fin.code ? ` ${fin.log}` : " (success)"}` : "not found yet, check the explorer"}`);
+    if (fin && fin.code !== 0) throw new Error(`self-send failed on chain: code ${fin.code}`);
+    console.log(`balance ${before} uqor before, ${await balanceUqor(from.cosmos)} uqor after`);
   } finally {
     transport.disconnect();
   }
@@ -220,9 +245,10 @@ async function dryrun(): Promise<void> {
 }
 
 const [cmd, a1, a2] = process.argv.slice(2);
-const run = cmd === "fund" ? () => fund(a1, a2) : cmd === "export-ecdsa" ? () => exportEcdsa(a1) : cmd === "dryrun" ? dryrun : undefined;
+const run = cmd === "fund" ? () => fund(a1, a2) : cmd === "export-ecdsa" ? () => exportEcdsa(a1) : cmd === "dryrun" ? dryrun
+  : cmd === "self-send" ? selfSend : undefined;
 if (!run) {
-  console.error("commands: fund <qor1> <qor> | export-ecdsa <file> | dryrun");
+  console.error("commands: fund <qor1> <qor> | export-ecdsa <file> | dryrun | self-send");
   process.exit(1);
 }
 run().catch((e: unknown) => {
