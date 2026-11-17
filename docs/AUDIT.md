@@ -1,6 +1,15 @@
 # QCAI audit
 
-Two-stage audit with the QCAI Contract Auditor on dashboard.qorechain.io, as the organisers describe for the Post-Quantum dApp track: run the auditor, fix the findings, run it again.
+Two-stage audit with the QCAI Contract Auditor on dashboard.qorechain.io, as the organisers describe for the Post-Quantum dApp track: run the auditor, fix the findings, run it again. Stages 3 and 4 audit registry v4, the contract that runs today.
+
+| Stage | Date (UTC) | Code | Setting | Score | Report (copy in `docs/audit/`) |
+|---|---|---|---|---|---|
+| 1 | 2026-11-12 | registry v2 | Ethereum (EVM/Solidity) | 82 | `2026-11-12-stage1-registry-v2-...html` |
+| 2 | 2026-11-13 | registry v3 (stage 1 fixes) | Ethereum (EVM/Solidity) | 72 | `2026-11-13-stage2-registry-v3-...html` |
+| 3 | 2026-11-15 | registry v4 | QoreChain (CosmWasm + PQC) | 78 | `2026-11-15-stage3-registry-v4-qorechain-setting-...html` |
+| 4 | 2026-11-17 | registry v4 (same input as stage 3) | Ethereum (EVM/Solidity) | 85 | `2026-11-17-stage4-registry-v4-...html` |
+
+The QoreChain team advises the Ethereum setting for Solidity contracts, the same setting for every stage, and "Not scored" for quantum readiness is expected there (16 Nov 2026). Stage 3 used the CosmWasm setting, which flags Solidity as a mismatch. Stage 4 repeats the same input with the advised setting, so stages 1, 2 and 4 compare directly. The quantum-safety evidence is in the section "Where QoreWitness calls the PQC precompiles".
 
 ## Stage 1 (12 Nov 2026)
 
@@ -46,7 +55,7 @@ Registry v4 adds the chain of custody (chained windows, reference block, gaps on
 
 - Report: https://qorechain-audit-reports-362958365954.s3.amazonaws.com/audits/QCAIA-1794725697151-41DCDCA7/report.html (public, `QCAIA-1794725697151-41DCDCA7`).
 - Input: `docs/audit/AnchorRegistry.v4.flat.sol` (Hardhat flatten of commit 6fccf05, SHA-256 `2e532218a16cd111fbb4bf96fc4cd52b66f936801ef44ad8291f00a0efdd2080`). Deployed at `0xa1378D6558B32e1f8d37b68cf90e3C93839Da365`.
-- Chain setting "QoreChain (CosmWasm + PQC)". With this setting the auditor returns a quantum readiness value: **QUANTUM-SAFE**. (The report page still shows "0%". The API value is text, so this is likely a display issue.) It also labels the code as Rust, which it is not.
+- Chain setting "QoreChain (CosmWasm + PQC)". The team later advised the Ethereum setting for Solidity (see stage 4). With this setting the auditor returns a quantum readiness value: **QUANTUM-SAFE**. (The report page still shows "0%". The API value is text, so this is likely a display issue.) It also labels the code as Rust, which it is not.
 - Score 78, risk medium. 1 high, 2 medium, 1 low, 1 info.
 
 | Finding | Severity | Our assessment | Action |
@@ -56,6 +65,20 @@ Registry v4 adds the chain of custody (chained windows, reference block, gaps on
 | Insufficient validation of the reference block hash | Medium | Partly right in spirit, wrong in detail. A zero hash is refused (`BadRefBlock`). The real limit is different: on qorechain-diana `BLOCKHASH` returns 0, so the contract cannot compare the hash itself. Verifiers compare it with the chain (`docs/SPEC.md`, section 4). | Documented. |
 | Inconsistent error handling in the PQC library | Low | By design: a failed call returns false (bad signature), an empty or short answer reverts (precompile missing). Fail closed. | No change. |
 | ML-DSA key length assumption | Info | By design: the registry accepts ML-DSA-87 only and checks the algorithm id and key length. A new algorithm means a new registry version. | No change. |
+
+## Stage 4: registry v4, Ethereum setting (17 Nov 2026)
+
+- Report: https://qorechain-audit-reports-362958365954.s3.amazonaws.com/audits/QCAIA-1794898425611-F962122E/report.html (public, `QCAIA-1794898425611-F962122E`)
+- Input: `docs/audit/AnchorRegistry.v4.flat.sol`, the same file as stage 3 (SHA-256 `2e532218a16cd111fbb4bf96fc4cd52b66f936801ef44ad8291f00a0efdd2080`, checked before upload). Deployed at `0xa1378D6558B32e1f8d37b68cf90e3C93839Da365`.
+- Setting "Ethereum (EVM/Solidity)". Score 85, risk medium, quantum readiness "Not scored". 1 high, 2 medium, 1 low, 1 info.
+
+| Finding | Severity | Our assessment | Evidence (`test/AnchorRegistry.test.ts`) |
+|---|---|---|---|
+| Window overlap after a device is revoked and registered again | High | False positive. Revoke is final: a device id with any status other than "none" cannot be registered again (`DeviceExists`). So `nextWindowStart` and the chain head of a device never reset. | New regression test: "a revoked device id cannot be registered again, so its window chain never resets (audit stage 4)". Also "rejects a second registration of the same device id". |
+| Overflow in the gap calculation | Medium | False positive. The gap is computed only after the overlap check, so `windowStart >= nextAllowed`. Solidity 0.8 checks arithmetic and would revert in any case. | "rejects overlapping and backdated windows", "stores the gap before a window and emits WindowGap" |
+| Missing access control on `anchor` | Medium | By design. Anyone may send the call, but only a registered, active camera key can sign a claim, and the signed message names the sender as owner. Another account with a valid signature is refused. | "rejects another account that sends the device key and a valid signature", "rejects an unregistered device", "rejects a bad device signature" |
+| Unbounded loop in Merkle verification | Low | Bounded by design: proofs longer than 32 hashes are refused (stage 1 fix). | "rejects Merkle proofs longer than 32 hashes (audit ETH-004)" |
+| No ERC interface | Info | Not applicable. The registry is not a token and needs no ERC interface. | - |
 
 ## Where QoreWitness calls the PQC precompiles
 

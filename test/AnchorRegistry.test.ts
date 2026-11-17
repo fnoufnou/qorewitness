@@ -259,6 +259,19 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
       assert.equal(v.deviceStatus, REVOKED);
       assert.ok(v.deviceRevokedAt >= v.anchor.anchoredAt);
     });
+
+    it("a revoked device id cannot be registered again, so its window chain never resets (audit stage 4)", async () => {
+      await register();
+      const t = await now();
+      await anchorWindow(t - 1000n, 3);
+      const head = await ctx.registry.read.chainHead([owner(), deviceId]);
+      const next = await ctx.registry.read.nextWindowStart([owner(), deviceId]);
+      await revoke();
+      await viem.assertions.revertWithCustomError(register(deviceId, fakeKey(2)), ctx.registry, "DeviceExists");
+      await viem.assertions.revertWithCustomError(register(), ctx.registry, "DeviceExists");
+      assert.equal(await ctx.registry.read.chainHead([owner(), deviceId]), head);
+      assert.equal(await ctx.registry.read.nextWindowStart([owner(), deviceId]), next);
+    });
   });
 
   // ---- T3: key rotation ----------------------------------------------------------------

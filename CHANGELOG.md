@@ -4,6 +4,10 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased (0.4.0-alpha.1)
 
+### 2026-11-17
+- QCAI stage 4 on registry v4 with the advised Ethereum setting: score 85. Every finding mapped to a test or a reason in `docs/AUDIT.md`. All four reports copied to `docs/audit/` with their dates.
+- Tests: a revoked device id cannot be registered again, so its window chain never resets (69 tests).
+
 ### 2026-11-16
 - Tests: three regression tests show that the registry fails closed when a PQC precompile answers nothing (68 tests).
 - Docs: `docs/AUDIT.md` maps every `pqcVerify` and `pqcKeyStatus` call to what it protects and to its tests.
