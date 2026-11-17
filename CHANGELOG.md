@@ -5,6 +5,9 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 ## Unreleased (0.4.0-alpha.1)
 
 ### 2026-11-17
+- Local dashboard, phase 1 (read only): health line, latest anchors with explorer links, receipt downloads, JSON status. Node's built-in http server, token in an HttpOnly cookie, strict headers, local port only. Not deployed yet (75 tests).
+- Design note `docs/AGENT_KEY.md`: owner key offline with a linked agent key and a relayer (T31), from SDK 0.14.0.
+- Drill: `self-send` command for the normal transaction, fee 0.025 QOR.
 - QCAI stage 4 on registry v4 with the advised Ethereum setting: score 85. Every finding mapped to a test or a reason in `docs/AUDIT.md`. All four reports copied to `docs/audit/` with their dates.
 - Tests: a revoked device id cannot be registered again, so its window chain never resets (69 tests).
 

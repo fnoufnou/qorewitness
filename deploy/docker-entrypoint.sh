@@ -4,6 +4,7 @@
 #   recorder   record the camera stream (RTSP, RTMP or HTTP) into 60-second segments
 #   retention  delete segments older than QW_RETENTION_DAYS (default 14), every 6 hours
 #   setup      first-run wizard in the terminal (account, keys, registration)
+#   ui         local dashboard on port 8080 (read only, token in the log)
 #   device|window|verify ...   the CLIs, e.g. "device status <label>"
 set -euo pipefail
 cd /opt/qorewitness
@@ -15,6 +16,7 @@ case "${1:-agent}" in
   agent)    exec node --import tsx "${envfile[@]}" src/agent/run.ts ;;
   recorder) exec scripts/record.sh ;;
   retention) while true; do deploy/qw-retention.sh || true; sleep 21600; done ;;
+  ui)       export QW_UI_HOST="${QW_UI_HOST:-0.0.0.0}"; exec node --import tsx "${envfile[@]}" src/web/server.ts ;;
   setup)    shift; exec node --import tsx "${envfile[@]}" scripts/setup.ts "$@" ;;
   device)   shift; exec node --import tsx "${envfile[@]}" scripts/device.ts "$@" ;;
   window)   shift; exec node --import tsx "${envfile[@]}" scripts/window.ts "$@" ;;

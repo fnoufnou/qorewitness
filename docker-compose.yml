@@ -36,3 +36,13 @@ services:
       - path: ./data/camera.env
         required: false
     volumes: ["./data:/data"]
+  ui:
+    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-latest}
+    command: ui
+    restart: unless-stopped
+    env_file:
+      - path: ./data/camera.env
+        required: false
+    volumes: ["./data:/data:ro"]
+    # Local only. The token link is in: docker compose logs ui
+    ports: ["127.0.0.1:8080:8080"]

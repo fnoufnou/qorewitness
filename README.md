@@ -99,6 +99,8 @@ Stream types (`QW_STREAM_URL` in `data/camera.env`):
 | `http://` `https://` | Pull an HLS (`.m3u8`) or HTTP-FLV stream. |
 | `rtmp://0.0.0.0:1935/live/<secret>` with `QW_STREAM_LISTEN=1` | The camera or an app pushes to this machine. Open port 1935 in `docker-compose.yml`, on the camera network only: anyone who reaches the port and knows the path can push video. |
 
+The `ui` service is a local dashboard: health, latest anchors with explorer links, and receipt downloads. It listens on 127.0.0.1:8080 only and holds no keys. Open the link with the token from `docker compose logs ui`.
+
 The `retention` service deletes segments older than `QW_RETENTION_DAYS` (default 14). Receipts stay. Export the clips you need as evidence first.
 
 ## Quick start
