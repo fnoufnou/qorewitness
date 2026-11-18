@@ -4,6 +4,10 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased (0.4.0-alpha.1)
 
+### 2026-11-18
+- Site and project page: plain-language rewrite for camera owners (receipt explained, limits in normal words, hopeful close). Demo facts updated: block 10,120,133, four audit rounds, crash recovery done.
+- Q-Day Drill: normal transaction sent with plan B (fee 0.025 QOR), proof accepted.
+
 ### 2026-11-17
 - Local dashboard, phase 1 (read only): health line, latest anchors with explorer links, receipt downloads, JSON status. Node's built-in http server, token in an HttpOnly cookie, strict headers, local port only. Not deployed yet (75 tests).
 - Design note `docs/AGENT_KEY.md`: owner key offline with a linked agent key and a relayer (T31), from SDK 0.14.0.
