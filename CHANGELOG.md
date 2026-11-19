@@ -5,6 +5,7 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 ## Unreleased (0.4.0-alpha.1)
 
 ### 2026-11-19
+- Docs: `docs/THREAT_MODEL.md` published after review: five claims (continuous stream and two-sided time bound added), design goal, eIDAS explained.
 - Dependencies: `@qorechain/sdk` and `@qorechain/evm` 0.12.0 to 0.14.0, now exact pins. See the table below.
 
 ### 2026-11-18
