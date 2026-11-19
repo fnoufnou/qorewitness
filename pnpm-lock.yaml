@@ -15,14 +15,14 @@ importers:
         specifier: 2.0.1
         version: 2.0.1
       '@qorechain/evm':
-        specifier: ^0.12.0
-        version: 0.12.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))
+        specifier: 0.14.0
+        version: 0.14.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))
       '@qorechain/pqc':
         specifier: 0.2.3
         version: 0.2.3
       '@qorechain/sdk':
-        specifier: ^0.12.0
-        version: 0.12.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))
+        specifier: 0.14.0
+        version: 0.14.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))
       '@scure/base':
         specifier: ^2.4.0
         version: 2.4.0
@@ -738,8 +738,8 @@ packages:
     resolution: {integrity: sha512-q4n32/FNKIhQ3zQGGw5CvPF6GTvDCpYwIf7bEY/dZTZbgfDsHyjJwURxUJf3VQuuJj+fDIFl4+KkBVbw4Ef6jA==}
     engines: {node: '>= 12'}
 
-  '@qorechain/evm@0.12.0':
-    resolution: {integrity: sha512-fOmHqRWCoxYrHZe6rGLZEQRZYpX7VvHZYnJgWTSq7pQVke8Vjb+tlN84x+oOnviaPCizuvbZci5jYoOmiSjhbw==}
+  '@qorechain/evm@0.14.0':
+    resolution: {integrity: sha512-IdIJpbmJX8T+ctDnGPv50UGUM2o80TfrWAjU41UjUfIEaWTcTVt64fXQR8V86BDuXRlOuFAa9UiM4RtnyKD5Tg==}
     peerDependencies:
       viem: ^2.0.0
 
@@ -747,8 +747,8 @@ packages:
     resolution: {integrity: sha512-YLzcfwkeq9mCyTcFf/BQFB7dsNIkyFcUluByp1zrJ7SRAkPj8cwPmv7jtw5Xeh7K80FgwzlvtBeZb/dzzknWZA==}
     engines: {node: '>=18'}
 
-  '@qorechain/sdk@0.12.0':
-    resolution: {integrity: sha512-Zo19xIaQmf/wNDQQ71aJnOXptWwDu5frGTckDDuQE8likpHSSON5I4qN0FfvQN6AhS8s1Vs2CZedf5s62VNr1w==}
+  '@qorechain/sdk@0.14.0':
+    resolution: {integrity: sha512-EwoH2WX5hRUK685a3NDDd0dZcn7QL/6M11huVh7Kx37nFDMryF8QAHrJe0to8EcRmRnLbMH5UNnZbjoI48wo9Q==}
     peerDependencies:
       viem: ^2.0.0
     peerDependenciesMeta:
@@ -1816,7 +1816,7 @@ snapshots:
       '@nomicfoundation/solidity-analyzer-linux-x64-musl': 0.1.2
       '@nomicfoundation/solidity-analyzer-win32-x64-msvc': 0.1.2
 
-  '@qorechain/evm@0.12.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))':
+  '@qorechain/evm@0.14.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))':
     dependencies:
       viem: 2.57.17(typescript@5.9.3)(zod@3.25.76)
 
@@ -1825,7 +1825,7 @@ snapshots:
       '@noble/hashes': 2.0.1
       '@noble/post-quantum': 0.7.1
 
-  '@qorechain/sdk@0.12.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))':
+  '@qorechain/sdk@0.14.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))':
     dependencies:
       '@bufbuild/protobuf': 2.17.0
       '@cosmjs/amino': 0.39.0
@@ -1835,7 +1835,7 @@ snapshots:
       '@cosmjs/tendermint-rpc': 0.39.0
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
-      '@qorechain/evm': 0.12.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))
+      '@qorechain/evm': 0.14.0(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))
       '@qorechain/pqc': 0.2.3
       '@scure/base': 1.2.6
       '@scure/bip32': 1.7.0
@@ -1857,7 +1857,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 

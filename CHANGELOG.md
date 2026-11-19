@@ -4,6 +4,9 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased (0.4.0-alpha.1)
 
+### 2026-11-19
+- Dependencies: `@qorechain/sdk` and `@qorechain/evm` 0.12.0 to 0.14.0, now exact pins. See the table below.
+
 ### 2026-11-18
 - Site and project page: plain-language rewrite for camera owners (receipt explained, limits in normal words, hopeful close). Demo facts updated: block 10,120,133, four audit rounds, crash recovery done.
 - Q-Day Drill: normal transaction sent with plan B (fee 0.025 QOR), proof accepted.
@@ -52,3 +55,4 @@ QoreChain packages are pinned to exact versions. Each update records here: the o
 | Date | Package | From | To | Notes |
 |---|---|---|---|---|
 | 2026-11-16 | `@qorechain/sdk`, `@qorechain/evm` | 0.12.0 | 0.14.0 (checked, not applied) | 0.13.0 fixes ML-DSA derivation from a raw ECDSA key. Our accounts use mnemonics and are not affected. |
+| 2026-11-19 | `@qorechain/sdk`, `@qorechain/evm` | 0.12.0 (range `^0.12.0`) | 0.14.0 (exact) | Released 11 and 12 Nov. The packages ship no changelog: source is the QoreChain team (derivation fix in 0.13.0) and the SDK type docs (authenticator lanes and possession proofs for chain v3.2.8). Checks: tests and typecheck (75), `probe:pqc` live (valid signatures accepted, tampered, short and wrong-message signatures refused), key check (same addresses and ML-DSA-87 keys for all three accounts), recovery drill on testnet, agent restarted and anchoring. |
