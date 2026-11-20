@@ -1,6 +1,6 @@
 # Design: owner key offline with an agent key (T31)
 
-Status: design, 17 Nov 2026. Based on `@qorechain/sdk` 0.14.0 (types and doc comments) and the QoreChain team's answers of 15 and 16 Nov 2026. Not built yet. A testnet spike comes first.
+Status: design of 17 Nov 2026, confirmed by a testnet spike on 20 Nov 2026 (8 of 8 checks passed, details in `docs/TESTNET_FINDINGS.md`). Based on `@qorechain/sdk` 0.14.0 and the QoreChain team's answers of 15 and 16 Nov 2026. The agent does not use this mode yet.
 
 ## Problem
 

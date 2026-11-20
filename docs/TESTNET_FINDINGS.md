@@ -142,3 +142,22 @@ After feedback from the QoreChain team on chain of custody and time bounds. Rule
 - The first v4 deploy (`0x95BA116CC13cDd058E0622E7eCfE001f7b85c102`) required `blockhash(refBlock) != 0` and refused every anchor. It is not used.
 - Fix: the device signs the block hash it read from the RPC. The contract checks that the block is one of the last 256, and compares the hash only where the EVM knows it. Verifiers compare the signed hash with the chain's block. The lower time bound holds, because nobody knows a block hash before the block exists.
 - Question for the team: is BLOCKHASH meant to return 0 on the EVM lane?
+
+## Owner key offline: agent key spike (20 Nov 2026)
+
+`scripts/authenticator-spike.ts`, SDK 0.14.0, chain v3.2.8, test owner `0x181A21311797E258B346e7728E43Ae782fa41Ab7`, relayer = the agent account, registry v4. Result: 8 of 8 checks passed.
+
+| Step | Result | Transaction |
+|---|---|---|
+| Link a secp256k1 agent key (20-byte address, EIP-191 possession proof), permission `evm`, spending rule: only `anchor()` on registry v4, 1 uqor per tx and per day | Accepted | `F7853FB5...52D6` |
+| Owner EVM window | None live during the test | - |
+| Anchor one window through `MsgExecuteEVM` from the relayer | Accepted. The record shows the owner (`0x181A...1Ab7`) as owner, so no contract change is needed | `778CC249...1D38`, block 10,419,865 |
+| Same call data to registry v3 | Refused by the spending rule: "a linked key with a spending rule may call" only the listed target. The tx succeeds, the execution fails, the nonce is used | `3F01CABF...BD8E` |
+| Value transfer of 1,000 uqor | Refused: "per-tx limit 1uqor exceeded" | `8AD2CD01...F4D8` |
+| Revoke the agent key | Accepted | `8CBC76A2...2E30` |
+| Anchor after revoke | Refused at broadcast: the key lacks the permission | - |
+
+Findings:
+- `MsgExecuteEVM` runs the call from the owner's EVM address, and it needs no EVM window. The owner's recovery phrase can leave the recorder.
+- Gas: the relayed anchor used 895,024 gas (direct anchor: about 406,000 EVM gas). With 1,500,000 gas wanted at 0.1 uqor, the fee was 0.15 QOR. With about 1,100,000 gas wanted it would be about 0.11 QOR, close to a direct anchor (about 0.104 QOR).
+- A refused execution does not revert the transaction. It emits `abstractaccount_execution_failed` and uses the key's nonce. The agent must read that event, not only the tx code.
