@@ -8,7 +8,7 @@
  */
 import { deriveUnifiedAccount, type UnifiedAccount } from "@qorechain/sdk";
 import {
-  createPublicClient, createWalletClient, decodeFunctionData, defineChain, http, keccak256, parseAbi, toHex,
+  createPublicClient, createWalletClient, decodeFunctionData, defineChain, encodeFunctionData, http, keccak256, parseAbi, toHex,
   type Address, type Hex,
 } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
@@ -173,8 +173,11 @@ export class AnchorClient {
   /**
    * Device key signs the window root, chained to the device's chain head and to a
    * recent block (time bound on both sides). The segments must be linked (linkWindow).
+   * Builds and signs the window claim without sending it. The anchor transaction
+   * can then go out directly (anchorWindow) or through an authenticator lane
+   * (MsgExecuteEVM, owner key offline).
    */
-  async anchorWindow(deviceId: Hex, device: DeviceKey, w: Window): Promise<AnchorResult> {
+  async prepareAnchor(deviceId: Hex, device: DeviceKey, w: Window) {
     const links = w.segments.map((s) => {
       if (!s.link) throw new Error("segments are not linked (spec/2)");
       return s.link;
@@ -192,11 +195,17 @@ export class AnchorClient {
     };
     const msg = signingMessage(await this.chainId(), this.registry, { owner: this.address, ...claim });
     const signature = signChecked(device.publicKey, device.secretKey, msg);
-    const tx = await this.send("anchor", [claim, device.publicKeyHex, signature]);
+    const data = encodeFunctionData({ abi: REGISTRY_ABI, functionName: "anchor", args: [claim, device.publicKeyHex, signature] });
+    return { claim, root, prevRoot, refBlock, refBlockHash, signature, data };
+  }
+
+  async anchorWindow(deviceId: Hex, device: DeviceKey, w: Window): Promise<AnchorResult> {
+    const p = await this.prepareAnchor(deviceId, device, w);
+    const tx = await this.send("anchor", [p.claim, device.publicKeyHex, p.signature]);
     const anchorId = await this.pub.readContract({
       address: this.registry, abi: REGISTRY_ABI, functionName: "anchorIdOf", args: [this.address, deviceId, w.windowStart],
     });
-    return { ...tx, anchorId, root, signature, prevRoot, refBlock, refBlockHash };
+    return { ...tx, anchorId, root: p.root, signature: p.signature, prevRoot: p.prevRoot, refBlock: p.refBlock, refBlockHash: p.refBlockHash };
   }
 
   /**
