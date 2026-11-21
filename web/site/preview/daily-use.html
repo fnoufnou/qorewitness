@@ -48,22 +48,26 @@
 </div></header>
 <main id="main">
 
-<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Daily use</p><h1>Nothing changes in your day.</h1><p class="lead">Your Tapo app stays your app. QoreWitness runs next to it, on your box. You look at the dashboard when you want to.</p></div></div>
+<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Daily use</p><h1>Nothing changes in your day.</h1><p class="lead">Keep using the Tapo app for live view and alerts. QoreWitness works in the background, on your box. Open the dashboard once in a while.</p></div></div>
 <section><div class="wrap narrow">
 <h2>The dashboard</h2>
-<p style="margin-top:16px">The dashboard shows one line at the top. It tells you if sealing works.</p>
-<div class="tablewrap"><table><thead><tr><th>Colour</th><th>It means</th><th>What to do</th></tr></thead><tbody>
-<tr><td><b style="color:var(--ok)">Green</b></td><td>Sealing is fine. The last seal is a few minutes old.</td><td>Nothing.</td></tr>
-<tr><td><b style="color:var(--warn)">Orange</b></td><td>Something is late. For example the internet is slow or the network is busy.</td><td>Wait 20 minutes. If it stays orange, read the line for the cause.</td></tr>
-<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing has stopped. For example the camera sends no video.</td><td>Check the power and Wi-Fi of the camera and the box.</td></tr>
+<p style="margin-top:16px">The dashboard shows one line in a colour and one thing to do. Open it at the address of your box, for example <code>http://192.168.1.30:8080</code>, and sign in with your dashboard password.</p>
+<div class="tablewrap"><table><thead><tr><th>Colour</th><th>Example</th><th>What to do</th></tr></thead><tbody>
+<tr><td><b style="color:var(--ok)">Green</b></td><td>Sealing OK. Last seal 4 minutes ago.</td><td>Nothing.</td></tr>
+<tr><td><b style="color:var(--warn)">Orange</b></td><td>Waiting for the first seal.</td><td>Nothing. It comes 10 to 15 minutes after setup.</td></tr>
+<tr><td><b style="color:var(--warn)">Orange</b></td><td>Network fees low: about 2 days left.</td><td>Self-managed: add test QOR to the address shown. Fees included: the pilot tops up.</td></tr>
+<tr><td><b style="color:var(--warn)">Orange</b></td><td>The disk is almost full.</td><td>Keep video for fewer days, or connect a bigger disk.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td>No video from the camera.</td><td>Check the power and Wi-Fi of the camera. Check its IP address.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing stopped 40 minutes ago.</td><td>Check the internet connection of the box. Restart the box if this stays.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing stops: the network fees ran out.</td><td>Self-managed: add test QOR. Fees included: the pilot tops up. If this stays for a day, the pilot may be paused.</td></tr>
 </tbody></table></div>
 <figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the dashboard in green, orange and red state"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the dashboard in green, orange and red state</span></div></figure>
+<p class="muted">Phone alerts for these states are planned. Today you see them when you open the dashboard.</p>
 </div></section>
 
 <section class="alt"><div class="wrap narrow">
 <h2>Clips are kept for 14 days</h2>
-<p style="margin-top:16px">The box deletes old clips after 14 days. You can change this. Receipts stay. A clip that is gone cannot be proven, so <b>export a clip before it is deleted</b> if you may need it. See <a href="prove.html#owner">Prove a video</a>.</p>
-<p class="muted">Video takes room. If the disk fills up, the box shortens the time it keeps clips. The dashboard tells you.</p>
+<p style="margin-top:16px">The box deletes video older than the retention time. The setup proposes it from the free disk. The default is 14 days. Receipts stay. A clip that is gone cannot be proven, so <b>download a clip before it is deleted</b> if you may need it. See <a href="prove.html#owner">Prove a video</a>.</p>
 </div></section>
 
 <section><div class="wrap narrow">
@@ -78,30 +82,31 @@
 
 <section class="alt" id="backup"><div class="wrap narrow">
 <h2>Backup</h2>
-<p style="margin-top:16px">Keep a copy of these things. Store them away from the box.</p>
+<p style="margin-top:16px">Copy these things to a USB stick or another computer. Keep them away from the box.</p>
 <ul class="checks">
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>Your recovery phrase</b> (Self-managed). On paper, in a safe place. Nobody can recover it for you.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>The clips you may need</b>, with their receipts. We plan a one-click export. It is not built yet. Until then, copy the clip and its receipt files by hand from the recordings folder.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>The folder <code>qorewitness/data</code></b>, at least the file <code>qorewitness.env</code> and the folder <code>keys</code>. These are your keys. Anyone with them can use your test account.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>The clips you may need</b>, with their receipts. A one-click export as one ZIP is coming in the pilot. Until then, copy the clip by hand and download its receipt from the dashboard.</span></li>
 </ul>
 <p class="muted">The seals on the network stay if you lose the box. To prove a clip you also need the clip and its receipt.</p>
 </div></section>
 
 <section><div class="wrap narrow">
-<h2>Stop or remove</h2>
+<h2>Update, stop or remove</h2>
 <ul class="plain" style="margin-top:16px">
-<li>To pause, stop QoreWitness on the box. Your camera and the Tapo app keep working.</li>
-<li>To remove it, delete the QoreWitness folder from the box and the camera account in the Tapo app.</li>
+<li><b>Update.</b> QoreWitness never updates itself. The version is pinned on purpose. You choose when to move to a new version.</li>
+<li><b>Pause or remove.</b> Stop QoreWitness with <code>cd ~/qorewitness &amp;&amp; docker compose down</code>. Your camera and the Tapo app keep working. Delete the folder <code>~/qorewitness</code> when you no longer need the video, the receipts or the keys.</li>
 <li>Records on the network cannot be deleted by us or by you. They hold only fingerprints and times.</li>
 <li>If you stop using a camera key, you can revoke it. A revoked key cannot come back.</li>
 </ul>
+<div class="callout"><b class="t">Keep the box on your home network</b>The setup and the dashboard use plain HTTP on your home network. Use a network you trust. Never forward port 8080 on your router.</div>
 </div></section>
-<div class="band"><div class="wrap"><div><h2>Need proof of a clip?</h2><p>Export it, send it, and let the other side check it in a browser.</p></div><a class="btn primary" href="prove.html">Prove a video <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a></div></div>
+<div class="band"><div class="wrap"><div><h2>Need proof of a clip?</h2><p>Take the clip and its receipt, send them, and let the other side check them in a browser.</p></div><a class="btn primary" href="prove.html">Prove a video <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a></div></div>
 </main>
 <footer class="site-footer"><div class="wrap">
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
 <p>Seal your camera footage. Prove later that nobody changed it.</p>
-<p><b>QoreWitness will never ask for your recovery phrase.</b></p></div>
+<p><b>QoreWitness will never ask for your keys or your backup files.</b></p></div>
 <div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
 <div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>

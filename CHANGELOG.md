@@ -4,6 +4,8 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+- Site: preview copy updated to the built installer, setup in the browser and dashboard (screen names and dashboard states from `docs/INSTALL.md`). Evidence ZIP export, ZIP verifier, phone alerts, Windows installer and ready-made Pi image are marked planned.
+
 ### 2026-11-21: the QoreWitness box (browser setup)
 - Security: `camera.env` and every secret file are written with mode 600, also when an older version left 644. `record.sh` masks `user:pass@` in all ffmpeg output, with the same rule as `src/core/redact.ts`. The `ui` no longer loads `qorewitness.env`. `docker-compose.yml` pins `QW_VERSION` instead of `latest`.
 - Docker: new `supervise recorder|agent` mode. Both wait for `data/setup.done`, read `camera.env` as data (never as shell code) and restart when it changes. Older terminal installs with receipts count as done.
