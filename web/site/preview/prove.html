@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Prove a video | QoreWitness</title>
-<meta name="description" content="How to prove that a video did not change: get the clip and its receipt, send them, and let the receiver check them in a browser for a green result.">
+<meta name="description" content="How to prove that a video did not change: press Save evidence, send the one file, and let the receiver see a big green Original in a browser.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#17483A">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Prove a video | QoreWitness">
-<meta property="og:description" content="How to prove that a video did not change: get the clip and its receipt, send them, and let the receiver check them in a browser for a green result.">
+<meta property="og:description" content="How to prove that a video did not change: press Save evidence, send the one file, and let the receiver see a big green Original in a browser.">
 <meta property="og:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -48,88 +48,81 @@
 </div></header>
 <main id="main">
 
-<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Prove a video</p><h1>Show that a clip is the original.</h1><p class="lead">Two people are involved. The owner sends the clip and its receipt file. The receiver drops both on a web page and reads the result.</p></div></div>
-<section id="demo"><div class="wrap">
+<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Prove a video</p><h1>Show that a clip is the original.</h1><p class="lead">The owner sends one file. The receiver drops it on a web page and reads the result.</p></div></div>
+<section id="owner"><div class="wrap">
 <div class="split">
 <div>
-<p class="eyebrow">For the receiver</p><h2>Check a video now.</h2>
-<p style="margin-top:16px">You received a clip and a receipt. You need no account and no software. Everything runs in your browser. Your files stay on your computer.</p>
-<ol class="plain">
-<li>Open the verifier.</li>
-<li>Drop the clip and its receipt on the page.</li>
-<li>Read the result. Green means the clip has not changed since it was sealed. Red means it does not match its receipt.</li>
-<li>To keep a copy of the result, use the print function of your browser and save it as PDF.</li>
+<p class="eyebrow">For the owner</p><h2>Save evidence.</h2>
+<ol class="plain" style="margin-top:16px">
+<li>Open your dashboard.</li>
+<li>Press <b>Download</b> next to the time you need. Or press <b>Save evidence</b> and pick a time range.</li>
+<li>You get one file. Send it to the receiver, for example an insurer or a lawyer.</li>
 </ol>
-<div class="btns"><a class="btn primary" href="../verifier.html">Open the verifier <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a></div>
-<h3 style="margin:32px 0 10px">Try it with the demo clip</h3>
-<p>The demo clip is a generated test pattern. It was sealed on the QoreChain testnet. Download both files and drop them in the verifier. Then use the button to change one byte and check again. The result turns red.</p>
-<div class="btns"><a class="btn" href="../demo-clip.mp4" download>Demo clip (MP4)</a><a class="btn" href="../demo-receipt.json" download>Demo receipt (JSON)</a></div>
-<p class="small muted" style="margin-top:14px">Verifier fingerprint (SHA-256): <code style="word-break:break-all">a995b6e408847daa288aa41ec4e7d03e2ce85bd0088b77c297c9634c5b5eb623</code></p>
-</div>
-<div class="stack"><div class="cert" role="group" aria-label="Example result for the demo clip"><span class="tag">Example result · demo clip</span>
-<div class="head"><svg aria-hidden="true" focusable="false"><use href="#i-check-circle"/></svg><div><b>Verified: original file</b><span>demo-clip.mp4 · camera demo-testpattern</span></div></div>
-<ul>
-<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>File fingerprint matches</span><span class="v">03d22bb8…0e6691</span></li>
-<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Merkle path valid</span><span class="v">root 3563a87a…410d09</span></li>
-<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Camera key registered</span><span class="v">version 1</span></li>
-<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>ML-DSA-87 signature valid</span><span class="v">post-quantum</span></li>
-<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Recorded on QoreChain</span><span class="v">block 10,120,133</span></li>
-</ul><div class="foot">Existed before 2026-11-12 07:00:49 UTC</div></div>
-<div class="cert bad"><span class="tag">Example result · one byte changed</span><div class="head"><svg aria-hidden="true" focusable="false"><use href="#i-x-circle"/></svg><div><b>Not verified: file does not match its receipt</b><span>The first failed check is shown on top</span></div></div><ul><li><span><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg>File fingerprint matches</span><span class="v">failed</span></li></ul></div>
-<p class="small muted">These pictures show the idea. The verifier page is the real result.</p></div>
-</div>
-</div></section>
-
-<section class="alt" id="owner"><div class="wrap narrow">
-<p class="eyebrow">For the owner</p><h2>Get the clip and its receipt.</h2>
-<p style="margin-top:16px">Do this as soon as you know you may need a clip. Clips are deleted after 14 days by default.</p>
-<div class="callout warn"><b class="t">Coming in the pilot</b>A one-click export as one ZIP, and a verifier that takes that ZIP, are planned. They are not built yet. Today you take two files: the clip and its receipt.</div>
-<ol class="steps" style="margin-top:28px">
-<li class="step"><h3>Find the time</h3><div class="body"><p>Open the dashboard and find the date and time of the clip you need.</p><figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the dashboard with the list of recent seals and their receipts"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the dashboard with the list of recent seals and their receipts</span></div></figure></div></li>
-<li class="step"><h3>Take the clip and the receipt</h3><div class="body"><p>Copy the clip from the folder <code>~/qorewitness/data/&lt;camera&gt;/segments</code> on the box. Download its receipt from the dashboard. Keep both files together.</p><figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the receipt download on the dashboard"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the receipt download on the dashboard</span></div></figure></div></li>
-<li class="step"><h3>Check it yourself</h3><div class="body"><p>Drop the clip and its receipt on the <a href="../verifier.html">verifier</a> before you send them. You should see the green result.</p></div></li>
-<li class="step"><h3>Send it</h3><div class="body"><p>Send both files to the receiver, for example an insurer or a lawyer. Add the link to the verifier. You can use this text:</p>
-<div class="copybox light"><code id="mail-tpl">Subject: Video evidence with proof of origin
+<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the dashboard with the Download button next to a time, and the Save evidence button"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the dashboard with the Download button next to a time, and the Save evidence button</span></div></figure>
+<p>Do this soon. The box deletes video after about 2 weeks.</p>
+<div class="callout warn"><b class="t">Your video shows people</b>Send it only to people who need it. Do not post it in public.</div>
+<details class="help"><summary>Text you can send with the file</summary><div class="in"><div class="copybox light"><code id="mail-tpl">Subject: Video evidence with proof of origin
 
 Hello,
 
-Attached are a video clip from my home camera and its receipt file.
+Attached is a file from my home camera. It holds the video and its proof.
 The footage was sealed by QoreWitness minutes after recording.
 
 To check it:
 1. Open https://qorewitness.fnoufnou.com/verifier.html
-2. Drop the clip and the receipt file on the page.
-3. The page shows a green result if the clip has not changed since it was sealed.
+2. Drop the file on the page.
+3. The page shows a big green "Original" if the video has not changed since it was sealed.
 
 You do not need to trust me or QoreWitness. The page repeats every check in your own browser.
 
-Note: the video shows people. Please handle it with care.</code><button class="btn" type="button" data-copy="mail-tpl"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy text</span></button></div>
-<div class="callout warn"><b class="t">Your video shows people</b>Send it only to people who need it. Use a way to send that you trust. Do not post it in public.</div></div></li>
+Note: the video shows people. Please handle it with care.</code><button class="btn" type="button" data-copy="mail-tpl"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy text</span></button></div></div></details>
+</div>
+<div id="demo" class="stack"><p class="eyebrow">For the receiver</p><h2 style="margin-bottom:16px">Check a video now.</h2>
+<p>You received a file. You need no account and no software. Your file stays on your computer.</p>
+<ol class="plain">
+<li>Open the verifier.</li>
+<li>Drop the file on the page.</li>
+<li>Read the result. A big green <b>Original</b> means the video has not changed since it was sealed.</li>
 </ol>
+<div class="btns"><a class="btn primary" href="../verifier.html">Open the verifier <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a></div>
+</div>
+</div>
 </div></section>
 
-<section><div class="wrap">
+<section class="alt"><div class="wrap">
 <div class="split">
-<div><h2>What a green result means</h2>
-<ul class="checks" style="margin-top:16px"><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>This file existed at the time the network recorded.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>It has not changed since it was sealed.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The seal was made by the key of one known camera.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The clips around it form an unbroken recording.</span></li></ul></div>
-<div><h2>What it does not mean</h2>
-<ul class="checks no" style="margin-top:16px"><li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That the scene was real. A staged scene is sealed the same way.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That a court will accept it. A court weighs it as ordinary evidence.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That the clip is complete. Only sealed minutes can be checked.</span></li></ul>
+<div class="stack"><h2>What the result looks like</h2>
+<div class="cert" role="group" aria-label="Example result for the demo clip"><span class="tag">Example result · demo clip</span>
+<div class="head"><svg aria-hidden="true" focusable="false"><use href="#i-check-circle"/></svg><div><b>Original</b><span>Not changed since it was sealed</span></div></div>
+<ul>
+<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Same file as when it was sealed</span></li>
+<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Seal is valid</span></li>
+<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Sealed 3 minutes after recording</span></li>
+</ul><div class="foot">Existed before 12 Nov 2026, 08:00</div></div>
+<div class="cert bad"><span class="tag">Example result · video changed</span><div class="head"><svg aria-hidden="true" focusable="false"><use href="#i-x-circle"/></svg><div><b>Changed after sealing</b><span>This file does not match its receipt</span></div></div></div>
+<p class="small muted">An orange result means unchanged, with notes. The page says what the notes are. A button prints the result.</p></div>
+<div><h3 style="margin-bottom:10px">Try it with the demo clip</h3>
+<p>The demo clip is a generated test pattern. Download both files and drop them on the verifier. Then use its button to change one byte and check again. The result turns red.</p>
+<div class="btns"><a class="btn" href="../demo-clip.mp4" download>Demo clip</a><a class="btn" href="../demo-receipt.json" download>Demo receipt</a></div>
+<h3 style="margin:32px 0 10px">What a green result means</h3>
+<ul class="checks"><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The file existed at the time of the public record.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>It has not changed since it was sealed.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>One known camera made the seal.</span></li></ul>
+<h3 style="margin:24px 0 10px">What it does not mean</h3>
+<ul class="checks no"><li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That the scene was real. A staged scene is sealed the same way.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That a court will accept it. A court weighs it as ordinary evidence.</span></li></ul>
 <p class="small"><a href="trust.html">Read Trust and limits</a></p></div>
 </div>
-<div class="art" style="max-width:260px;margin:32px 0 0"><svg viewBox="0 0 240 130" aria-hidden="true" focusable="false"><g>
+<div class="art" style="max-width:220px;margin:32px 0 0"><svg viewBox="0 0 240 130" aria-hidden="true" focusable="false"><g>
 <path d="M166.0 65.0L167.3 66.9L168.0 68.8L167.9 70.7L166.8 72.4L165.1 74.0L163.4 75.4L162.2 76.9L161.7 78.5L161.9 80.5L162.5 82.6L163.0 84.8L162.9 86.9L162.0 88.5L160.4 89.7L158.2 90.6L156.1 91.2L154.4 92.1L153.3 93.5L152.8 95.3L152.5 97.5L152.1 99.8L151.3 101.6L149.8 102.8L147.8 103.3L145.6 103.2L143.3 103.1L141.4 103.2L139.9 104.0L138.7 105.5L137.6 107.5L136.4 109.4L134.9 110.8L133.1 111.4L131.1 111.0L129.0 110.1L127.0 109.1L125.1 108.5L123.4 108.7L121.8 109.6L120.0 111.0L118.1 112.3L116.2 113.0L114.3 112.9L112.6 111.8L111.0 110.1L109.6 108.4L108.1 107.2L106.5 106.7L104.5 106.9L102.4 107.5L100.2 108.0L98.1 107.9L96.5 107.0L95.3 105.4L94.4 103.2L93.8 101.1L92.9 99.4L91.5 98.3L89.7 97.8L87.5 97.5L85.2 97.1L83.4 96.3L82.2 94.8L81.7 92.8L81.8 90.6L81.9 88.3L81.8 86.4L81.0 84.9L79.5 83.7L77.5 82.6L75.6 81.4L74.2 79.9L73.6 78.1L74.0 76.1L74.9 74.0L75.9 72.0L76.5 70.1L76.3 68.4L75.4 66.8L74.0 65.0L72.7 63.1L72.0 61.2L72.1 59.3L73.2 57.6L74.9 56.0L76.6 54.6L77.8 53.1L78.3 51.5L78.1 49.5L77.5 47.4L77.0 45.2L77.1 43.1L78.0 41.5L79.6 40.3L81.8 39.4L83.9 38.8L85.6 37.9L86.7 36.5L87.2 34.7L87.5 32.5L87.9 30.2L88.7 28.4L90.2 27.2L92.2 26.7L94.4 26.8L96.7 26.9L98.6 26.8L100.1 26.0L101.3 24.5L102.4 22.5L103.6 20.6L105.1 19.2L106.9 18.6L108.9 19.0L111.0 19.9L113.0 20.9L114.9 21.5L116.6 21.3L118.2 20.4L120.0 19.0L121.9 17.7L123.8 17.0L125.7 17.1L127.4 18.2L129.0 19.9L130.4 21.6L131.9 22.8L133.5 23.3L135.5 23.1L137.6 22.5L139.8 22.0L141.9 22.1L143.5 23.0L144.7 24.6L145.6 26.8L146.2 28.9L147.1 30.6L148.5 31.7L150.3 32.2L152.5 32.5L154.8 32.9L156.6 33.7L157.8 35.2L158.3 37.2L158.2 39.4L158.1 41.7L158.2 43.6L159.0 45.1L160.5 46.3L162.5 47.4L164.4 48.6L165.8 50.1L166.4 51.9L166.0 53.9L165.1 56.0L164.1 58.0L163.5 59.9L163.7 61.6L164.6 63.2L166.0 65.0Z" fill="var(--bad-bg)" stroke="var(--bad)" stroke-width="2.3000000000000003"/>
 <circle cx="120" cy="65" r="26.7" fill="none" stroke="var(--bad)" stroke-width="6.0"/>
 <circle cx="120" cy="65" r="9.2" fill="var(--bad)"/>
 <path d="M106.2 21.300000000000004 L122.3 55.8 L110.8 74.2 L131.5 108.69999999999999" fill="none" stroke="var(--bad)" stroke-width="4.6" stroke-linejoin="round"/></g></svg></div>
-<p class="small muted">A red result looks like this seal: cracked. The page names the check that failed.</p>
-<p class="muted">You do not need to trust the owner or us. The code is open and the verifier is one file with a published fingerprint.</p>
+<p class="small muted">A red result is a cracked seal. Nobody has to trust the owner or us. The code is open.</p>
 </div></section>
 </main>
 <footer class="site-footer"><div class="wrap">
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
 <p>Seal your camera footage. Prove later that nobody changed it.</p>
-<p><b>QoreWitness will never ask for your keys or your backup files.</b></p></div>
+<p><b>QoreWitness will never ask for your passwords or files.</b></p></div>
 <div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
 <div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>

@@ -4,6 +4,8 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+- Site: simplified preview copy after the PO walkthrough. Fees included is the default without a pilot code, Self-managed is folded. Install is one paste on your own computer. Setup is 3 screens. Prove is one evidence file and a green Original. Crypto words only in folded boxes, Trust and Developers.
+
 ### 2026-11-21: save evidence (dashboard) and ZIP verifier
 - Dashboard: **Save evidence**. Pick a date and a time range (max 60 minutes, default last hour). The box checks each clip against its receipt (both fingerprints, size, chain link, Merkle path), tells you about gaps and clips not sealed yet, then streams one ZIP (stored entries, Node built-ins only, exact Content-Length, 2 GB cap): original clips, receipts, `certificate.html` and `HOW-TO-CHECK.txt`. Same session, CSRF and host rules as every dashboard route. Clip names from receipts must match `seg_*.mp4|ts`, links are never followed, and entry names are made by the box.
 - Verifier: drop the ZIP. It unpacks in the browser (own reader for stored and deflate entries, refuses unsafe names, ZIP64, encryption and entries that inflate past their size), checks every clip with its receipt using the existing code, and shows one verdict first: green "Original", orange "Original, with notes" or "Check not finished", red "Changed after sealing" or "Not confirmed". Then what it proves and cannot prove, a print button and folded technical details. One clip plus receipt and the tamper demo still work. Still one offline HTML file (366 KB).
