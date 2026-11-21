@@ -30,6 +30,9 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { qorechainTestnet, REGISTRY_ABI } from "../src/agent/anchor-client.js";
+import {
+  accountSequence as bankAccountSequence, balanceUqor as bankBalanceUqor, finalCode as bankFinalCode, FEE_HYBRID_SEND, hybridBankSend,
+} from "../src/agent/bank.js";
 import type { ReceiptV3 as ReceiptV2 } from "../src/core/verify.js";
 
 const CHAIN_ID = "qorechain-diana";
@@ -39,32 +42,10 @@ const FEE = { amount: [{ denom: "uqor", amount: "100000" }], gas: "800000" };
 const ATTACKER: Address = "0x000000000000000000000000000000000000dEaD";
 const FAKE_TOKEN = `0x${keccak256(toBytes("qorewitness-drill-token")).slice(26)}` as Address; // not in any window scope
 
-async function accountSequence(address: string) {
-  const res = await fetch(`${REST}/cosmos/auth/v1beta1/accounts/${address}`);
-  if (!res.ok) throw new Error(`account query failed: HTTP ${res.status}`);
-  const body = (await res.json()) as { account?: Record<string, unknown> };
-  const acc = (body.account?.base_account ?? body.account ?? {}) as Record<string, string>;
-  return { accountNumber: BigInt(acc.account_number ?? "0"), sequence: BigInt(acc.sequence ?? "0") };
-}
-
-async function balanceUqor(qor1: string): Promise<bigint> {
-  const res = await fetch(`${REST}/cosmos/bank/v1beta1/balances/${qor1}`);
-  const body = (await res.json()) as { balances?: { denom: string; amount: string }[] };
-  return BigInt(body.balances?.find((b) => b.denom === "uqor")?.amount ?? "0");
-}
-
-/** Waits for a Cosmos tx and returns its final code (CheckTx can pass, DeliverTx can still fail). */
-async function finalCode(hash: string): Promise<{ code: number; log: string } | undefined> {
-  for (let i = 0; i < 10; i++) {
-    await new Promise((ok) => setTimeout(ok, 2000));
-    const res = await fetch(`${REST}/cosmos/tx/v1beta1/txs/${hash}`);
-    if (res.ok) {
-      const b = (await res.json()) as { tx_response?: { code: number; raw_log: string } };
-      if (b.tx_response) return { code: b.tx_response.code, log: b.tx_response.raw_log };
-    }
-  }
-  return undefined;
-}
+const NET = { chainId: CHAIN_ID, rest: REST, rpc: RPC };
+const accountSequence = (address: string) => bankAccountSequence(REST, address);
+const balanceUqor = (qor1: string) => bankBalanceUqor(REST, qor1);
+const finalCode = (hash: string) => bankFinalCode(REST, hash);
 
 async function mnemonicAccount(): Promise<UnifiedAccount> {
   const m = process.env.QORE_MNEMONIC?.trim();
@@ -75,37 +56,20 @@ async function mnemonicAccount(): Promise<UnifiedAccount> {
 async function fund(to: string, qor: string): Promise<void> {
   if (!/^qor1[0-9a-z]{38,}$/.test(to)) throw new Error("usage: fund <qor1-address> <qor>");
   const from = await mnemonicAccount();
-  const amount = [{ denom: "uqor", amount: (BigInt(Math.round(Number(qor) * 1e6))).toString() }];
-  const transport = await StargateClient.connect(RPC);
-  try {
-    const signer = new EthNativeSigner(from, { signMode: "hybrid", rest: REST });
-    const r = await signer.bankSend(transport, to, amount, { chainId: CHAIN_ID, ...(await accountSequence(from.cosmos)), fee: FEE });
-    console.log(`sent ${qor} QOR from ${from.cosmos} to ${to}: code ${r.code} tx ${r.transactionHash}`);
-  } finally {
-    transport.disconnect();
-  }
+  const r = await hybridBankSend(from, to, BigInt(Math.round(Number(qor) * 1e6)), NET, FEE);
+  console.log(`sent ${qor} QOR from ${from.cosmos} to ${to}: code ${r.code} tx ${r.transactionHash}`);
 }
-
-const FEE_SELF_SEND = { amount: [{ denom: "uqor", amount: "25000" }], gas: "250000" };
 
 async function selfSend(): Promise<void> {
   const from = await mnemonicAccount();
   const before = await balanceUqor(from.cosmos);
-  const transport = await StargateClient.connect(RPC);
-  try {
-    const signer = new EthNativeSigner(from, { signMode: "hybrid", rest: REST });
-    const r = await signer.bankSend(transport, from.cosmos, [{ denom: "uqor", amount: "1" }], {
-      chainId: CHAIN_ID, ...(await accountSequence(from.cosmos)), fee: FEE_SELF_SEND,
-    });
-    console.log(`self-send from ${from.cosmos}: code ${r.code} tx ${r.transactionHash}`);
-    if (r.code !== 0) throw new Error(`self-send failed: code ${r.code}`);
-    const fin = await finalCode(r.transactionHash);
-    console.log(`final: ${fin ? `code ${fin.code}${fin.code ? ` ${fin.log}` : " (success)"}` : "not found yet, check the explorer"}`);
-    if (fin && fin.code !== 0) throw new Error(`self-send failed on chain: code ${fin.code}`);
-    console.log(`balance ${before} uqor before, ${await balanceUqor(from.cosmos)} uqor after`);
-  } finally {
-    transport.disconnect();
-  }
+  const r = await hybridBankSend(from, from.cosmos, 1n, NET, FEE_HYBRID_SEND);
+  console.log(`self-send from ${from.cosmos}: code ${r.code} tx ${r.transactionHash}`);
+  if (r.code !== 0) throw new Error(`self-send failed: code ${r.code}`);
+  const fin = await finalCode(r.transactionHash);
+  console.log(`final: ${fin ? `code ${fin.code}${fin.code ? ` ${fin.log}` : " (success)"}` : "not found yet, check the explorer"}`);
+  if (fin && fin.code !== 0) throw new Error(`self-send failed on chain: code ${fin.code}`);
+  console.log(`balance ${before} uqor before, ${await balanceUqor(from.cosmos)} uqor after`);
 }
 
 async function exportEcdsa(file: string): Promise<void> {

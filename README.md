@@ -46,7 +46,8 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 - A home camera records 60-second segments. The agent anchors every 10-minute window. It used v2 from 9 Nov and v3 since 12 Nov, 07:01 UTC.
 - Threat model: what QoreWitness claims and does not claim, its design goal, attackers and controls: `docs/THREAT_MODEL.md`.
 - Audit: QCAI audit stages, each finding with its fix, test or reason, and a map of every PQC precompile call with its tests: `docs/AUDIT.md`.
-- Gas and tx hashes: `docs/TESTNET_FINDINGS.md`.
+- Gas and tx hashes: `docs/TESTNET_FINDINGS.md`. One anchor costs about 0.0457 test QOR (about 406,000 gas). The owner account also opens an EVM window (0.1 test QOR) about every 7 hours. Explorers show about 0.104 QOR per anchor: that is the maximum fee, the chain charges less.
+- Fees included (pilot): a sponsor service refills the test QOR that pilot cameras use. Free, test tokens only: `docs/SPONSOR.md`.
 - Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`. Without any QoreWitness code: `python3 tools/verify_receipt.py <receipt> <file>` (standard library only). The exact rules, and how to replay a check with third-party tools, are in `docs/SPEC.md`. The page has a tamper demo: it changes one byte in a copy in memory and checks again.
 
 ## Contract rules
@@ -77,6 +78,7 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 | `src/agent/` | Agent: segment watcher, windows, device key, ML-DSA signing, scoped EVM window renewal, receipts |
 | `src/setup/` | Setup steps shared by the terminal and the browser setup (idempotent, chain access behind an interface) |
 | `src/web/` | Box web server: pairing and auth, setup wizard, Tapo camera test, pilot sponsor client, dashboard |
+| `services/sponsor/` | Pilot fee sponsor: tops up owner accounts with test QOR (testnet only) |
 | `web/verifier/` | Browser verifier (single HTML file after `pnpm build:verifier`) |
 | `deploy/` | Recorder (ffmpeg) and agent systemd units, per-camera config |
 | `scripts/` | Device CLI, EVM window helper, anchor and verify CLIs, live precompile probes |

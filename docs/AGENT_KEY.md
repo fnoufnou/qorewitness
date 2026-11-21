@@ -53,7 +53,7 @@ Compared with today, a compromised recorder no longer exposes the owner account,
 
 - The owner must re-link the agent key before it expires, about every 30 days. The dashboard (T25) shows the expiry date and warns 7 days ahead.
 - Two accounts per installation (owner and relayer) and one extra key. The setup wizard creates them.
-- Fees stay about the same (one EVM call per window, about 0.1 test QOR), paid by the relayer.
+- Fees go up. A relayed anchor pays for the gas wanted (about 0.11 test QOR at about 1,100,000 gas). A direct anchor pays for the gas used (about 0.0457 test QOR, `docs/TESTNET_FINDINGS.md`). So a relayed anchor costs about 2.4 times a direct one. The relayer pays. The owner opens no EVM windows (0.1 test QOR each, about 3.5 per day), which saves about 0.35 test QOR per day.
 - Testnet only for now: the team says abstract accounts are not on mainnet yet.
 
 ## Open questions (Workshop 2 list, 17 Nov)

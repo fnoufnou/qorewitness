@@ -14,3 +14,4 @@ receipts
 web/site/*
 !web/site/fonts
 !web/site/favicon.svg
+services
