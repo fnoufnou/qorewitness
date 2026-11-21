@@ -10,4 +10,7 @@ keys
 data
 receipts
 .git
-web/site
+# Only the fonts and the icon of the site go into the image (dashboard and setup).
+web/site/*
+!web/site/fonts
+!web/site/favicon.svg

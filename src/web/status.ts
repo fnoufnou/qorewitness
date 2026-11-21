@@ -26,6 +26,7 @@ export interface LocalStatus {
   openSegments: number;
   segmentFiles: number;
   segmentBytes: number;
+  newestSegmentAgeSeconds?: number; // age of the newest change to a segment file: the camera is online if small
   diskFreeBytes?: number;
   diskTotalBytes?: number;
 }
@@ -80,11 +81,18 @@ export function collectStatus(opts: { device: string; receiptDir: string; segmen
   }
   let segmentFiles = 0;
   let segmentBytes = 0;
+  let newestMtime = 0;
   if (existsSync(opts.segmentDir)) {
     for (const f of readdirSync(opts.segmentDir)) {
       if (!f.startsWith("seg_")) continue;
       segmentFiles++;
-      segmentBytes += statSync(join(opts.segmentDir, f)).size;
+      try {
+        const st = statSync(join(opts.segmentDir, f));
+        segmentBytes += st.size;
+        newestMtime = Math.max(newestMtime, st.mtimeMs);
+      } catch {
+        // Deleted by retention between readdir and stat.
+      }
     }
   }
   let diskFreeBytes: number | undefined;
@@ -107,6 +115,7 @@ export function collectStatus(opts: { device: string; receiptDir: string; segmen
     openSegments,
     segmentFiles,
     segmentBytes,
+    newestSegmentAgeSeconds: newestMtime ? Math.max(0, now - Math.floor(newestMtime / 1000)) : undefined,
     diskFreeBytes,
     diskTotalBytes,
   };
@@ -123,4 +132,78 @@ export function health(s: LocalStatus, windowSeconds: number): { level: "ok" | "
     return { level: "warn", text: "Less than 15% disk space left. Lower QW_RETENTION_DAYS or add storage." };
   }
   return { level: "ok", text: "Recording and anchoring normally." };
+}
+
+// ---------------------------------------------------------------- box health for owners (green, orange, red)
+
+/** Seals per day at the default 10-minute window, and the fee per seal (docs/TESTNET_FINDINGS.md). */
+export const FEE_PER_SEAL_UQOR = 100_000;
+
+export interface BoxFacts {
+  windowSeconds: number;
+  plan?: "self" | "sponsored";
+  balanceUqor?: number; // undefined when the network could not be asked
+  setupAgeSeconds?: number; // time since setup.done
+  qor1?: string;
+}
+
+export interface BoxHealth {
+  level: "ok" | "warn" | "bad"; // green, orange, red
+  title: string;
+  action?: string; // one thing the owner can do
+  feeDaysLeft?: number;
+}
+
+/** "less than a day", "about 1 day", "about 4 days". */
+export function daysText(days: number): string {
+  if (days < 1) return "less than a day";
+  const n = Math.floor(days);
+  return `about ${n} day${n === 1 ? "" : "s"}`;
+}
+
+export function feeDaysLeft(balanceUqor: number | undefined, windowSeconds: number): number | undefined {
+  if (balanceUqor === undefined) return undefined;
+  const perDay = (86_400 / windowSeconds) * FEE_PER_SEAL_UQOR;
+  return balanceUqor / perDay;
+}
+
+/**
+ * One plain sentence and one action. The first problem that matches wins:
+ * unsealed windows, camera offline, fees, sealing stopped, first seal, disk.
+ */
+export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
+  const age = f.setupAgeSeconds ?? Infinity;
+  const days = feeDaysLeft(f.balanceUqor, f.windowSeconds);
+  const addFees = `Add free test QOR to your account${f.qor1 ? ` ${f.qor1}` : ""} on the QoreChain dashboard (Faucet).`;
+  const lastSealMin = s.lastAnchorAgeSeconds === undefined ? undefined : Math.max(0, Math.round(s.lastAnchorAgeSeconds / 60));
+  if (s.unanchored.length) {
+    return { level: "bad", title: "Some video could not be sealed.", action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days };
+  }
+  const camOffline = s.newestSegmentAgeSeconds === undefined ? age > 600 : s.newestSegmentAgeSeconds > 300;
+  if (camOffline) {
+    return { level: "bad", title: "No video from the camera.", action: "Check the power and Wi-Fi of the camera. If the camera has a new IP address, give it a fixed address in your router.", feeDaysLeft: days };
+  }
+  if (days !== undefined && f.balanceUqor! < 3 * FEE_PER_SEAL_UQOR) {
+    return f.plan === "sponsored"
+      ? { level: "bad", title: "Sealing stops: the network fees ran out.", action: "The pilot tops up your box. If this stays for more than a day, the pilot may be paused or full.", feeDaysLeft: days }
+      : { level: "bad", title: "Sealing stops: the network fees ran out.", action: addFees, feeDaysLeft: days };
+  }
+  if (days !== undefined && f.plan !== "sponsored" && days < 3) {
+    return { level: "warn", title: `Network fees low: ${daysText(days)} left.`, action: addFees, feeDaysLeft: days };
+  }
+  if (days !== undefined && f.plan === "sponsored" && days < 0.25) {
+    return { level: "warn", title: "Network fees low.", action: "The pilot tops up your box by itself. Nothing to do now.", feeDaysLeft: days };
+  }
+  if (s.lastAnchorAgeSeconds === undefined) {
+    return age > 1800
+      ? { level: "bad", title: "No seal yet.", action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days }
+      : { level: "warn", title: "Waiting for the first seal.", action: "The first seal comes about 10 to 15 minutes after setup. Nothing to do.", feeDaysLeft: days };
+  }
+  if (s.lastAnchorAgeSeconds > 3 * f.windowSeconds) {
+    return { level: "bad", title: `Sealing stopped ${lastSealMin} minutes ago.`, action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days };
+  }
+  if (s.diskFreeBytes !== undefined && s.diskTotalBytes && s.diskFreeBytes / s.diskTotalBytes < 0.15) {
+    return { level: "warn", title: "The disk is almost full.", action: "Keep video for fewer days, or connect a bigger disk.", feeDaysLeft: days };
+  }
+  return { level: "ok", title: `Sealing OK. Last seal ${lastSealMin} minutes ago.`, feeDaysLeft: days };
 }
