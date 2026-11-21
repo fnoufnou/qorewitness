@@ -33,6 +33,8 @@ Two keys, two layers of post-quantum protection:
 
 ## Live on testnet (qorechain-diana, EVM chain ID 9800)
 
+QoreWitness targets the qorechain-diana testnet, where the fest is judged. The QoreChain PQC precompiles (`pqcVerify`, `pqcKeyStatus`) are not active on mainnet yet, so QoreWitness does not run on mainnet.
+
 | What | Address or tx |
 |---|---|
 | Registry v4 (14 Nov, chained windows, time bound on both sides, live) | `0xa1378D6558B32e1f8d37b68cf90e3C93839Da365` |
@@ -53,8 +55,6 @@ Two keys, two layers of post-quantum protection:
 - Devices belong to the account that registered them. Register: the owner key and the new device key sign (proof of possession). Revoke: the owner key signs. Final, a revoked device id cannot come back. Rotate: the old and the new device key sign. A nonce per owner stops replays.
 - Anchor: only the owner account can send it, and the current device key must sign. Anchors from a revoked device or with an old key fail.
 - Windows per (owner, device) must move forward and must not overlap. A later anchor cannot fill a gap in the past.
-- Since v4, each window commits to the previous root of its camera, and each segment to the previous segment. A removed, replaced or re-recorded piece breaks the chain. Gaps are stored on chain.
-- Since v4, the camera signs the hash of a recent block: the root was signed after that block and anchored before the anchor block.
 - Since v4, each window commits to the previous root of its camera, and each segment to the previous segment. A removed, replaced or re-recorded piece breaks the chain. Gaps are stored on chain.
 - Since v4, the camera signs the hash of a recent block: the root was signed after that block and anchored before the anchor block.
 - A window must end before the block time (120 s skew allowed).

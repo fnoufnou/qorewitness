@@ -5,6 +5,8 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 ## 0.5.0-alpha.1 (21 Nov 2026, first tester build)
 
 ### 2026-11-21
+- Contracts: `QorePqc.keyStatus` reads `pqcKeyStatus` by position, so fields that the chain appends after `possessionProven` no longer turn the answer into "possession not proven". Team guidance of 21 Nov. Ships with the next registry deployment. Live registry v4 unchanged (76 tests).
+- Docs: README states that QoreWitness targets qorechain-diana and that the PQC precompiles are not active on mainnet yet. `docs/AUDIT.md` records the team confirmation of `pqcKeyStatus`. Duplicate lines in the README contract rules removed.
 - Release: first image for testers, built by GitHub Actions (amd64, arm64).
 - Docs: relayed anchors emit no EVM logs (`docs/TESTNET_FINDINGS.md`). Agent-key mode stays an option after the tester release (`docs/AGENT_KEY.md`).
 - Testnet v3.2.9: `probe:pqc` passes, the live agent anchors normally.

@@ -44,3 +44,20 @@ contract MockPqcKeyStatus3 {
         return (k.length > 0, k.length > 0 ? 1 : 0, k);
     }
 }
+
+/// @notice Test double for pqcKeyStatus at 0x0A02 with a field appended after
+///         possessionProven, the way the chain adds new fields (5 values).
+contract MockPqcKeyStatus5 {
+    mapping(address => bytes) public keys;
+    mapping(address => bool) public pop;
+
+    function setKey(address account, bytes calldata pubkey, bool possessionProven) external {
+        keys[account] = pubkey;
+        pop[account] = possessionProven;
+    }
+
+    function pqcKeyStatus(address account) external view returns (bool, uint8, bytes memory, bool, uint64) {
+        bytes memory k = keys[account];
+        return (k.length > 0, k.length > 0 ? 1 : 0, k, pop[account], 42);
+    }
+}

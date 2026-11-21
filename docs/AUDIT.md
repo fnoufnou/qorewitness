@@ -92,8 +92,23 @@ All calls go through `contracts/QorePqc.sol`. It uses `staticcall` only, so a pr
 | `pqcVerify` | `DeviceRegistry.revokeDevice` | Only the owner can revoke a camera | "revokes a device with the owner signature, final", "rejects revoke with a bad owner signature, or with the device key", "rejects a replayed revoke signature" |
 | `pqcVerify` | `DeviceRegistry.rotateDeviceKey` | A key changes only with signatures from the old and the new key | "rotates with signatures from the old and the new key", "rejects rotation without a valid old-key signature", "rejects rotation without a valid new-key signature", "rejects a replayed rotation (nonce)" |
 | `pqcVerify` | `AnchorRegistry.anchor` | A window root is accepted only with the camera's signature over the full claim (owner, window, root, previous root, reference block) | "rejects a bad device signature", "rejects a signature by the owner key instead of the device key", "rejects another account that sends the device key and a valid signature", "rejects a signature over another block hash than the claim" |
-| `pqcKeyStatus` (0x...0a02) | `DeviceRegistry._ownerKey` | The owner must have an ML-DSA-87 key on chain (2,592 bytes, algorithm 1), with proof of possession where required | "rejects an owner without a PQC key on chain", "rejects an owner key without proof of possession when required", "accepts the 3-value pqcKeyStatus form when no proof of possession is required" |
+| `pqcKeyStatus` (0x...0a02) | `DeviceRegistry._ownerKey` | The owner must have an ML-DSA-87 key on chain (2,592 bytes, algorithm 1), with proof of possession where required | "rejects an owner without a PQC key on chain", "rejects an owner key without proof of possession when required", "reads proof of possession by position when pqcKeyStatus appends fields", "accepts the 3-value pqcKeyStatus form when no proof of possession is required" |
 | Both | `QorePqc` wrapper | Fail closed: an empty or short answer from a precompile reverts (`PqcPrecompileInactive`). An anchor is never accepted without a real check. | "refuses to register a device when pqcVerify answers nothing", "refuses to anchor when pqcVerify answers nothing, and keeps no record", "refuses to register a device when pqcKeyStatus answers nothing" |
+
+### pqcKeyStatus: team confirmation (21 Nov 2026)
+
+The QoreChain core team confirmed in Discord #builders (21 Nov 2026) that `0x...0a02` is `pqcKeyStatus`, a documented precompile (SDK EVM guide and Workshop 2), active on qorechain-diana, with no plan to change or remove it during the fest. Facts from that answer:
+
+- It returns `(bool registered, uint8 algorithmId, bytes pubkey, bool possessionProven)`. `algorithmId` 1 is ML-DSA-87, `pubkey` is the 2,592-byte key.
+- A call costs 2,500 gas and never reverts. An unregistered address returns `registered = false`.
+- Check `possessionProven`, not only `registered`. QoreWitness does this: every deployed registry has `requirePossessionProof = true`.
+- New fields are appended after the existing ones. The address and the existing fields stay. Decode the first values by position.
+- It is not active on mainnet yet (no QoreChain precompile is).
+
+Effect on QoreWitness:
+
+- `QorePqc.keyStatus` on `main` reads the first four values when the answer has four or more values (test "reads proof of possession by position when pqcKeyStatus appends fields").
+- The live registry v4 (`0xa1378D6558B32e1f8d37b68cf90e3C93839Da365`, commit `6fccf05`, `docs/audit/AnchorRegistry.v4.flat.sol`) accepts exactly 3 or 4 values. If a field were appended, it would read the owner key as "possession not proven". Register and revoke would then fail closed. Anchoring and `verifyAnchor` do not call `pqcKeyStatus`, so they keep working. The registry has no upgrade path, so this change ships with the next registry deployment.
 
 The local tests use mock precompiles. Real ML-DSA-87 verification is checked against testnet with `pnpm probe:pqc`, and every live anchor since 9 Nov 2026 passed `pqcVerify` on chain.
 

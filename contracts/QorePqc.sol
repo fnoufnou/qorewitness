@@ -34,7 +34,9 @@ library QorePqc {
     /// @notice Reads the ML-DSA key that the chain has registered for `account`.
     /// @dev Accepts the documented 3-value return and the 4-value return of
     ///      chain v3.2.4+ that adds `possessionProven`. In the 3-value form
-    ///      `possessionProven` is reported as false.
+    ///      `possessionProven` is reported as false. New fields are appended
+    ///      after the existing ones (QoreChain team, 21 Nov 2026), so a longer
+    ///      return is read by position: the first four values, the rest ignored.
     function keyStatus(address account)
         internal
         view
@@ -44,12 +46,13 @@ library QorePqc {
             PQC_KEY_STATUS.staticcall(abi.encodeWithSignature("pqcKeyStatus(address)", account));
         if (!ok) return (false, 0, "", false);
         if (ret.length < 96) revert PqcPrecompileInactive();
-        // Head word 2 is the offset of the dynamic `bytes`: 0x60 for 3 values, 0x80 for 4.
+        // Head word 2 is the offset of the dynamic `bytes`: 0x60 for 3 values, 0x80 for 4,
+        // higher when fields are appended after possessionProven.
         uint256 offset;
         assembly {
             offset := mload(add(ret, 0x60))
         }
-        if (offset == 0x80) {
+        if (offset >= 0x80) {
             (registered, algorithmId, pubkey, possessionProven) = abi.decode(ret, (bool, uint8, bytes, bool));
         } else {
             (registered, algorithmId, pubkey) = abi.decode(ret, (bool, uint8, bytes));

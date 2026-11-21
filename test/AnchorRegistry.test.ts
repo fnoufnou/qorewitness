@@ -30,13 +30,13 @@ function segments(n: number): Uint8Array[] {
   });
 }
 
-async function deploy(keyStatusMock: "MockPqcKeyStatus3" | "MockPqcKeyStatus4", requirePop = false, ownerPop = true) {
+async function deploy(keyStatusMock: "MockPqcKeyStatus3" | "MockPqcKeyStatus4" | "MockPqcKeyStatus5", requirePop = false, ownerPop = true) {
   const verifyMock = await viem.deployContract("MockPqcVerify");
   const statusMock = await viem.deployContract(keyStatusMock);
   const publicClient = await viem.getPublicClient();
   await networkHelpers.setCode(PQC_VERIFY, (await publicClient.getCode({ address: verifyMock.address }))!);
   await networkHelpers.setCode(PQC_KEY_STATUS, (await publicClient.getCode({ address: statusMock.address }))!);
-  // Both mocks have the same setKey(); the 4-value ABI is enough to call it.
+  // All mocks have the same setKey(); the 4-value ABI is enough to call it.
   const status = await viem.getContractAt("MockPqcKeyStatus4", PQC_KEY_STATUS);
   const registry = await viem.deployContract("AnchorRegistry", [requirePop]);
   const [wallet, other] = await viem.getWalletClients();
@@ -182,6 +182,14 @@ describe("AnchorRegistry v2 with DeviceRegistry", () => {
 
     it("rejects an owner key without proof of possession when required", async () => {
       ctx = await deploy("MockPqcKeyStatus3", true);
+      await viem.assertions.revertWithCustomError(register(), ctx.registry, "PossessionNotProven");
+    });
+
+    it("reads proof of possession by position when pqcKeyStatus appends fields", async () => {
+      ctx = await deploy("MockPqcKeyStatus5", true, true);
+      await register();
+      assert.equal(await nonce(), 1n);
+      ctx = await deploy("MockPqcKeyStatus5", true, false);
       await viem.assertions.revertWithCustomError(register(), ctx.registry, "PossessionNotProven");
     });
 
