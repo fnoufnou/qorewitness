@@ -1,35 +1,26 @@
 /**
- * setup.ts - first-run wizard for one camera (terminal). Safe to run again: every step
- * checks what exists and skips it.
+ * setup.ts - first-run setup for one camera in the terminal. The browser setup
+ * (src/web/wizard.ts) runs the same steps from src/setup/steps.ts. Safe to run
+ * again: every step checks what exists and skips it.
  *
- *   1. Camera settings      -> /data/camera.env
- *   2. Owner account        -> /data/qorewitness.env (new mnemonic, mode 600, testnet only)
+ *   1. Camera settings      -> /data/camera.env (mode 600)
+ *   2. Owner account        -> /data/qorewitness.env (new recovery phrase, mode 600, testnet only)
  *   3. Test QOR             -> waits until the faucet funds the account
- *   4. ML-DSA-87 key        -> registered on chain with proof of possession
- *   5. Device key           -> /data/keys/<camera>.key (mode 600), registered in the registry
+ *   4. Camera key           -> /data/keys/<camera>.key (mode 600)
+ *   5. Registration         -> account ML-DSA-87 key, scoped EVM window, camera in the registry
  *
  * Usage (Docker): docker compose run --rm agent setup [--camera front-door] [--stream rtsp://...]
  * Env: QW_DATA (default /data), QORE_REGISTRY (default: the public v4 registry).
  */
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
-import { StargateClient } from "@cosmjs/stargate";
+import { redactSecrets, safeError } from "../src/core/redact.js";
 import {
-  EthNativeSigner, buildRegisterPqcKeyMsg, deriveUnifiedAccount, fetchPqcStatus, generateMnemonic,
-  isRegisteredPqcKey, signProofOfPossession,
-} from "@qorechain/sdk";
-import type { Address } from "viem";
-import { AnchorClient, DEVICE_STATUS } from "../src/agent/anchor-client.js";
-import { createDeviceKey, loadDeviceKey } from "../src/agent/device-key.js";
-import { ensureScopedWindow, TESTNET_WINDOW } from "../src/agent/evm-window.js";
-import { deviceIdOf } from "../src/core/message.js";
+  FAUCET, MIN_SETUP_UQOR, dataPaths, ensureDeviceKey, ensureOwnerAccount, finishSetup, keyFingerprint, liveChain,
+  readAccountInfo, readEnvFile, registerOnChain, saveCamera,
+} from "../src/setup/steps.js";
 
-const DATA = process.env.QW_DATA ?? "/data";
-const PUBLIC_REGISTRY_V4 = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
-const FAUCET = "https://dashboard.qorechain.io";
-const MIN_UQOR = 2_000_000n; // enough for key registration, a window and the device registration
-
+const p = dataPaths();
+const chain = liveChain();
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 const arg = (name: string) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -38,104 +29,43 @@ const arg = (name: string) => {
 const say = (s: string) => console.log(s);
 const step = (n: number, s: string) => say(`\n[${n}/5] ${s}`);
 
-function readEnv(path: string): Record<string, string> {
-  if (!existsSync(path)) return {};
-  return Object.fromEntries(
-    readFileSync(path, "utf8").split("\n").filter((l) => /^[A-Z_]+=/.test(l)).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]),
-  );
-}
-function writeEnv(path: string, env: Record<string, string>, secret: boolean): void {
-  writeFileSync(path, Object.entries(env).map(([k, v]) => `${k}=${v}`).join("\n") + "\n", { mode: secret ? 0o600 : 0o644 });
-  if (secret) chmodSync(path, 0o600);
-}
-
-async function uqor(qor1: string): Promise<bigint> {
-  const r = await fetch(`${TESTNET_WINDOW.rest}/cosmos/bank/v1beta1/balances/${qor1}`);
-  const b = (await r.json()) as { balances?: { denom: string; amount: string }[] };
-  return BigInt(b.balances?.find((x) => x.denom === "uqor")?.amount ?? "0");
-}
-
 async function main(): Promise<void> {
   say("QoreWitness setup (QoreChain testnet). Nothing here touches mainnet funds.");
-  mkdirSync(join(DATA, "keys"), { recursive: true, mode: 0o700 });
 
   step(1, "Camera");
-  const camPath = join(DATA, "camera.env");
-  const cam = readEnv(camPath);
+  const cam = readEnvFile(p.cameraEnv);
   const label = cam.QW_DEVICE ?? arg("camera") ?? ((await rl.question("Camera name (letters, digits, dashes) [camera]: ")).trim() || "camera");
-  if (!/^[a-z0-9-]{1,40}$/.test(label)) throw new Error("use lower-case letters, digits and dashes for the camera name");
   const stream = cam.QW_STREAM_URL ?? cam.QW_RTSP_URL ?? arg("stream") ?? arg("rtsp") ??
     (await rl.question("Stream URL of the camera (rtsp://, rtmp:// or https://): ")).trim();
-  if (!/^(rtsps?|rtmps?|https?):\/\//.test(stream)) throw new Error("the stream URL must start with rtsp(s)://, rtmp(s):// or http(s)://");
-  writeEnv(camPath, {
-    QW_DEVICE: label, QW_STREAM_URL: stream,
-    QW_SEGMENT_SECONDS: cam.QW_SEGMENT_SECONDS ?? "60", QW_WINDOW_SECONDS: cam.QW_WINDOW_SECONDS ?? "600",
-    QW_RETENTION_DAYS: cam.QW_RETENTION_DAYS ?? "14",
-  }, false);
-  say(`  camera "${label}" saved in ${camPath}`);
+  saveCamera(p, { label, streamUrl: stream });
+  say(`  camera "${label}" saved in ${p.cameraEnv} (mode 600), stream ${redactSecrets(stream)}`);
 
   step(2, "Owner account");
-  const accPath = join(DATA, "qorewitness.env");
-  const acc = readEnv(accPath);
-  if (!acc.QORE_MNEMONIC) {
-    acc.QORE_MNEMONIC = generateMnemonic(256);
-    say("  new account created (from a fresh mnemonic, so the ECDSA key alone never gives the ML-DSA key)");
-  }
-  acc.QORE_REGISTRY ??= process.env.QORE_REGISTRY ?? PUBLIC_REGISTRY_V4;
-  acc.QORE_NETWORK = "testnet";
-  writeEnv(accPath, acc, true);
-  const owner = await deriveUnifiedAccount(acc.QORE_MNEMONIC, 0);
+  const owner = await ensureOwnerAccount(p);
+  if (owner.created) say("  new account created from a fresh recovery phrase");
   say(`  address ${owner.cosmos} (EVM ${owner.evm})`);
-  say(`  the mnemonic is in ${accPath} (mode 600). Back it up. Never use it on mainnet.`);
+  say(`  the recovery phrase is in ${p.accountEnv} (mode 600). Back it up. Never use it on mainnet.`);
 
   step(3, "Test QOR");
-  for (let bal = await uqor(owner.cosmos); bal < MIN_UQOR; bal = await uqor(owner.cosmos)) {
+  for (let bal = await chain.balanceUqor(owner.cosmos); bal < MIN_SETUP_UQOR; bal = await chain.balanceUqor(owner.cosmos)) {
     say(`  balance ${Number(bal) / 1e6} QOR. Claim test QOR for ${owner.cosmos} at ${FAUCET} (Faucet).`);
     await rl.question("  Press Enter when the faucet has sent it... ");
   }
-  say(`  balance ${Number(await uqor(owner.cosmos)) / 1e6} QOR`);
+  say(`  balance ${Number(await chain.balanceUqor(owner.cosmos)) / 1e6} QOR`);
 
-  step(4, "Post-quantum key of the account");
-  const pqc = await fetchPqcStatus({ rest: TESTNET_WINDOW.rest, address: owner.cosmos });
-  if (pqc.registered && isRegisteredPqcKey(pqc, owner.pqc.publicKey) === false) {
-    throw new Error("another ML-DSA key is registered for this account. Use the wallet that registered it.");
-  }
-  if (!pqc.registered) {
-    const pop = signProofOfPossession({ chainId: TESTNET_WINDOW.chainId, account: owner.cosmos, keypair: owner.pqc });
-    const msg = buildRegisterPqcKeyMsg(owner.cosmos, { pqcKeypair: owner.pqc, proofOfPossession: pop });
-    const seqRes = await fetch(`${TESTNET_WINDOW.rest}/cosmos/auth/v1beta1/accounts/${owner.cosmos}`);
-    const a = ((await seqRes.json()) as { account?: Record<string, unknown> }).account ?? {};
-    const base = ((a.base_account ?? a) as Record<string, string>);
-    const transport = await StargateClient.connect(TESTNET_WINDOW.rpc);
-    try {
-      const r = await new EthNativeSigner(owner, { signMode: "classical", rest: TESTNET_WINDOW.rest }).signAndBroadcast(transport, {
-        chainId: TESTNET_WINDOW.chainId, accountNumber: BigInt(base.account_number ?? "0"), sequence: BigInt(base.sequence ?? "0"),
-        fee: { amount: [{ denom: "uqor", amount: "100000" }], gas: "800000" }, messages: [msg],
-      });
-      if (r.code !== 0) throw new Error(`key registration failed: code ${r.code} ${r.rawLog ?? ""}`);
-    } finally {
-      transport.disconnect();
-    }
-    await new Promise((ok) => setTimeout(ok, 8000));
-    say("  ML-DSA-87 key registered with proof of possession");
-  } else say("  already registered");
+  step(4, "Camera key");
+  const { key, created } = ensureDeviceKey(p, label);
+  say(`  ${created ? "created" : "found"} camera key ${keyFingerprint(key.keyHash)}`);
 
-  step(5, "Camera key");
-  const keyPath = join(DATA, "keys", `${label}.key`);
-  const key = existsSync(keyPath) ? loadDeviceKey(keyPath) : createDeviceKey(keyPath);
-  const client = await AnchorClient.create(acc.QORE_MNEMONIC, acc.QORE_REGISTRY as Address);
-  const deviceId = deviceIdOf(label);
-  let d = await client.getDevice(deviceId);
-  if (d.status === 0) {
-    if (await ensureScopedWindow(owner, acc.QORE_REGISTRY)) say("  opened an EVM window scoped to the registry");
-    const tx = await client.registerDevice(deviceId, key);
-    say(`  camera registered: tx ${tx.txHash}`);
-    d = await client.getDevice(deviceId);
-  }
-  if (d.status !== 1 || d.keyHash !== key.keyHash) {
-    throw new Error(`camera "${label}" is ${DEVICE_STATUS[d.status]} with another key. Choose another camera name.`);
-  }
-  say(`  camera "${label}" is active, key version ${d.keyVersion}`);
+  step(5, "Registration on QoreChain");
+  const r = await registerOnChain(p, label, chain, (n, total, text) => say(`  (${n}/${total}) ${text}`));
+  if (r.txHash) say(`  camera registered: tx ${r.txHash}`);
+  say(`  camera "${label}" is active, key version ${r.keyVersion}`);
+  finishSetup(p, {
+    device: label, deviceId: r.deviceId, owner: owner.evm, qor1: owner.cosmos, registry: owner.registry,
+    plan: readAccountInfo(p)?.plan ?? "self", keyFingerprint: keyFingerprint(key.keyHash),
+    registeredTx: r.txHash ?? readAccountInfo(p)?.registeredTx, setupAt: new Date().toISOString(),
+  });
 
   say("\nDone. Start recording and anchoring with: docker compose up -d");
   say("Receipts appear in ./data/" + label + "/receipts every 10 minutes.");
@@ -143,7 +73,7 @@ async function main(): Promise<void> {
 
 main()
   .catch((e: unknown) => {
-    console.error(`\nSetup stopped: ${e instanceof Error ? e.message.split("\n")[0] : e}`);
+    console.error(`\nSetup stopped: ${safeError(e)}`);
     process.exitCode = 1;
   })
   .finally(() => rl.close());

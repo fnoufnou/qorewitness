@@ -1,135 +1,373 @@
 /**
- * QoreWitness local dashboard (T25, phase 1: read only).
+ * QoreWitness box: local dashboard and browser setup, on one port.
  *
- * A small web server inside the container, with Node's built-in http module and
- * no extra dependencies. It shows the camera's health, the latest anchors with
- * links to the public explorer, and lets the owner download receipts. It holds
- * no keys and sends no transactions.
+ * Node's built-in http module, no extra dependencies. While /data/setup.done is
+ * missing, every page leads to /setup. After setup, /setup answers 404 and the
+ * dashboard shows the health of the box in plain words, the latest seals and
+ * receipt downloads.
  *
- * Access: a token. Set QW_UI_TOKEN, or the server makes one at start and prints
- * the link in the log. The token is checked in constant time, then kept in an
- * HttpOnly cookie. Listen address: QW_UI_HOST (default 127.0.0.1), QW_UI_PORT
- * (default 8080). In Docker, compose publishes it on 127.0.0.1 only.
+ * Access (src/web/auth.ts): pairing token or code on first run, then a password,
+ * signed session cookies and a CSRF token on every POST. Host allowlist,
+ * same-origin POST, private clients only, body limit 16 KB.
  *
- * Env: QW_DEVICE, QW_SEGMENT_DIR, QW_RECEIPT_DIR, QW_WINDOW_SECONDS, QORE_REGISTRY (shown only).
+ * The process never loads qorewitness.env into its environment. During setup the
+ * wizard reads the recovery phrase from the file only for the steps that sign.
+ *
+ * Env: QW_DATA (default /data), QW_UI_HOST (default 127.0.0.1), QW_UI_PORT (8080),
+ * QW_UI_HOSTNAME (extra allowed host names, comma separated), QW_UI_TRUST_PROXY=1,
+ * QW_UI_PUBLIC_URL (shown in the log with the pairing link), QW_SPONSOR_URL.
  */
-import { randomBytes, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { collectStatus, health, RECEIPT_NAME, type LocalStatus } from "./status.js";
+import { join, resolve } from "node:path";
+import { safeError } from "../core/redact.js";
+import {
+  EXPLORER, dataPaths, ensureDirs, fetchBalanceUqor, isSetupDone, liveChain, readAccountInfo, readEnvFile, type AccountInfo, type Paths,
+} from "../setup/steps.js";
+import {
+  FailureLimiter, checkPassword, clearPairing, csrfOk, csrfToken, ensurePairing, hasPassword, hostAllowed, issueSession, originOk,
+  passwordProblem, privateAddress, readPairing, safeEqual, sessionSecret, sessionValid, setPassword, SESSION_SECONDS,
+} from "./auth.js";
+import { snapshot } from "./camera.js";
+import { CSP, esc, layout } from "./html.js";
+import { SponsorClient } from "./sponsor.js";
+import { boxHealth, collectStatus, daysText, health, RECEIPT_NAME, type BoxHealth, type LocalStatus } from "./status.js";
+import { Wizard, renderClaimCode, renderClaimPassword, renderDone, renderLogin } from "./wizard.js";
 
-const env = (k: string, d: string) => process.env[k]?.trim() || d;
-const device = env("QW_DEVICE", "camera");
-const segmentDir = env("QW_SEGMENT_DIR", `/data/${device}/segments`);
-const receiptDir = env("QW_RECEIPT_DIR", `/data/${device}/receipts`);
-const windowSeconds = Number(env("QW_WINDOW_SECONDS", "600"));
-const registry = env("QORE_REGISTRY", "");
-const host = env("QW_UI_HOST", "127.0.0.1");
-const port = Number(env("QW_UI_PORT", "8080"));
-const token = env("QW_UI_TOKEN", randomBytes(18).toString("base64url"));
-const EXPLORER = "https://explore.qore.network";
+export { esc };
+/** Constant-time string compare (kept for older callers). */
+export const tokenOk = (given: string | undefined, expected: string) => safeEqual(given, expected);
 
-export const esc = (v: unknown) =>
-  String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+const VERIFIER = "https://qorewitness.fnoufnou.com/verifier.html";
+const MAX_BODY = 16 * 1024;
+const ASSETS: Record<string, { file: string; type: string }> = {
+  "/assets/plex-sans.woff2": { file: "web/site/fonts/plex-sans.woff2", type: "font/woff2" },
+  "/assets/plex-mono-400.woff2": { file: "web/site/fonts/plex-mono-400.woff2", type: "font/woff2" },
+  "/favicon.svg": { file: "web/site/favicon.svg", type: "image/svg+xml" },
+};
 
-export function tokenOk(given: string | undefined, expected: string): boolean {
-  if (!given) return false;
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
+export interface ServerOptions {
+  paths: Paths;
+  wizard: Wizard;
+  hostnames?: string[];
+  trustProxy?: boolean;
+  appDir?: string;
+  balance?: (qor1: string) => Promise<bigint>;
+  now?: () => number;
 }
 
 function cookie(req: IncomingMessage, name: string): string | undefined {
   for (const part of (req.headers.cookie ?? "").split(";")) {
     const [k, ...v] = part.trim().split("=");
-    if (k === name) return decodeURIComponent(v.join("="));
+    if (k === name) {
+      try {
+        return decodeURIComponent(v.join("="));
+      } catch {
+        return undefined;
+      }
+    }
   }
   return undefined;
 }
 
-const mb = (n: number) => `${(n / 1e6).toFixed(0)} MB`;
-const gb = (n?: number) => (n === undefined ? "unknown" : `${(n / 1e9).toFixed(1)} GB`);
-const time = (s: number) => new Date(s * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+const setCookie = (name: string, value: string, maxAge: number) =>
+  `${name}=${encodeURIComponent(value)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}`;
 
-export function page(s: LocalStatus, h: ReturnType<typeof health>, reg: string): string {
-  const rows = s.latest.map((a) => `<tr>
-    <td>${esc(time(a.windowStart))}</td><td>${esc(a.segments)}</td>
-    <td>${a.txHash ? `<a href="${EXPLORER}/tx/${esc(a.txHash)}" rel="noreferrer" target="_blank">${esc(a.blockNumber ?? "tx")}</a>` : "-"}</td>
-    <td>${a.warnings ? `<span class="warn">${esc(a.warnings)}</span>` : "0"}</td>
-    <td>${esc(a.spec ?? "")}</td>
-    <td><a href="/receipts/${encodeURIComponent(a.file)}" download>receipt</a></td></tr>`).join("");
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="60"><title>QoreWitness: ${esc(s.device)}</title><style>
-:root{--pine:#17483A;--ink:#13201C;--stone:#5A6661;--line:#DCE1DD;--bg:#F6F7F5;--ok:#1E7A50;--okbg:#E6F2EC;--bad:#B42318;--badbg:#FBEAE7;--sig:#E8663D}
-@media (prefers-color-scheme:dark){:root{--ink:#E8EFEC;--stone:#A9B6B0;--line:#2A433C;--bg:#0F211C;--okbg:#173A2C;--badbg:#3A1D18}body{background:#0F211C}main{background:#152B25}}
-body{margin:0;font:15px/1.5 system-ui,"IBM Plex Sans",sans-serif;color:var(--ink);background:var(--bg)}
-header{background:var(--pine);color:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center}
-header i{width:10px;height:10px;border-radius:50%;background:var(--sig);display:inline-block}
-main{max-width:960px;margin:16px auto;padding:16px;background:#fff;border:1px solid var(--line);border-radius:8px}
-.health{padding:10px 12px;border-radius:6px;margin-bottom:16px}.ok{background:var(--okbg);color:var(--ok)}.warn{color:var(--sig)}.bad{background:var(--badbg);color:var(--bad)}
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:16px}
-.facts div{border:1px solid var(--line);border-radius:6px;padding:8px}.facts b{display:block;font-size:12px;color:var(--stone);font-weight:500}
-table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:6px;border-bottom:1px solid var(--line)}
-.scroll{overflow-x:auto}a{color:var(--pine)}@media (prefers-color-scheme:dark){a{color:#7FC4AE}}small{color:var(--stone)}
-</style></head><body><header><i></i><strong>QoreWitness</strong><span>${esc(s.device)}</span></header><main>
-<div class="health ${h.level === "ok" ? "ok" : h.level === "bad" ? "bad" : "warn"}">${esc(h.text)}</div>
-<div class="facts">
-<div><b>Last window ended</b>${s.lastAnchorAgeSeconds === undefined ? "none yet" : `${esc(Math.round(s.lastAnchorAgeSeconds / 60))} min ago`}</div>
-<div><b>Receipts</b>${esc(s.receipts)}</div>
-<div><b>Waiting to anchor</b>${esc(s.pendingWindows)} window(s), ${esc(s.openSegments)} open segment(s)</div>
-<div><b>Clips on disk</b>${esc(s.segmentFiles)} (${esc(mb(s.segmentBytes))})</div>
-<div><b>Disk free</b>${esc(gb(s.diskFreeBytes))} of ${esc(gb(s.diskTotalBytes))}</div>
-<div><b>Registry</b>${reg ? `<a href="${EXPLORER}/address/${esc(reg)}" rel="noreferrer" target="_blank">${esc(reg.slice(0, 10))}…</a>` : "not set"}</div>
-</div>
-<h2>Latest anchored windows</h2><div class="scroll"><table><thead><tr><th>Window start</th><th>Clips</th><th>Block</th><th>Warnings</th><th>Rules</th><th></th></tr></thead>
-<tbody>${rows || `<tr><td colspan="6">No receipts yet.</td></tr>`}</tbody></table></div>
-<p><small>Check any clip with its receipt in the public verifier: <a href="https://qorewitness.fnoufnou.com/verifier.html" rel="noreferrer" target="_blank">qorewitness.fnoufnou.com/verifier.html</a>. Your clips never leave this machine. This page refreshes every minute.</small></p>
-</main></body></html>`;
-}
-
-function send(res: ServerResponse, code: number, type: string, body: string | Buffer, extra: Record<string, string> = {}) {
+function send(res: ServerResponse, code: number, type: string, body: string | Buffer, extra: Record<string, string | string[]> = {}) {
   res.writeHead(code, {
     "content-type": type, "cache-control": "no-store", "x-content-type-options": "nosniff",
-    "referrer-policy": "no-referrer", "x-frame-options": "DENY",
-    "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'",
+    // same-origin, not no-referrer: with no-referrer, browsers send "Origin: null" on form posts.
+    "referrer-policy": "same-origin", "x-frame-options": "DENY", "content-security-policy": CSP,
     ...extra,
   });
   res.end(body);
 }
 
-export function handler(req: IncomingMessage, res: ServerResponse): void {
-  const url = new URL(req.url ?? "/", "http://local");
-  if (req.method !== "GET") return send(res, 405, "text/plain", "method not allowed");
-  const q = url.searchParams.get("token") ?? undefined;
-  if (tokenOk(q, token)) {
-    // Move the token from the address bar into a cookie.
-    return send(res, 303, "text/plain", "", {
-      location: url.pathname, "set-cookie": `qw_ui=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000`,
-    });
+const html = (res: ServerResponse, code: number, title: string, body: string, opts: { refresh?: number; script?: boolean; wide?: boolean; extra?: Record<string, string | string[]> } = {}) =>
+  send(res, code, "text/html; charset=utf-8", layout({ title, body, refreshSeconds: opts.refresh, script: opts.script, wide: opts.wide }), opts.extra);
+
+const redirect = (res: ServerResponse, to: string, extra: Record<string, string | string[]> = {}) =>
+  send(res, 303, "text/plain", "", { location: to, ...extra });
+
+async function readForm(req: IncomingMessage): Promise<Record<string, string> | undefined> {
+  const type = (req.headers["content-type"] ?? "").split(";")[0].trim().toLowerCase();
+  if (type !== "application/x-www-form-urlencoded") return undefined;
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const c of req) {
+    size += (c as Buffer).length;
+    if (size > MAX_BODY) return undefined;
+    chunks.push(c as Buffer);
   }
-  if (!tokenOk(cookie(req, "qw_ui"), token)) {
-    return send(res, 401, "text/plain; charset=utf-8", "QoreWitness dashboard: open the link with ?token=... from the container log.");
-  }
-  const s = collectStatus({ device, receiptDir, segmentDir });
-  if (url.pathname === "/") return send(res, 200, "text/html; charset=utf-8", page(s, health(s, windowSeconds), registry));
-  if (url.pathname === "/api/status") return send(res, 200, "application/json", JSON.stringify({ ...s, health: health(s, windowSeconds) }));
-  const m = /^\/receipts\/([^/]+)$/.exec(url.pathname);
-  if (m) {
-    const name = decodeURIComponent(m[1]);
-    if (!RECEIPT_NAME.test(name) || !name.startsWith(`${device}-`)) return send(res, 404, "text/plain", "not found");
-    try {
-      return send(res, 200, "application/json", readFileSync(join(receiptDir, name)), { "content-disposition": `attachment; filename="${name}"` });
-    } catch {
-      return send(res, 404, "text/plain", "not found");
-    }
-  }
-  return send(res, 404, "text/plain", "not found");
+  return Object.fromEntries(new URLSearchParams(Buffer.concat(chunks).toString("utf8")));
 }
 
+// ---------------------------------------------------------------- dashboard page
+
+const time = (s: number) => new Date(s * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+const gb = (n?: number) => (n === undefined ? "unknown" : `${(n / 1e9).toFixed(1)} GB`);
+
+export interface DashboardView {
+  status: LocalStatus;
+  health: BoxHealth;
+  info?: AccountInfo;
+  balanceUqor?: number;
+  retentionDays?: number;
+  csrf?: string;
+}
+
+export function dashboardPage(v: DashboardView): string {
+  const s = v.status;
+  const h = v.health;
+  const rows = s.latest.map((a) => `<tr>
+    <td>${esc(time(a.windowStart))}</td><td>${esc(a.segments)}</td>
+    <td>${a.txHash ? `<a href="${EXPLORER}/tx/${esc(a.txHash)}" rel="noreferrer" target="_blank">block ${esc(a.blockNumber ?? "")}</a>` : "-"}</td>
+    <td>${a.warnings ? `<span>${esc(a.warnings)} clip(s) with a gap or a stream change</span>` : "none"}</td>
+    <td><a href="/receipts/${encodeURIComponent(a.file)}" download>receipt</a></td></tr>`).join("");
+  const fees = v.info?.plan === "sponsored"
+    ? "Covered by the pilot"
+    : v.balanceUqor === undefined ? "unknown" : `${(v.balanceUqor / 1e6).toFixed(1)} test QOR${h.feeDaysLeft !== undefined ? `, ${daysText(h.feeDaysLeft)}` : ""}`;
+  const camera = s.newestSegmentAgeSeconds === undefined ? "no video yet" : s.newestSegmentAgeSeconds <= 300 ? "online" : `no video for ${Math.round(s.newestSegmentAgeSeconds / 60)} min`;
+  return `<div class="status ${h.level}" role="status"><span class="dot"></span><div><strong>${esc(h.title)}</strong>${h.action ? `<p>${esc(h.action)}</p>` : ""}</div></div>
+<div class="facts">
+<div><b>Camera</b>${esc(v.info?.device ?? s.device)}: ${esc(camera)}</div>
+<div><b>Last seal</b>${s.lastAnchorAgeSeconds === undefined ? "none yet" : `${esc(Math.max(0, Math.round(s.lastAnchorAgeSeconds / 60)))} min ago`}</div>
+<div><b>Network fees</b>${esc(fees)}</div>
+<div><b>Video kept</b>${esc(v.retentionDays ?? 14)} days, ${esc(gb(s.diskFreeBytes))} free</div>
+</div>
+<div class="card"><h2 style="margin-top:0">Latest seals</h2><div class="scroll"><table><thead><tr><th>Time</th><th>Clips</th><th>Sealed in</th><th>Notes</th><th></th></tr></thead>
+<tbody>${rows || `<tr><td colspan="5">No seals yet.</td></tr>`}</tbody></table></div>
+<p class="muted" style="margin-top:12px">To prove a clip, send it with its receipt. Anyone can check both in the public verifier: <a href="${VERIFIER}" rel="noreferrer" target="_blank">qorewitness.fnoufnou.com</a>. Your video never leaves this box unless you send it.</p>
+<details><summary>Technical details</summary><p class="mono">Receipts ${esc(s.receipts)}, waiting windows ${esc(s.pendingWindows)}, open segments ${esc(s.openSegments)}, clips on disk ${esc(s.segmentFiles)}<br>
+${v.info ? `Account ${esc(v.info.qor1)}<br>Owner ${esc(v.info.owner)}<br>Device id ${esc(v.info.deviceId)}<br>Camera key ${esc(v.info.keyFingerprint)}<br>Registry <a href="${EXPLORER}/address/${esc(v.info.registry)}" rel="noreferrer" target="_blank">${esc(v.info.registry)}</a>` : ""}</p></details></div>
+${v.csrf ? `<form method="post" action="/logout"><input type="hidden" name="_csrf" value="${esc(v.csrf)}"><button class="secondary">Log out</button></form>` : ""}`;
+}
+
+/** Older read-only page (kept for the phase 1 tests). */
+export function page(s: LocalStatus, h: ReturnType<typeof health>, reg: string): string {
+  return layout({
+    title: s.device, refreshSeconds: 60, wide: true,
+    body: dashboardPage({ status: s, health: { level: h.level, title: h.text }, info: reg ? ({ registry: reg } as AccountInfo) : undefined }),
+  });
+}
+
+// ---------------------------------------------------------------- handler
+
+export function createHandler(o: ServerOptions) {
+  const p = o.paths;
+  const ui = p.uiDir;
+  const appDir = o.appDir ?? resolve(".");
+  const now = o.now ?? Date.now;
+  const pairFails = new FailureLimiter(10, 24 * 3600_000); // then: run "pair" again or restart the ui
+  const loginFails = new FailureLimiter(5, 60_000);
+  let balanceCache: { at: number; qor1: string; value?: number } | undefined;
+
+  async function balance(qor1: string): Promise<number | undefined> {
+    if (balanceCache && balanceCache.qor1 === qor1 && now() - balanceCache.at < 60_000) return balanceCache.value;
+    let value: number | undefined;
+    try {
+      value = Number(await (o.balance ?? fetchBalanceUqor)(qor1));
+    } catch {
+      value = balanceCache?.qor1 === qor1 ? balanceCache.value : undefined;
+    }
+    balanceCache = { at: now(), qor1, value };
+    return value;
+  }
+
+  async function dashboard(res: ServerResponse, csrf: string, json: boolean) {
+    const info = readAccountInfo(p);
+    const cam = readEnvFile(p.cameraEnv);
+    const device = info?.device ?? cam.QW_DEVICE ?? "camera";
+    const windowSeconds = Number(cam.QW_WINDOW_SECONDS ?? 600);
+    const status = collectStatus({ device, receiptDir: join(p.data, device, "receipts"), segmentDir: join(p.data, device, "segments") });
+    let setupAgeSeconds: number | undefined;
+    try {
+      setupAgeSeconds = (now() - Date.parse(readFileSync(p.done, "utf8").trim() || "x")) / 1000;
+    } catch {
+      setupAgeSeconds = undefined;
+    }
+    if (!Number.isFinite(setupAgeSeconds)) setupAgeSeconds = undefined;
+    const bal = info ? await balance(info.qor1) : undefined;
+    const h = boxHealth(status, { windowSeconds, plan: info?.plan, balanceUqor: bal, setupAgeSeconds, qor1: info?.qor1 });
+    if (json) return send(res, 200, "application/json", JSON.stringify({ ...status, health: h, plan: info?.plan, balanceUqor: bal }));
+    return html(res, 200, device, dashboardPage({ status, health: h, info, balanceUqor: bal, retentionDays: Number(cam.QW_RETENTION_DAYS ?? 14), csrf }), { refresh: 60, wide: true });
+  }
+
+  async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    // 1. Network checks on every request.
+    if (!hostAllowed(req.headers.host, o.hostnames)) {
+      return send(res, 421, "text/plain; charset=utf-8", "Unknown host name. Open the box by its IP address, as the installer showed. To allow a name, set QW_UI_HOSTNAME.");
+    }
+    if (!o.trustProxy && (req.headers["x-forwarded-for"] || req.headers.forwarded)) {
+      return send(res, 400, "text/plain; charset=utf-8", "Requests through a proxy are refused. Set QW_UI_TRUST_PROXY=1 if you use one on purpose.");
+    }
+    if (!privateAddress(req.socket.remoteAddress)) return send(res, 403, "text/plain; charset=utf-8", "Only devices on the home network can open this page.");
+    const url = new URL(req.url ?? "/", "http://local");
+    const path = url.pathname;
+
+    // 2. Static files (fonts, icon). Public, no secrets.
+    if (req.method === "GET" && ASSETS[path]) {
+      try {
+        return send(res, 200, ASSETS[path].type, readFileSync(join(appDir, ASSETS[path].file)), { "cache-control": "public, max-age=86400" });
+      } catch {
+        return send(res, 404, "text/plain", "not found");
+      }
+    }
+    if (req.method !== "GET" && req.method !== "POST") return send(res, 405, "text/plain", "method not allowed");
+
+    let form: Record<string, string> = {};
+    if (req.method === "POST") {
+      if (!originOk(req.headers.origin, req.headers.host)) return send(res, 403, "text/plain; charset=utf-8", "This form must be sent from this page.");
+      const f = await readForm(req);
+      if (!f) return send(res, 413, "text/plain; charset=utf-8", "The form is too large or of the wrong type.");
+      form = f;
+    }
+
+    const claimed = hasPassword(ui);
+    const done = isSetupDone(p);
+    const client = req.socket.remoteAddress ?? "?";
+
+    // 3. First run: pairing, then a password.
+    if (!claimed) {
+      const pairing = readPairing(ui);
+      if (!pairing) return html(res, 503, "Setup", renderClaimCode("This box has no pairing code. Run the installer again to get one.", true));
+      const claimCsrf = csrfToken(pairing.token, "claim");
+      const claimOk = safeEqual(cookie(req, "qw_claim"), pairing.token);
+      const claimCookie = setCookie("qw_claim", pairing.token, 24 * 3600);
+      if (req.method === "GET" && url.searchParams.has("token")) {
+        if (!safeEqual(url.searchParams.get("token") ?? "", pairing.token)) {
+          pairFails.fail("pair");
+          return html(res, 403, "Setup", renderClaimCode("This setup link is not valid. Type the pairing code instead."));
+        }
+        // Move the token from the address bar into a cookie. A same-page reload keeps SameSite=Strict happy.
+        return send(res, 200, "text/html; charset=utf-8", `<!doctype html><meta http-equiv="refresh" content="0;url=/setup"><title>QoreWitness</title><a href="/setup">Continue</a>`, { "set-cookie": claimCookie });
+      }
+      if (req.method === "POST" && path === "/setup/pair") {
+        if (pairFails.blocked("pair")) return html(res, 429, "Setup", renderClaimCode("Too many wrong codes. On the box, run the installer again to get a new code.", true));
+        if (!safeEqual((form.code ?? "").trim(), pairing.code)) {
+          pairFails.fail("pair");
+          return html(res, 403, "Setup", renderClaimCode("This code is not right. Check the code on the installer screen."));
+        }
+        pairFails.reset("pair");
+        return redirect(res, "/setup", { "set-cookie": claimCookie });
+      }
+      if (req.method === "POST" && path === "/setup/password") {
+        if (!claimOk || !csrfOk(pairing.token, "claim", form._csrf)) return send(res, 403, "text/plain; charset=utf-8", "Open the setup link again.");
+        const problem = passwordProblem(form.password ?? "", form.again ?? "");
+        if (problem) return html(res, 400, "Setup", renderClaimPassword(claimCsrf, problem));
+        setPassword(ui, form.password!);
+        clearPairing(ui);
+        const session = issueSession(sessionSecret(ui)!, now());
+        return redirect(res, "/setup", { "set-cookie": [setCookie("qw_session", session, SESSION_SECONDS), setCookie("qw_claim", "", 0)] });
+      }
+      if (req.method === "GET" && path === "/setup") {
+        return claimOk ? html(res, 200, "Setup", renderClaimPassword(claimCsrf)) : html(res, 200, "Setup", renderClaimCode(pairFails.blocked("pair") ? "Too many wrong codes. On the box, run the installer again to get a new code." : undefined, pairFails.blocked("pair")));
+      }
+      return req.method === "GET" ? redirect(res, "/setup") : send(res, 404, "text/plain", "not found");
+    }
+
+    // 4. Login.
+    const secret = sessionSecret(ui)!;
+    const session = cookie(req, "qw_session");
+    const authed = sessionValid(secret, session, now());
+    if (!authed) {
+      if (req.method === "POST" && path === "/login") {
+        if (loginFails.blocked(client, now()) || loginFails.blocked("*", now())) return html(res, 429, "Log in", renderLogin("Too many tries. Wait one minute."));
+        if (!checkPassword(ui, form.password ?? "")) {
+          loginFails.fail(client, now());
+          loginFails.fail("*", now());
+          return html(res, 403, "Log in", renderLogin("This password is not right."));
+        }
+        loginFails.reset(client);
+        return redirect(res, done ? "/" : "/setup", { "set-cookie": setCookie("qw_session", issueSession(secret, now()), SESSION_SECONDS) });
+      }
+      if (req.method === "GET" && path === "/login") return html(res, 200, "Log in", renderLogin());
+      if (path.startsWith("/api/")) return send(res, 401, "application/json", JSON.stringify({ error: "login needed" }));
+      return req.method === "GET" ? redirect(res, "/login") : send(res, 403, "text/plain", "login needed");
+    }
+
+    // 5. Signed in. Every POST needs the CSRF token of this session.
+    const csrf = csrfToken(secret, session!);
+    if (req.method === "POST" && !csrfOk(secret, session, form._csrf)) return send(res, 403, "text/plain; charset=utf-8", "The form expired. Go back and reload the page.");
+    if (req.method === "POST" && path === "/logout") return redirect(res, "/login", { "set-cookie": setCookie("qw_session", "", 0) });
+    if (path === "/login") return redirect(res, done ? "/" : "/setup");
+
+    if (!done) {
+      const w = o.wizard;
+      if (req.method === "POST" && path.startsWith("/setup/")) {
+        const r = await w.post(path, { ...form, _csrf: csrf });
+        if (r.redirect) return redirect(res, r.redirect);
+        return html(res, 200, "Setup", r.html ?? "", { script: true });
+      }
+      if (req.method === "GET" && path === "/setup") {
+        w.resumeIfInterrupted();
+        const screen = await w.screen();
+        if (screen === "done") return redirect(res, "/setup/done");
+        return html(res, 200, "Setup", await w.render(screen, csrf), { refresh: w.refreshFor(screen), script: screen === "funding" });
+      }
+      return req.method === "GET" ? redirect(res, "/setup") : send(res, 404, "text/plain", "not found");
+    }
+
+    // 6. Setup is done: dashboard. /setup is closed (no more setup actions), only the done page stays.
+    if (req.method === "GET" && path === "/setup/done") return html(res, 200, "Sealing started", renderDone(readAccountInfo(p)?.device ?? "camera"));
+    if (req.method === "GET" && path === "/setup") return redirect(res, "/setup/done");
+    if (path === "/setup" || path.startsWith("/setup/")) {
+      return html(res, 404, "Setup finished", `<div class="card"><h1>Setup is finished</h1><p>This box is set up. Changes to the camera come in a later version.</p><a class="btn" href="/">Open my dashboard</a></div>`);
+    }
+    if (req.method === "GET" && path === "/") return dashboard(res, csrf, false);
+    if (req.method === "GET" && path === "/api/status") return dashboard(res, csrf, true);
+    const m = /^\/receipts\/([^/]+)$/.exec(path);
+    if (req.method === "GET" && m) {
+      const info = readAccountInfo(p);
+      const device = info?.device ?? readEnvFile(p.cameraEnv).QW_DEVICE ?? "camera";
+      let name: string;
+      try {
+        name = decodeURIComponent(m[1]);
+      } catch {
+        return send(res, 404, "text/plain", "not found");
+      }
+      if (!RECEIPT_NAME.test(name) || !name.startsWith(`${device}-`)) return send(res, 404, "text/plain", "not found");
+      try {
+        return send(res, 200, "application/json", readFileSync(join(p.data, device, "receipts", name)), { "content-disposition": `attachment; filename="${name}"` });
+      } catch {
+        return send(res, 404, "text/plain", "not found");
+      }
+    }
+    return send(res, 404, "text/plain", "not found");
+  }
+
+  return (req: IncomingMessage, res: ServerResponse) => {
+    handle(req, res).catch((e: unknown) => {
+      console.error(`${new Date().toISOString()} ui error: ${safeError(e)}`);
+      if (!res.headersSent) send(res, 500, "text/plain; charset=utf-8", "Something went wrong. Reload the page.");
+      else res.end();
+    });
+  };
+}
+
+// ---------------------------------------------------------------- main
+
 if (process.argv[1] && /server\.(ts|js)$/.test(process.argv[1])) {
-  createServer(handler).listen(port, host, () => {
-    const shown = host === "0.0.0.0" ? "localhost" : host;
-    console.log(`${new Date().toISOString()} dashboard for ${device}: http://${shown}:${port}/?token=${token}`);
+  const paths = dataPaths();
+  ensureDirs(paths);
+  const wizard = new Wizard({ paths, chain: liveChain(), sponsor: () => new SponsorClient(), snapshot: (u) => snapshot(u) });
+  const host = process.env.QW_UI_HOST?.trim() || "127.0.0.1";
+  const port = Number(process.env.QW_UI_PORT ?? 8080);
+  const handler = createHandler({
+    paths, wizard,
+    hostnames: (process.env.QW_UI_HOSTNAME ?? "").split(","),
+    trustProxy: process.env.QW_UI_TRUST_PROXY === "1",
+  });
+  createServer({ requestTimeout: 60_000, headersTimeout: 20_000 }, handler).listen(port, host, () => {
+    const at = new Date().toISOString();
+    console.log(`${at} QoreWitness box on ${host}:${port}`);
+    if (!hasPassword(paths.uiDir)) {
+      // The pairing link, once per start, in the container log only.
+      const { pairing } = ensurePairing(paths.uiDir);
+      const base = process.env.QW_UI_PUBLIC_URL?.replace(/\/+$/, "") || `http://localhost:${port}`;
+      if (pairing) console.log(`${at} first-run setup: ${base}/setup?token=${pairing.token}  pairing code ${pairing.code}`);
+    } else if (!isSetupDone(paths)) {
+      console.log(`${at} setup is open: log in at /setup with the dashboard password`);
+    }
   });
 }

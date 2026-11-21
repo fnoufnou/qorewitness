@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { esc, page, tokenOk } from "../src/web/server.js";
-import { collectStatus, health, RECEIPT_NAME, summarize } from "../src/web/status.js";
+import { boxHealth, collectStatus, feeDaysLeft, health, RECEIPT_NAME, summarize, type LocalStatus } from "../src/web/status.js";
 
 const receipt = (start: number, warn = false) => JSON.stringify({
   windowStart: String(start), windowSeconds: 600,
@@ -80,5 +80,53 @@ describe("local dashboard: server", () => {
     const html = page(s, { level: "ok", text: "<b>" }, "0x1234567890");
     assert.ok(!html.includes("<script>"));
     assert.ok(html.includes("&lt;b&gt;"));
+  });
+});
+
+describe("dashboard: box health in plain words", () => {
+  const base: LocalStatus = {
+    device: "cam", receipts: 10, unanchored: [], latest: [], lastAnchorAgeSeconds: 240, pendingWindows: 0, openSegments: 1,
+    segmentFiles: 100, segmentBytes: 1e9, newestSegmentAgeSeconds: 20, diskFreeBytes: 400e9, diskTotalBytes: 500e9,
+  };
+  const facts = { windowSeconds: 600, plan: "self" as const, balanceUqor: 50_000_000, setupAgeSeconds: 86_400, qor1: "qor1abc" };
+
+  it("green with the age of the last seal", () => {
+    const h = boxHealth(base, facts);
+    assert.equal(h.level, "ok");
+    assert.equal(h.title, "Sealing OK. Last seal 4 minutes ago.");
+    assert.equal(h.action, undefined);
+  });
+
+  it("red when the camera sends no video, with one action", () => {
+    const h = boxHealth({ ...base, newestSegmentAgeSeconds: 600 }, facts);
+    assert.equal(h.level, "bad");
+    assert.equal(h.title, "No video from the camera.");
+    assert.match(h.action!, /power and Wi-Fi/);
+  });
+
+  it("orange when fees run low on Self-managed, red when they ran out", () => {
+    const low = boxHealth(base, { ...facts, balanceUqor: 20_000_000 });
+    assert.equal(low.level, "warn");
+    assert.equal(low.title, "Network fees low: about 1 day left.");
+    assert.match(low.action!, /qor1abc/);
+    assert.equal(boxHealth(base, { ...facts, balanceUqor: 100_000 }).level, "bad");
+    assert.equal(Math.round(feeDaysLeft(14_400_000, 600)! * 10) / 10, 1);
+  });
+
+  it("Fees included: a normal top-up level is not a warning", () => {
+    assert.equal(boxHealth(base, { ...facts, plan: "sponsored", balanceUqor: 15_000_000 }).level, "ok");
+    assert.equal(boxHealth(base, { ...facts, plan: "sponsored", balanceUqor: 100_000 }).level, "bad");
+  });
+
+  it("orange while the first seal is pending, red after 30 minutes without one", () => {
+    const first = { ...base, receipts: 0, lastAnchorAgeSeconds: undefined };
+    assert.equal(boxHealth(first, { ...facts, setupAgeSeconds: 300 }).level, "warn");
+    assert.equal(boxHealth(first, { ...facts, setupAgeSeconds: 3600 }).level, "bad");
+  });
+
+  it("red when sealing stopped or windows could not be sealed, orange on a full disk", () => {
+    assert.equal(boxHealth({ ...base, lastAnchorAgeSeconds: 3000 }, facts).level, "bad");
+    assert.equal(boxHealth({ ...base, unanchored: ["unanchored-cam-1.json"] }, facts).level, "bad");
+    assert.equal(boxHealth({ ...base, diskFreeBytes: 10e9 }, facts).level, "warn");
   });
 });

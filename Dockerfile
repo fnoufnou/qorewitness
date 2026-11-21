@@ -20,5 +20,6 @@ ENV QW_COMMIT=${QW_COMMIT} NODE_ENV=production
 RUN useradd --system --uid 10001 --home /data qw && mkdir -p /data && chown qw /data
 USER qw
 VOLUME ["/data"]
+EXPOSE 8080
 ENTRYPOINT ["/usr/bin/tini", "--", "/opt/qorewitness/deploy/docker-entrypoint.sh"]
 CMD ["agent"]
