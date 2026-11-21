@@ -18,7 +18,7 @@ import { loadDeviceKey } from "../agent/device-key.js";
 import { deviceIdOf } from "../core/message.js";
 import { safeError } from "../core/redact.js";
 import {
-  FAUCET, LABEL_RE, MIN_SETUP_UQOR, REGISTER_STEPS, ensureDeviceKey, ensureOwnerAccount, finishSetup, isSetupDone,
+  FAUCET, LABEL_RE, MIN_SETUP_UQOR, REGISTER_STEPS, ensureDeviceKey, ensureOwnerAccount, finishSetup, isSetupDone, readOwnerPublic,
   keyFingerprint, readAccountInfo, readEnvFile, registerOnChain, saveCamera, writeSecretFile, type ChainOps, type Paths, type Plan,
 } from "../setup/steps.js";
 import { existsSync } from "node:fs";
@@ -115,6 +115,7 @@ export class Wizard {
   private running?: Promise<void>;
   private lastSnapshot?: { jpeg: Buffer; at: number };
   private balance?: { at: number; value: bigint; address: string };
+  private ownerPub?: { cosmos: string; evm: `0x${string}`; registry: `0x${string}` };
 
   constructor(private readonly d: WizardDeps) {}
 
@@ -142,9 +143,16 @@ export class Wizard {
     return !!s.camera && existsSync(`${this.d.paths.keysDir}/${s.camera.label}.key`);
   }
 
+  /** Public addresses of the owner, read once (the account never changes after it exists). */
+  private async owner() {
+    if (!this.ownerPub) this.ownerPub = await readOwnerPublic(this.d.paths);
+    if (!this.ownerPub) throw new Error("no owner account yet");
+    return this.ownerPub;
+  }
+
   private async balanceUqor(force = false): Promise<bigint | undefined> {
     if (!this.ownerExists()) return undefined;
-    const owner = await ensureOwnerAccount(this.d.paths);
+    const owner = await this.owner();
     const fresh = this.balance && this.balance.address === owner.cosmos && Date.now() - this.balance.at < 10_000;
     if (fresh && !force) return this.balance!.value;
     try {
@@ -204,13 +212,21 @@ export class Wizard {
     while (this.running) await this.running;
   }
 
-  /** A job that was running when the process stopped starts again (all steps are idempotent). */
+  /**
+   * Called on every page load: a job that was running when the process stopped
+   * starts again (all steps are idempotent), and a Fees included box that has
+   * not asked the sponsor yet does so now.
+   */
   resumeIfInterrupted(): void {
+    if (this.running) return;
     const s = this.state();
-    if (s.job?.status === "running" && !this.running) {
+    if (s.job?.status === "running") {
       if (s.job.kind === "register") this.startRegister();
       else this.startEnroll();
+      return;
     }
+    const ready = s.plan === "sponsored" && s.pilotCode && s.backupAck && s.camera && this.ownerExists() && this.keyExists(s);
+    if (ready && !s.sponsor && s.job?.kind !== "enroll" && s.job?.kind !== "register") this.startEnroll();
   }
 
   private startEnroll(): void {
@@ -218,7 +234,7 @@ export class Wizard {
       const s = this.state();
       if (!s.camera || !s.pilotCode) throw new Error("no pilot code");
       update(1, "Asking the pilot to cover the network fees");
-      const owner = await ensureOwnerAccount(this.d.paths);
+      const owner = await this.owner();
       const { key } = ensureDeviceKey(this.d.paths, s.camera.label);
       const answer = await enrollDevice(this.d.sponsor(), {
         pilotCode: s.pilotCode, registry: owner.registry, deviceId: deviceIdOf(s.camera.label), owner: owner.evm, key,
@@ -237,7 +253,7 @@ export class Wizard {
       if (!s.camera || !s.plan) throw new Error("camera or plan missing");
       const label = s.camera.label;
       const r = await registerOnChain(this.d.paths, label, this.d.chain, (n, _t, text) => update(n, text));
-      const owner = await ensureOwnerAccount(this.d.paths);
+      const owner = await this.owner();
       const { key } = ensureDeviceKey(this.d.paths, label);
       finishSetup(this.d.paths, {
         device: label, deviceId: r.deviceId, owner: owner.evm, qor1: owner.cosmos, registry: owner.registry, plan: s.plan,
@@ -259,6 +275,7 @@ export class Wizard {
 
     if (path === "/setup/plan") {
       if (action === "reset") {
+        if (s.job?.kind === "register" && s.job.status !== "failed") return { redirect: "/setup" };
         // Back to the plan choice, e.g. when the pilot is full. Keys and account stay.
         delete s.plan;
         delete s.pilotCode;
@@ -465,7 +482,7 @@ ${c ? `<div class="hint">For your safety the saved password is not shown. Type i
 <p>The box makes two keys: one for your account and one for the camera. The camera key signs every seal. The keys stay on this box.</p>${err}
 <form method="post" action="/setup/account">${hidden("_csrf", csrf)}${hidden("action", "create")}<button>Create keys</button></form></div>`;
     }
-    const owner = await ensureOwnerAccount(this.d.paths);
+    const owner = await this.owner();
     const keyHash = s.camera ? readKeyHash(this.d.paths, s.camera.label) : "";
     return `<div class="card">${eyebrow("account", "Keys")}
 <h1>Keys ready</h1>
@@ -480,7 +497,7 @@ ${c ? `<div class="hint">For your safety the saved password is not shown. Type i
   }
 
   private async renderFunding(s: WizardState, csrf: string, err: string): Promise<string> {
-    const owner = await ensureOwnerAccount(this.d.paths);
+    const owner = await this.owner();
     const bal = await this.balanceUqor();
     const balText = bal === undefined ? "not known yet" : `${qor(bal)} test QOR`;
     if (s.plan === "sponsored") {

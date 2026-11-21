@@ -161,6 +161,14 @@ export async function ensureOwnerAccount(p: Paths, registry?: string): Promise<O
   return { cosmos: owner.cosmos, evm: owner.evm as Address, registry: acc.QORE_REGISTRY as Address, created };
 }
 
+/** Public data of an existing owner account. Reads only, writes nothing. */
+export async function readOwnerPublic(p: Paths): Promise<Omit<OwnerPublic, "created"> | undefined> {
+  const acc = readEnvFile(p.accountEnv);
+  if (!acc.QORE_MNEMONIC) return undefined;
+  const owner = await deriveUnifiedAccount(acc.QORE_MNEMONIC, 0);
+  return { cosmos: owner.cosmos, evm: owner.evm as Address, registry: (acc.QORE_REGISTRY ?? PUBLIC_REGISTRY_V4) as Address };
+}
+
 /** The full owner account, with keys. Only for the steps that sign. Never log or return it. */
 export async function loadOwner(p: Paths): Promise<{ account: UnifiedAccount; mnemonic: string; registry: Address }> {
   const acc = readEnvFile(p.accountEnv);
