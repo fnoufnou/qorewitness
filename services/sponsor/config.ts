@@ -54,6 +54,12 @@ export interface SponsorConfig {
   reserveUqor: bigint;
   /** Warn when the hot wallet holds more than this (keep only a small float). */
   maxFloatUqor: bigint;
+  /** One start grant per pilot code for a camera that is not on chain yet. */
+  grantUqor: bigint;
+  /** A pending or funded camera that is not registered within this time expires. */
+  pendingTtlSeconds: number;
+  /** After an unknown grant result, retry once when the owner still holds 0 after this time. */
+  grantRetrySeconds: number;
   /** Blocks to search back for the device public key (registration or rotation event). */
   keyLookbackBlocks: bigint;
   logChunkBlocks: bigint;
@@ -103,6 +109,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): SponsorConfig 
     maxHourlyUqor: qor(env.SPONSOR_MAX_HOURLY_QOR, "30"),
     reserveUqor: qor(env.SPONSOR_RESERVE_QOR, "1"),
     maxFloatUqor: qor(env.SPONSOR_MAX_FLOAT_QOR, "200"),
+    grantUqor: qor(env.SPONSOR_GRANT_QOR, "3"),
+    pendingTtlSeconds: int(env.SPONSOR_PENDING_TTL_SECONDS, 48 * 3600, 60),
+    grantRetrySeconds: int(env.SPONSOR_GRANT_RETRY_SECONDS, 600, 60),
     keyLookbackBlocks: BigInt(int(env.SPONSOR_KEY_LOOKBACK_BLOCKS, 120_000, 1)),
     logChunkBlocks: BigInt(int(env.SPONSOR_LOG_CHUNK_BLOCKS, 5_000, 1)),
   };
