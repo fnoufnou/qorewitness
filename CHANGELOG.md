@@ -2,6 +2,13 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
+## Unreleased
+
+### 2026-11-21
+- Sponsor service "Fees included" (`services/sponsor/`, testnet pilot): refills the test QOR that a pilot camera uses, sent to the customer's own owner account. Enrol needs a pilot code and a camera ML-DSA-87 signature over a single-use nonce, checked against the device key on registry v4. Pays only the on-chain owner, only for anchors seen on chain. Caps per camera, owner and day, max 12 cameras, pause file as kill switch, automatic pause on high outflow, refuses any chain but 9800. Deploy files in `deploy/sponsor/`, details in `docs/SPONSOR.md`. Not deployed yet (105 tests).
+- Agent: hybrid bank send helpers moved from the Q-Day drill to `src/agent/bank.ts`. The drill and the sponsor share them.
+- Docs: real cost per anchor is about 0.0457 test QOR (406,000 gas at 0.1125 uqor per gas), plus 0.1 test QOR per EVM window open (about 3.5 per day). Explorers show the maximum fee (about 0.104 QOR). `docs/TESTNET_FINDINGS.md`, `docs/AGENT_KEY.md` (a relayed anchor costs about 2.4 times a direct one) and README updated.
+
 ## 0.5.0-alpha.1 (21 Nov 2026, first tester build)
 
 ### 2026-11-21
