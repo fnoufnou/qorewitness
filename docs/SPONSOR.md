@@ -8,41 +8,71 @@ Code: `services/sponsor/`. Deploy files: `deploy/sponsor/`. Tests: `test/sponsor
 
 ## How it works
 
-1. **Challenge.** The recorder asks for a nonce: `POST /sponsor/v1/challenge {"deviceId": "0x.."}`. The answer is `{nonce, expires, expiresAt}`. The nonce is 32 random bytes. It is valid for 5 minutes, for this device id, and for one attempt only.
+The setup wizard of the box (`src/web/sponsor.ts`, `src/web/wizard.ts`) is the client. It enrols the camera before it registers it on chain, because a new owner account has no test QOR yet.
+
+1. **Challenge.** The box asks for a nonce: `POST /sponsor/v1/challenge {"deviceId": "0x.."}`. The answer is `{nonce, expires, expiresAt}` (`expires` in unix seconds, `expiresAt` in ISO 8601). The nonce is 32 random bytes. It is valid for 5 minutes, for this device id, and for one attempt only.
 2. **Enrol.** The camera's ML-DSA-87 key signs (empty context) the UTF-8 text
 
    ```
    qorewitness-sponsor-v1|9800|<registry>|<deviceId>|<owner>|<nonce>
    ```
 
-   All four values are `0x` hex in lower case. The service also accepts EIP-55 spelling for `registry` and `owner`. The recorder then sends `POST /sponsor/v1/enroll {pilotCode, deviceId, owner, nonce, signature}`. `signature` is hex (4,627 bytes).
-3. **Checks on enrol.** The service:
-   - deletes the nonce (single use, also when a later check fails),
-   - checks the pilot code against the hashed list,
-   - reads `getDevice(owner, deviceId)` from AnchorRegistry v4 (`0xa1378D6558B32e1f8d37b68cf90e3C93839Da365`). The device must be active. Devices are stored per owner, so an active entry proves that `owner` is the on-chain owner,
-   - reads the device public key from a registry transaction on chain (the newest `anchor`, `rotateDeviceKey` or `registerDevice` call of this device) and accepts it only when `keccak256(key)` equals the key hash in the registry,
-   - verifies the signature with `@qorechain/pqc` (the same ML-DSA-87 code as the agent).
-   - A device must have anchored or registered within about 2 days (`SPONSOR_KEY_LOOKBACK_BLOCKS`). Otherwise the answer is `409 key_not_found`.
-4. **Top-up loop.** Every 15 minutes, per owner:
-   - skip while the kill switch is on, or within 1 hour of the last payout,
+   registry, deviceId and owner are lower-case `0x` hex. The service also accepts EIP-55 spelling for `registry` and `owner`. The box then sends `POST /sponsor/v1/enroll {pilotCode, deviceId, owner, nonce, signature, devicePubkey}`. `signature` (4,627 bytes) and `devicePubkey` (2,592 bytes) are `0x` hex.
+3. **Checks on enrol.** The service deletes the nonce (single use, also when a later check fails) and checks the pilot code against the hashed list. Then it reads `getDevice(owner, deviceId)` from AnchorRegistry v4 (`0xa1378D6558B32e1f8d37b68cf90e3C93839Da365`). Devices are stored per owner, so an entry under `owner` proves that `owner` is the on-chain owner.
+   - **Camera on chain (active).** The key must be the one on chain: `keccak256(devicePubkey)` must equal the key hash in the registry. Without `devicePubkey`, the service reads the key from the newest `anchor`, `rotateDeviceKey` or `registerDevice` call of this device (about 2 days back, `SPONSOR_KEY_LOOKBACK_BLOCKS`). The signature must verify. The camera is active at once. Answer: `enrolled`.
+   - **Camera not on chain yet (bootstrap).** The signature must verify against `devicePubkey`. The pilot code must be unused. The service binds pilot code, owner, device id and `keccak256(devicePubkey)` together, marks the camera `pending` and sends one start grant to `owner` in the background (default 3 test QOR). Answer: `pending`. After the send: `funded`.
+   - **Camera revoked.** Answer: `rejected`.
+   - The signature check uses `@qorechain/pqc`, the same ML-DSA-87 code as the agent.
+4. **Start grant.** 3 test QOR cover the setup and the first hours of sealing:
+   - ML-DSA-87 key registration of the account: about 0.1 test QOR,
+   - EVM window open: 0.1 test QOR,
+   - camera registration: 480,117 gas, about 0.054 test QOR charged (the balance must cover the maximum fee, about 0.15),
+   - the wizard needs 2 test QOR before it starts (`MIN_SETUP_UQOR`). After setup about 2.7 test QOR are left, about 9 hours of anchors at 10-minute windows. Then refills take over.
+   - The grant is written as "unknown" before the send, so a crash never pays twice. A refused send is tried again (3 attempts at most). An unknown result is tried again once, and only when the owner still holds 0 test QOR after 10 minutes.
+5. **Registration check.** Every pass looks at each `pending` or `funded` camera:
+   - registered under `owner` with the enrolled key hash: `active`. Refills count anchors from that moment,
+   - registered under `owner` with another key, or revoked: `rejected`. No more payouts,
+   - not registered within 48 hours of enrolment: expired (status word `rejected`). The pilot code stays used.
+6. **Refill loop.** Every 15 minutes, per owner, for `active` cameras:
+   - skip while the kill switch is on, or within 1 hour of the last payout (the start grant counts),
    - skip when the owner balance is 10 test QOR or more,
    - per device: skip when it is no longer active, or when its last anchored window ended more than 2 hours ago (`nextWindowStart` in the registry),
    - credit = anchors seen on chain since the last payout x 0.048 QOR. This is the measured fee of 0.0457 QOR per anchor plus a share of the EVM window opens. At most one anchor per 10 minutes counts, so tiny windows cannot farm the sponsor,
    - payout = the smallest of: the credit, the caps left today, 15 QOR minus the balance, the hot wallet float minus a 1 QOR reserve, and the hourly limit left. No payout below 0.5 QOR,
-   - one hybrid-signed (secp256k1 + ML-DSA-87) native `MsgSend` to the owner address from the chain. The service never takes a payout address from a request. The send path is `src/agent/bank.ts`, the same one the Q-Day drill uses for `fund` and `self-send`. Fee about 0.025 QOR.
-5. **Status.** `GET /sponsor/v1/status/<deviceId>` returns `enrolled`, `owner`, `lastTopUp` (time, amount, tx), `usedTodayUqor`, `capPerDayUqor` and `paused`. When two owners use the same device id, add `?owner=0x..`.
-6. **Health.** `GET /sponsor/healthz` returns `ok`, `paused` and the number of enrolled cameras.
+   - one hybrid-signed (secp256k1 + ML-DSA-87) native `MsgSend` to the owner address. The service never takes a payout address from a request. The send path is `src/agent/bank.ts`, the same one the Q-Day drill uses for `fund` and `self-send`. Fee about 0.025 QOR. Grants and refills go out one at a time.
+7. **Status.** `GET /sponsor/v1/status/<deviceId>` returns `status` (word below), `state`, `owner`, `startGrant`, `lastTopUp`, `usedTodayUqor`, `capPerDayUqor` and `paused`. HTTP 404 when the camera is not enrolled. When two owners use the same device id, add `?owner=0x..`.
+8. **Health.** `GET /sponsor/healthz` returns `ok`, `paused` and the number of live cameras.
 
 Amounts in answers are in uqor (1 QOR = 1,000,000 uqor), as decimal strings.
+
+### Status words
+
+The wizard reads exactly these words in `status`.
+
+| Word | Meaning | HTTP on enrol |
+|---|---|---|
+| `enrolled` | Accepted, the camera is on chain already | 200 |
+| `pending` | Accepted, start grant not sent yet | 200 |
+| `funded` | Start grant sent, waiting for the camera registration | 200 |
+| `active` | On chain with the enrolled key, refills apply | 200 |
+| `full` | Camera limit or today's budget reached | 409 |
+| `invalid_code` | Unknown pilot code | 403 |
+| `used_code` | The code belongs to another owner, or a start grant needs an unused code | 403 |
+| `paused` | Kill switch on (also for a `pending` camera in status) | 423 |
+| `rejected` | Bad signature, wrong key, revoked, or expired | 403 |
+
+Malformed requests (bad hex, bad nonce) get HTTP 400 without a status word.
 
 ## Limits (defaults, `deploy/sponsor/sponsor.env.example`)
 
 | Limit | Default |
 |---|---|
+| Start grant | 3 test QOR, once per pilot code |
+| Pending camera | expires 48 h after enrolment without registration |
 | Per camera per UTC day | 9 test QOR (one camera uses about 6.9 per day) |
 | Per owner per UTC day | 18 test QOR |
-| Global per UTC day | 90 test QOR |
-| Enrolled cameras | 12 in total, 2 per owner |
+| Global per UTC day | 90 test QOR (start grants count) |
+| Live cameras | 12 in total, 2 per owner (pending, funded and active) |
 | Balance | top up below 10, never above 15 test QOR |
 | Payouts | at most 1 per owner per hour, at least 0.5 test QOR |
 | Hourly outflow | 30 test QOR, then automatic pause |
@@ -51,11 +81,15 @@ Amounts in answers are in uqor (1 QOR = 1,000,000 uqor), as decimal strings.
 
 One faucet claim (100 test QOR per 24 h) covers about 14 cameras at 10-minute windows. For more cameras, ask the QoreChain team for a pilot allocation.
 
-The sponsor refills what was used. It does not give a start balance. The owner needs about 2 test QOR from the faucet to register the camera, as today. The runway after a sponsor stop is the balance the owner holds (about 1.4 days at 10 test QOR).
+The sponsor refills what was used. The runway after a sponsor stop is the balance the owner holds (about 9 hours after the start grant, about 1.4 days at 10 test QOR).
+
+Abuse limits of the start grant:
+- Anyone with a valid unused pilot code gets at most 3 test QOR for a camera key that they make themselves. A code pays one grant (two in the rare "unknown result" retry). Hand out codes one by one.
+- An owner can move the grant away and never register. The camera then expires after 48 h and the code stays used.
 
 ## Kill switch
 
-- Pause: `sudo touch /var/lib/qw-sponsor/PAUSED`. The service checks the file before every pass and before every payout. Enrol answers `503 paused`. Status shows `paused: true`.
+- Pause: `sudo touch /var/lib/qw-sponsor/PAUSED`. The service checks the file before every pass and before every payout. Enrol answers `paused` (HTTP 423). Status shows `paused: true`. Start grants and refills wait.
 - Resume: `sudo rm /var/lib/qw-sponsor/PAUSED`.
 - Automatic pause: the service writes the file itself when the payouts of the last hour reach `SPONSOR_MAX_HOURLY_QOR`. The file holds the reason. Read it before you resume.
 - There is no admin HTTP endpoint.
@@ -71,14 +105,14 @@ The sponsor refills what was used. It does not give a start balance. The owner n
 
 ## Records
 
-- `state.json`: enrolments (owner, device id, hash of the pilot code, enrol time, anchors paid), usage per day, payouts of the last 2 days. Written atomically (temp file, fsync, rename).
-- `payouts.jsonl`: append-only. Time, owner, device ids, amount, status (`pending`, `sent`, `refused`, `unknown`) and tx hash. A payout is written as `pending` before the send. When the result is unknown, it stays counted, so a restart never pays twice.
+- `state.json`: enrolments (owner, device id, key hash, hash of the pilot code, state, start grant, enrol time, anchors paid), the pilot code bindings, usage per day, payouts of the last 2 days. Written atomically (temp file, fsync, rename).
+- `payouts.jsonl`: append-only. Time, kind (`grant` or `refill`), owner, device ids, amount, status (`pending`, `sent`, `refused`, `unknown`) and tx hash. A payout is written as `pending` before the send. When the result is unknown, it stays counted, so a restart never pays twice.
 - Review the top 5 receivers once a week.
 
 ## Privacy
 
 - No email, no accounts, no names. A pilot code and an owner address are enough.
-- The service stores owner address, device id and the SHA-256 hash of the pilot code. It never stores pilot codes or IP addresses.
+- The service stores owner address, device id, the hash of the camera public key and the SHA-256 hash of the pilot code. It never stores pilot codes or IP addresses.
 - IP addresses are used in memory for rate limits only. Log lines carry truncated IPs (IPv4 /24, IPv6 /48). nginx writes no access log for `/sponsor/`.
 - Logs go to their own journald namespace (`qw-sponsor`) with 14-day retention (`journald@qw-sponsor.conf`). Log lines hold no secrets, no request bodies and no pilot codes. Device ids are shortened.
 - `state.json` and `payouts.jsonl` are kept until 3 months after the pilot ends, then deleted.
@@ -101,4 +135,4 @@ On the web host, as root. Read each step before you run it.
 6. Logs: `cp deploy/sponsor/journald@qw-sponsor.conf /etc/systemd/`.
 7. Service: `cp deploy/sponsor/qw-sponsor.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now qw-sponsor`. Check `journalctl --namespace=qw-sponsor -u qw-sponsor -f` for `start` and `listening`.
 8. nginx: add `deploy/sponsor/nginx-sponsor.conf` to the site's 443 server block, `nginx -t && systemctl reload nginx`. Check `curl -s https://qorewitness.fnoufnou.com/sponsor/healthz`.
-9. Alerts: forward log lines with `"level":"alert"` to Telegram (as `qw-health.sh`). Events: `float_low`, `float_empty`, `auto_pause`, `top_up_unknown`, `pass_failed`, `http_error`.
+9. Alerts: forward log lines with `"level":"alert"` to Telegram (as `qw-health.sh`). Events: `float_low`, `float_empty`, `auto_pause`, `top_up_unknown`, `start_grant_unknown`, `grant_failed`, `rejected`, `pass_failed`, `http_error`.

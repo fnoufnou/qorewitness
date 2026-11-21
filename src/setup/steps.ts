@@ -32,8 +32,8 @@ export const FAUCET = "https://dashboard.qorechain.io";
 export const EXPLORER = "https://explore.qore.network";
 /** Enough for the key registration, one window and the camera registration. */
 export const MIN_SETUP_UQOR = 2_000_000n;
-/** About 0.1 test QOR per anchor (docs/TESTNET_FINDINGS.md). */
-export const FEE_PER_ANCHOR_UQOR = 100_000n;
+/** About 0.0457 test QOR per anchor plus a share of the EVM window opens (docs/TESTNET_FINDINGS.md). */
+export const FEE_PER_ANCHOR_UQOR = 48_000n;
 export const TESTNET_EVM_CHAIN_ID = 9800;
 export const LABEL_RE = /^[a-z0-9-]{1,40}$/;
 
