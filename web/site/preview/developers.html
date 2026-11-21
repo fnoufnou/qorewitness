@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>For developers | QoreWitness</title>
+<meta name="description" content="Architecture, contract addresses, post-quantum checks on chain, audit rounds and drills for QoreWitness on the QoreChain testnet qorechain-diana.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#17483A">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="For developers | QoreWitness">
+<meta property="og:description" content="Architecture, contract addresses, post-quantum checks on chain, audit rounds and drills for QoreWitness on the QoreChain testnet qorechain-diana.">
+<meta property="og:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#17483A"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="16" cy="16" r="3" fill="#fff"/><circle cx="25.5" cy="6.5" r="3" fill="#E8663D"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/></symbol>
+<symbol id="i-finger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 18.5c1.2-1.8 1.8-4 1.8-6.5a3.7 3.7 0 0 1 7.4 0c0 1.2-.1 2.4-.4 3.5"/><path d="M12 12c0 3.5-.9 6.6-2.6 9"/><path d="M4.3 15.5c.5-1.1.7-2.3.7-3.5a7 7 0 0 1 12.6-4.2"/><path d="M19 11c.1.4.1.7.1 1 0 2.4-.4 4.6-1.2 6.6"/><path d="M15.2 18.8c-.3.9-.7 1.7-1.2 2.5"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5" opacity=".55"/></symbol>
+<symbol id="i-sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l2 2M14.5 8.5l2 2"/></symbol>
+<symbol id="i-chain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2.5" y="8" width="8" height="8" rx="2"/><rect x="13.5" y="8" width="8" height="8" rx="2"/><path d="M10.5 12h3"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4" fill="currentColor"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M4 7h16"/><path d="M6.5 7L3.5 13a3 3 0 0 0 6 0z"/><path d="M17.5 7l-3 6a3 3 0 0 0 6 0z"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="11" rx="3"/><circle cx="12" cy="11.5" r="3"/><path d="M9 20.5h6M12 17v3.5"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 12h4"/><circle cx="16.5" cy="12" r="1" fill="currentColor"/><path d="M7 20h10"/></symbol>
+<symbol id="i-browser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><path d="M7 6.8h.01M10 6.8h.01"/><path d="M8.5 14l2.5 2.5 4.5-4.5"/></symbol>
+</defs></svg>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><div class="wrap bar">
+<a class="brand" href="index.html" aria-label="QoreWitness home"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
+<span class="badge-pilot" title="QoreWitness runs on a test network. No payment is collected."><i></i>Testnet pilot</span>
+<nav class="nav" aria-label="Main"><a href="how-it-works.html">How it works</a><a href="get-started.html">Get started</a><a href="prove.html">Prove a video</a><a href="plans.html">Plans</a><a href="faq.html">FAQ</a></nav>
+<a class="btn primary sm cta" href="prove.html#demo">Try the demo</a>
+</div></header>
+<main id="main">
+
+<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">For developers and the jury</p><h1>QoreWitness on QoreChain.</h1><p class="lead">Post-quantum evidence anchoring for home cameras. Entered in the QoreChain Developer Fest, Post-Quantum dApp category, under the alias fnoufnou. Testnet only.</p><ul class="meta"><li>Open source, Apache-2.0</li><li>Network: qorechain-diana (EVM chain ID 9800)</li></ul></div></div>
+<section><div class="wrap">
+<div class="btns"><a class="btn primary" href="https://github.com/fnoufnou/qorewitness">GitHub <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a><a class="btn" href="https://github.com/fnoufnou/qorewitness/blob/main/docs/SPEC.md">Spec</a><a class="btn" href="https://github.com/fnoufnou/qorewitness/blob/main/docs/AUDIT.md">Audit</a><a class="btn" href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CUSTODY_DRILL.md">Custody drill</a><a class="btn" href="https://github.com/fnoufnou/qorewitness/blob/main/docs/THREAT_MODEL.md">Threat model</a><a class="btn" href="../verifier.html">Verifier</a></div>
+</div></section>
+
+<section class="alt"><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Architecture</p><h2>From camera to contract.</h2></div>
+<pre class="pre" tabindex="0" aria-label="Architecture sketch">camera (RTSP) -> ffmpeg segments (60 s)
+  -> agent: SHA-256 and SHA3-256 per segment
+  -> window of 10 min -> Merkle root (SHA-256)
+  -> ML-DSA-87 signature by the device key
+  -> AnchorRegistry.anchor() on QoreChain  (pqcVerify on chain)
+  -> receipt JSON next to the recordings
+
+verifier (static page or CLI): clip + receipt
+  -> file hash, Merkle path, verifyAnchor on chain,
+     device key, ML-DSA-87 signature</pre>
+<div class="tablewrap"><table><thead><tr><th>Key</th><th>Holder</th><th>Signs</th><th>Checked by</th></tr></thead><tbody>
+<tr><td>Owner key (ML-DSA-87, registered on chain)</td><td>Owner account</td><td>Native transactions (hybrid), EVM window, register and revoke a device</td><td>Chain, and the contract via <code>pqcKeyStatus</code> and <code>pqcVerify</code></td></tr>
+<tr><td>Device key (one per camera)</td><td>Agent next to the camera</td><td>Window roots, key rotation</td><td>Contract via <code>pqcVerify</code></td></tr>
+</tbody></table></div>
+<ul class="plain">
+<li>Each window commits to the previous root of its camera. Each segment commits to the previous segment. Gaps are stored on chain.</li>
+<li>The camera signs the hash of a recent block. The root was signed after that block and anchored before the anchor block.</li>
+<li>Anchors are immutable. There is no contract owner and no upgrade path.</li>
+</ul>
+</div></section>
+
+<section id="contracts"><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Contracts</p><h2>Addresses on qorechain-diana.</h2><p>Explorer: <a href="https://explore.qore.network">explore.qore.network</a> (testnet).</p></div>
+<div class="tablewrap"><table><thead><tr><th>What</th><th>Address</th></tr></thead><tbody>
+<tr><td><b>Registry v4</b> (14 Nov, chained windows, time bound on both sides, live)</td><td class="mono"><code>0xa1378D6558B32e1f8d37b68cf90e3C93839Da365</code></td></tr>
+<tr><td>Registry v3 (12 Nov, audit fixes, Q-Day Drill)</td><td class="mono"><code>0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2</code></td></tr>
+<tr><td>Registry v2 (9 to 12 Nov, devices, rotation, <code>verifyAnchor</code>)</td><td class="mono"><code>0x1854EeE2A659F4f39A05d5832cceC405E8045336</code></td></tr>
+<tr><td>Registry v1 (9 Nov, anchors by account key)</td><td class="mono"><code>0xA73d4347b50C2A373533915d698Bf03a01c65aAF</code></td></tr>
+<tr><td>Owner and agent account</td><td class="mono"><code>0xD6C6bDfBE567BcE731907789800205Df0B78ca52</code></td></tr>
+</tbody></table></div>
+<dl class="kv" style="margin-top:20px">
+<dt>Demo record</dt><dd>Block 10,120,133, camera <code>demo-testpattern</code>, a generated test pattern with both fingerprints (receipt v3).</dd>
+<dt>Verifier SHA-256</dt><dd><code>a995b6e408847daa288aa41ec4e7d03e2ce85bd0088b77c297c9634c5b5eb623</code><br><span class="small muted">Build it with <code>pnpm build:verifier</code> and compare.</span></dd>
+<dt>Check a receipt in a terminal</dt><dd><code>pnpm tsx scripts/verify-receipt.ts demo-receipt.json demo-clip.mp4</code></dd>
+<dt>Without our code</dt><dd><code>python3 tools/verify_receipt.py &lt;receipt&gt; &lt;file&gt;</code> (standard library only)</dd>
+<dt>Run the tests</dt><dd><code>pnpm test</code> (76 automated tests on 21 Nov 2026)</dd>
+</dl>
+</div></section>
+
+<section class="alt" id="pqc"><div class="wrap split">
+<div><p class="eyebrow">Post-quantum on chain</p><h2>The contract checks the signature itself.</h2>
+<p style="margin-top:16px">Two QoreChain precompiles do the work. Both are active on the testnet. They are not active on mainnet yet, so QoreWitness runs on the testnet only.</p>
+<ul class="plain"><li><code>pqcVerify</code> at <code>0x…0A01</code> checks an ML-DSA-87 signature. Every state change in the registry needs a fresh signature.</li><li><code>pqcKeyStatus</code> at <code>0x…0A02</code> tells the contract if the owner key is registered and if possession is proven.</li></ul>
+<p class="muted small">The audit notes map every call of a precompile to its tests.</p></div>
+<div class="panel"><h3>Chain-level protection</h3><p style="margin:0">Every EVM transaction needs a registered ML-DSA-87 key and an EVM authorisation window. The agent opens a window that is scoped to the registry only. A stolen ECDSA key cannot anchor, register, revoke or rotate anything, even inside an open window.</p></div>
+</div></section>
+
+<section><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Audit</p><h2>Four rounds with the QCAI Contract Auditor.</h2><p>Reviewed with an automated auditor. No firm has certified it. Each finding is mapped to a change, a test or a reason in the audit notes. The reports are copied to <code>docs/audit/</code>.</p></div>
+<div class="tablewrap"><table><thead><tr><th>Stage</th><th>Date</th><th>Code</th><th>Setting</th><th>Score</th></tr></thead><tbody>
+<tr><td>1</td><td>12 Nov 2026</td><td>registry v2</td><td>Ethereum (EVM/Solidity)</td><td>82</td></tr>
+<tr><td>2</td><td>13 Nov 2026</td><td>registry v3</td><td>Ethereum (EVM/Solidity)</td><td>72</td></tr>
+<tr><td>3</td><td>15 Nov 2026</td><td>registry v4</td><td>QoreChain (CosmWasm + PQC)</td><td>78</td></tr>
+<tr><td>4</td><td>17 Nov 2026</td><td>registry v4, same input as stage 3</td><td>Ethereum (EVM/Solidity)</td><td>85</td></tr>
+</tbody></table></div>
+<p class="small muted">The QoreChain team advises the Ethereum setting for Solidity contracts. Stage 3 used another setting and flags Solidity as a mismatch. Compare stages 1, 2 and 4 with each other.</p>
+</div></section>
+
+<section class="alt"><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Drills</p><h2>We attack our own system and publish the result.</h2></div>
+<ul class="grid c3">
+<li class="tile"><h3>Q-Day Drill, dry run</h3><p>13 attacks with only the ECDSA key. 0 succeeded. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/TESTNET_FINDINGS.md">testnet findings</a>.</p></li>
+<li class="tile"><h3>Custody drill</h3><p>10 attacks on the footage. All 5 attacks after sealing were rejected. 4 of 5 swaps before hashing were flagged. A swap with the camera's own settings was missed. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CUSTODY_DRILL.md">the drill</a>.</p></li>
+<li class="tile"><h3>Recovery drill</h3><p>The agent stops after the transaction is mined and before the receipt is written. After a restart, the receipt is rebuilt from public data and verifies (block 10,133,808).</p></li>
+</ul>
+<h3 style="margin:32px 0 10px">Known limits for the jury</h3>
+<ul class="limits">
+<li>Testnet only. The PQC precompiles are not active on mainnet yet.</li>
+<li>The recovery phrase of the owner account sits on the recorder today. An agent-key mode is designed (<a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/AGENT_KEY.md">notes</a>). A spike passed on the testnet. Relayed calls emit no EVM logs, so the mode waits.</li>
+<li>The customer setup wizard and the Fees included service are in development.</li>
+</ul>
+</div></section>
+</main>
+<footer class="site-footer"><div class="wrap">
+<div class="cols">
+<div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
+<p>Seal your camera footage. Prove later that nobody changed it.</p>
+<p><b>QoreWitness will never ask for your recovery phrase.</b></p></div>
+<div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
+<div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
+<div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>
+</div>
+<div class="legal"><span>Testnet pilot. Both plans are free and no payment is collected. Records on the test network may be removed when it resets.</span><span>Open source under Apache-2.0. Built by fnoufnou. QoreWitness is not a TP-Link product and has no link with TP-Link. Tapo is a trademark of its owner.</span></div>
+</div></footer>
+<script src="../assets/site.js" defer></script>
+</body>
+</html>
