@@ -94,7 +94,7 @@ On a 64-bit Linux machine (Raspberry Pi OS Lite 64-bit, Debian, Ubuntu) on your 
 curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash
 ```
 
-The installer offers to install Docker (it asks first), pulls the published image `ghcr.io/fnoufnou/qorewitness:<QW_VERSION>`, starts the box and prints a setup link with a pairing code. The rest happens in the browser on your phone or laptop: dashboard password, camera with a "Test camera" picture (Tapo C210 helper), plan (Fees included with a pilot code, or Self-managed), keys, network fees, registration with a progress bar. Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
+The installer installs Docker when it is missing (Enter or `--yes` means yes), pulls the published image `ghcr.io/fnoufnou/qorewitness:<QW_VERSION>`, starts the box and prints the dashboard address and a pairing code. The rest happens in the browser on your phone or laptop: a password, the camera ("Is this your camera?" with a picture), and one progress bar to "Sealing started". Keys and the owner account are made in the background. The pilot pays the network fees (Fees included, no code). Self-managed sits under "Advanced". Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
 
 Step by step, with a Tapo C210 section: `docs/INSTALL.md`. The older terminal setup stays available: `install.sh --terminal` or `docker compose run --rm agent setup`.
 
@@ -110,7 +110,7 @@ Stream types (`QW_STREAM_URL` in `data/camera.env`):
 The `ui` service serves the browser setup and the dashboard on one port. Before setup it needs the pairing code. After setup it needs the dashboard password. It shows the health of the box in plain words (green, orange, red) with one action per problem, the latest seals with explorer links, and receipt downloads.
 - Port: `QW_UI_BIND` in `~/qorewitness/.env`. The installer sets `0.0.0.0:8080` on a home network and `127.0.0.1:8080` on a host with a public IP. Never forward this port on your router.
 - Checks: Host allowlist (private IPs, `localhost`, `*.local`, `QW_UI_HOSTNAME`), same-origin POST with a CSRF token, private clients only, scrypt password, signed sessions.
-- During setup the `ui` writes secrets to `/data` (camera password in `camera.env`, recovery phrase in `qorewitness.env`, camera key), all with mode 600. Its process never loads the recovery phrase into its environment, and it reads the phrase from the file only for the setup steps that sign.
+- During setup the `ui` writes secrets to `/data` (camera password in `camera.env`, recovery phrase in `qorewitness.env`, camera key), all with mode 600. Its process never loads the recovery phrase into its environment, and it reads the phrase from the file only for the setup steps that sign. After `setup.done` the process locks itself and no longer reads `qorewitness.env` or `keys/`.
 
 `recorder` and `agent` run in supervise mode: they wait for `data/setup.done`, read `data/camera.env` themselves and restart when it changes. Camera passwords are masked in all logs.
 

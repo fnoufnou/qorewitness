@@ -2,7 +2,7 @@
 
 Pilot on the QoreChain test network (qorechain-diana). No money is collected. Test tokens have no value.
 
-This guide takes you from a new camera to "Sealing started" in about one hour. You type one command in a terminal. Everything else happens in your browser.
+This guide takes you from a new camera to "Sealing started" in about one hour. You paste one line in a terminal. Everything else happens in your browser: a password, your camera, and one progress bar.
 
 ## What you need
 
@@ -39,89 +39,96 @@ Raspberry Pi:
 2. Choose **Raspberry Pi OS Lite (64-bit)**.
 3. In the settings of the Imager: host name `qorewitness`, a user name and password, your Wi-Fi (or use a cable), and **Enable SSH**.
 4. Write the card, put it in the Pi and start it. Wait two minutes.
-5. On your computer, open a terminal and connect: `ssh <your user>@qorewitness.local`.
 
 Debian or Ubuntu: any 64-bit install with internet access and a user with `sudo`.
 
-## Step 3. Run the installer
+## Step 3. Paste one line on your own computer
 
-Paste this line in the terminal of the box:
+Open a terminal on your laptop:
+- **Mac:** press Cmd and Space, type `Terminal`, press Enter.
+- **Windows:** press the Windows key, type `PowerShell`, press Enter.
+
+Paste this line. Use your Pi user name in place of `mark`. Press Enter.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash
+ssh -t mark@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash -s -- --yes"
 ```
 
-The installer:
-- checks the system (64-bit Linux),
-- offers to install Docker if it is missing (it asks first),
-- downloads the published QoreWitness image for your processor (amd64 or arm64),
-- makes the folder `~/qorewitness` with the folder `data` for keys and video,
-- starts QoreWitness,
-- shows a **setup link** and a **pairing code** in large text.
+What you will see:
+- The first time, a question if you trust the box. Type `yes` and press Enter.
+- Your Pi password (from the Imager). You do not see the letters while you type.
+- A few minutes of text. The installer installs Docker when it is missing, downloads QoreWitness and starts it.
+- At the end, in large text: the address of your box and a pairing code.
 
-The link and the code are also in `~/qorewitness/SETUP-LINK.txt`. Only your user can read that file. Do not share the code: anyone with it can set up the box until you choose a password.
+```
+      http://192.168.1.30:8080
+      Pairing code:  123 456
+```
 
-Options:
+Do not share the code. Anyone with it can set up the box until you choose a password.
+
+Already on the box (keyboard and screen, or an SSH session)? Paste the part between the quotes: `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash -s -- --yes`.
+
+You can run the line again at any time. It keeps your camera, keys, account and video.
+
+<details><summary>Options for experts</summary>
 
 | Option | Use |
 |---|---|
-| `--yes` | Install Docker without the question |
+| `--yes` | Accept the defaults without questions. Without it, the installer asks before it installs Docker (Enter means yes). |
 | `--local-only` | The dashboard opens on the box itself only (127.0.0.1) |
 | `--new-password` | You forgot the dashboard password. Shows a new pairing code. Camera, keys and account stay. |
 | `--terminal` | The older setup with questions in the terminal, no browser |
 | `--build` | Build the image from source (slow on a Pi) |
 | `QW_VERSION=...` | Install another published version |
 
-To pass an option through the pipe: `curl -fsSL .../install.sh | bash -s -- --new-password`.
-
-You can run the installer again at any time. It keeps your camera, keys, account and video.
+</details>
 
 ## Step 4. Set up in the browser
 
-Open the link on your phone or laptop. Or open `http://<IP of the box>:8080/setup` and type the pairing code. On a Raspberry Pi with the host name `qorewitness`, `http://qorewitness.local:8080` often works too.
+Open the address on your phone or laptop and type the pairing code. Or click the long link that the installer showed under the code.
 
-1. **Password.** Choose a password for the dashboard (10 characters or more).
-2. **Camera.** Type the IP address, the user name and the password of the camera account from step 1. Tick the box that the camera films your own property. Press **Test camera**. Within 15 seconds you see a picture from your camera. Press **Looks right**, or **Use standard quality** for a smaller disk or weak Wi-Fi.
-3. **Plan.**
-   - **Fees included (pilot):** we pay the network fees for this camera. You need a pilot code from the website.
-   - **Self-managed:** you hold the account and add free test tokens yourself, about once a week.
-   Both plans make the same proof. Both are free in the pilot.
-4. **Keys.** Press **Create keys**. The box makes an account key and a camera key. Read the backup note, then confirm.
-5. **Network fees.** With Fees included, you need no faucet. The pilot checks your code and the camera signature, sends a free start of 3 test QOR to your account, and the page moves on by itself. Later it refills what the camera uses. With Self-managed, copy the address, claim test QOR at the QoreChain dashboard (Faucet), and wait. You need at least 2 test QOR to start.
-6. **Connect.** Press **Start**. A progress bar shows four steps. This takes 1 to 3 minutes.
-7. **Done.** "Sealing started". The first seal comes in about 10 to 15 minutes.
+1. **Password.** Choose a password for your dashboard (10 characters or more).
+2. **Camera.** Type the camera address and the name and password of the camera account from step 1. Tick "My camera films my own property". Press **Test camera**.
+3. **Is this your camera?** Within 15 seconds you see a picture from your camera. Press **Yes, this is my camera**.
+4. **Connecting your camera.** One progress bar runs by itself. It takes 2 to 5 minutes. You can close the page.
+5. **Sealing started.** The page shows the address of your dashboard. Bookmark it, or add it to your home screen. The first seal comes in about 10 to 15 minutes.
 
-You can close the browser at any time. Open the link again and the setup continues at the right step.
+The pilot pays the network fees. You do nothing. The pilot has a limited number of places. If it is full, the progress bar says so and offers **Use my own wallet**.
+
+Your box keeps its keys in the qorewitness folder. Back up that folder once.
+
+<details><summary>Advanced: use my own wallet (Self-managed)</summary>
+
+On the camera screen, open **Advanced** and tick **Use my own wallet**. During the progress bar, the page shows your account address. Claim test QOR for it at the QoreChain dashboard (Faucet). You need at least 2 test QOR to start. One camera uses about 7 test QOR a day, so claim again every few days. The dashboard turns orange when the fees run low.
+
+</details>
 
 ## Daily use
 
 Keep using the Tapo app for live view and alerts. QoreWitness works in the background.
 
-Open the dashboard (`http://<IP of the box>:8080`) once in a while. It shows one line in a colour and one thing to do:
+Open your dashboard once in a while. It shows one line in a colour and one thing to do:
 
 | Colour | Example | What to do |
 |---|---|---|
 | Green | Sealing OK. Last seal 4 minutes ago. | Nothing |
 | Orange | Waiting for the first seal. | Nothing. It comes 10 to 15 minutes after setup. |
-| Orange | Network fees low: about 2 days left. | Self-managed: add test QOR to the address shown. |
+| Orange | Sealing pauses soon: fees are running out. | Fees included: nothing, the pilot tops up. Self-managed: add test tokens (the address is under Details). |
 | Orange | The disk is almost full. | Keep video for fewer days, or connect a bigger disk. |
-| Red | No video from the camera. | Check the power and Wi-Fi of the camera. Check its IP address. |
+| Red | No video from the camera. | Check the power and Wi-Fi of the camera. |
 | Red | Sealing stopped 40 minutes ago. | Check the internet connection of the box. Restart the box if this stays. |
-| Red | Sealing stops: the network fees ran out. | Self-managed: add test QOR. Fees included: the pilot tops up. If this stays for a day, the pilot may be paused. |
+| Red | Sealing paused: the fees ran out. | Fees included: the pilot tops up. If this stays for a day, the pilot may be paused. Self-managed: add test tokens. |
 
-Video older than the retention time (proposed from the free disk, 14 days by default) is deleted. The receipts stay. Download the clips you need before then.
+Video older than about 2 weeks (the box proposes the days from its free disk) is deleted. Download what you need before then.
 
-### Save evidence
+### Prove a video
 
-To prove what your camera saw, use **Save evidence** on the dashboard:
+The dashboard lists the latest seals in your own time, for example "Sat 21 Nov, 22:46 to 22:56". Press **Download** next to the time you need. You get one file (ZIP) with the original video of those 10 minutes and its proof. Another time: open **Pick another time** under the list (up to 60 minutes).
 
-1. Pick the date and the start and end time (up to 60 minutes), or press **Last hour**. Press **Check this time**.
-2. The box checks every clip against its receipt and tells you what it found. If part of the time has no sealed video, or the newest clips are not sealed yet (sealing takes about 10 minutes), it says so before you download.
-3. Press **Download evidence**. You get one ZIP: the original clips (they play in any video player), their receipts, `certificate.html` (one page to print) and `HOW-TO-CHECK.txt` (3 steps). The limit is 2 GB per ZIP.
+Give the file to the receiver, for example an insurer. They open https://qorewitness.fnoufnou.com/verifier.html and drop the file on the page. They see one result: green "Original" with the recording date and time, or red "Changed after sealing". Nobody needs to trust you or us.
 
-Give the ZIP to the receiver. They open https://qorewitness.fnoufnou.com/verifier.html and drop the ZIP on the page. They see one result: green "Original" with the recording date and time and the seal delay, orange for "unchanged, with notes", or red for "Changed after sealing". A button prints the result. Nobody needs to trust you or us.
-
-You can still check one clip with its receipt: copy the clip from `~/qorewitness/data/<camera>/segments`, download its receipt from the dashboard and drop both on the verifier ("Or check one clip with its receipt").
+Technical facts (block numbers, the registry, the keys) are under **Details** on the dashboard.
 
 ## Update
 
@@ -142,7 +149,9 @@ The image version is pinned on purpose. QoreWitness never updates itself.
 | The camera is busy. | The C210 sends at most two streams at once. Close the live view in the Tapo app and test again. |
 | The camera sends no picture. | Tapo Care, microSD and a recorder: only two of three work. Turn one off. |
 | Unknown host name. | Open the box by its IP address, as the installer showed. For your own name, set `QW_UI_HOSTNAME` in `~/qorewitness/.env`. |
-| The page does not open at all. | The box and your phone must be on the same network. Guest Wi-Fi often blocks this. Run the installer again to see the link. |
+| The page does not open at all. | The box and your phone must be on the same network. Guest Wi-Fi often blocks this. Run the line again to see the address. |
+| `qorewitness.local` not found (step 3) | Your network does not know the name. Open your router app, find the IP address of the box, and use it in place of `qorewitness.local`. |
+| `Permission denied` (step 3) | Wrong user name or Pi password. Use the ones you set in the Imager. |
 
 Logs: `cd ~/qorewitness && docker compose logs --tail 50 recorder agent ui`. Camera passwords are masked in the logs.
 

@@ -4,6 +4,16 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+### 2026-11-21: keep it simple (box setup, installer, dashboard)
+- Setup in the browser: 3 screens and 1 progress bar. Password (one field, "Show password"), camera (address, camera account name and password, one tick), "Is this your camera?" with the picture, then one progress bar that starts by itself and ends at "Sealing started". The plan, keys, backup, funding and Ready/Start screens are gone. Keys and the owner account are made in the background. The camera name is always `camera-1`.
+- Fees included is the default and sends no pilot code. When the pilot says no (full, paused), the progress bar says so in plain words and offers "Use my own wallet". Self-managed also sits under "Advanced" on the camera screen. Sponsor status asks with `?owner=`, because every box uses the same camera name.
+- Done screen: the dashboard address in large text, "bookmark it", and one backup line.
+- Dashboard: times in the browser's own time zone, a Download button per seal (one 10-minute evidence ZIP), "Pick another time" folded. No crypto words on the main view: blocks, registry, balance, keys and receipts sit under Details. "Fees low" became "Sealing pauses soon: fees are running out" with one action. The fee per seal is now 0.048 test QOR (measured).
+- Installer: Docker install defaults to yes (Enter), `--yes` accepts all defaults. The end shows the dashboard address and the pairing code in large text. One paste from your own laptop: `ssh -t <user>@qorewitness.local "curl ... | bash -s -- --yes"`.
+- Security (sec-review-1, finding 3): after `setup.done` the ui process locks itself and every read of `qorewitness.env` or `keys/` throws (`lockSecrets`, with tests). Invisible to the owner. The residual risk is in the threat model.
+- Box footer: "QoreWitness never asks for your passwords or files."
+- Docs: `docs/INSTALL.md` rewritten for the one-paste install, the short setup and Download per seal.
+
 ### 2026-11-21: save evidence (dashboard) and ZIP verifier
 - Dashboard: **Save evidence**. Pick a date and a time range (max 60 minutes, default last hour). The box checks each clip against its receipt (both fingerprints, size, chain link, Merkle path), tells you about gaps and clips not sealed yet, then streams one ZIP (stored entries, Node built-ins only, exact Content-Length, 2 GB cap): original clips, receipts, `certificate.html` and `HOW-TO-CHECK.txt`. Same session, CSRF and host rules as every dashboard route. Clip names from receipts must match `seg_*.mp4|ts`, links are never followed, and entry names are made by the box.
 - Verifier: drop the ZIP. It unpacks in the browser (own reader for stored and deflate entries, refuses unsafe names, ZIP64, encryption and entries that inflate past their size), checks every clip with its receipt using the existing code, and shows one verdict first: green "Original", orange "Original, with notes" or "Check not finished", red "Changed after sealing" or "Not confirmed". Then what it proves and cannot prove, a print button and folded technical details. One clip plus receipt and the tamper demo still work. Still one offline HTML file (366 KB).
