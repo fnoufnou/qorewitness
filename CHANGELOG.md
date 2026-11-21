@@ -2,6 +2,11 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
+## Unreleased
+
+- Site: new customer website as noindex preview in `web/site/preview/` (home, how it works, Tapo C210 guide, daily use, prove a video, plans, FAQ, trust and limits, developers). Pilot badge on every page, light and dark mode, no external hosts. Built by `scripts/build-site-preview.mjs`. The live home page is unchanged.
+- Site: the claims "quantum-safe encryption" and "chain of custody at the camera itself" are replaced in the new pages ("planned: share evidence privately", "chain of custody minutes after recording, on your own recorder").
+
 ## 0.5.0-alpha.1 (21 Nov 2026, first tester build)
 
 ### 2026-11-21
