@@ -12,7 +12,7 @@
  *   match Host.
  */
 import { createHmac, randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, linkSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { isIP } from "node:net";
 import { join } from "node:path";
 import { writeSecretFile } from "../setup/steps.js";
@@ -57,7 +57,19 @@ export function ensurePairing(uiDir: string): { pairing?: Pairing; created: bool
     code: String(randomInt(0, 1_000_000)).padStart(6, "0"),
     createdAt: new Date().toISOString(),
   };
-  writeSecretFile(tokenPath(uiDir), JSON.stringify(pairing) + "\n");
+  // Create-if-absent in one step: the ui server and the "pair" command can start at the same time.
+  const tmp = `${tokenPath(uiDir)}.${randomBytes(4).toString("hex")}.tmp`;
+  writeFileSync(tmp, JSON.stringify(pairing) + "\n", { mode: 0o600, flag: "wx" });
+  try {
+    linkSync(tmp, tokenPath(uiDir));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+    const other = readPairing(uiDir);
+    if (other) return { pairing: other, created: false };
+    throw e;
+  } finally {
+    rmSync(tmp, { force: true });
+  }
   return { pairing, created: true };
 }
 
