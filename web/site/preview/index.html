@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QoreWitness: video evidence you can trust again</title>
+<meta name="description" content="QoreWitness seals your home camera footage minutes after it is recorded. Later you can show anyone that the clip is the original. Testnet pilot, free to try.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#17483A">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="QoreWitness: video evidence you can trust again">
+<meta property="og:description" content="QoreWitness seals your home camera footage minutes after it is recorded. Later you can show anyone that the clip is the original. Testnet pilot, free to try.">
+<meta property="og:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#17483A"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="16" cy="16" r="3" fill="#fff"/><circle cx="25.5" cy="6.5" r="3" fill="#E8663D"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/></symbol>
+<symbol id="i-finger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 18.5c1.2-1.8 1.8-4 1.8-6.5a3.7 3.7 0 0 1 7.4 0c0 1.2-.1 2.4-.4 3.5"/><path d="M12 12c0 3.5-.9 6.6-2.6 9"/><path d="M4.3 15.5c.5-1.1.7-2.3.7-3.5a7 7 0 0 1 12.6-4.2"/><path d="M19 11c.1.4.1.7.1 1 0 2.4-.4 4.6-1.2 6.6"/><path d="M15.2 18.8c-.3.9-.7 1.7-1.2 2.5"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5" opacity=".55"/></symbol>
+<symbol id="i-sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l2 2M14.5 8.5l2 2"/></symbol>
+<symbol id="i-chain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2.5" y="8" width="8" height="8" rx="2"/><rect x="13.5" y="8" width="8" height="8" rx="2"/><path d="M10.5 12h3"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4" fill="currentColor"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M4 7h16"/><path d="M6.5 7L3.5 13a3 3 0 0 0 6 0z"/><path d="M17.5 7l-3 6a3 3 0 0 0 6 0z"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="11" rx="3"/><circle cx="12" cy="11.5" r="3"/><path d="M9 20.5h6M12 17v3.5"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 12h4"/><circle cx="16.5" cy="12" r="1" fill="currentColor"/><path d="M7 20h10"/></symbol>
+<symbol id="i-browser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><path d="M7 6.8h.01M10 6.8h.01"/><path d="M8.5 14l2.5 2.5 4.5-4.5"/></symbol>
+</defs></svg>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><div class="wrap bar">
+<a class="brand" href="index.html" aria-label="QoreWitness home"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
+<span class="badge-pilot" title="QoreWitness runs on a test network. No payment is collected."><i></i>Testnet pilot</span>
+<nav class="nav" aria-label="Main"><a href="how-it-works.html">How it works</a><a href="get-started.html">Get started</a><a href="prove.html">Prove a video</a><a href="plans.html">Plans</a><a href="faq.html">FAQ</a></nav>
+<a class="btn primary sm cta" href="prove.html#demo">Try the demo</a>
+</div></header>
+<main id="main">
+
+<div class="hero"><div class="wrap">
+<div>
+<p class="eyebrow">Proof for home camera footage</p>
+<h1>Video evidence you can trust again.</h1>
+<p class="lead">QoreWitness seals your camera footage minutes after it is recorded. Later, you can show anyone that the clip is the original. Your video stays at home.</p>
+<div class="btns"><a class="btn primary" href="get-started.html">Set up your Tapo C210 <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a><a class="btn" href="prove.html#demo">Try the free demo</a></div>
+<p class="fine">Testnet pilot. Free to try. No payment needed.</p>
+</div>
+<svg class="hero-art" viewBox="0 0 520 420" role="img" aria-labelledby="ha-t ha-d" xmlns="http://www.w3.org/2000/svg">
+<title id="ha-t">A seal on a film strip and a green certificate card</title>
+<desc id="ha-d">A film strip with three frames. A round pine seal is pressed on the middle frame. In front is a green card that says Verified: original file. It is labelled Demo clip.</desc>
+<g transform="rotate(-5 260 100)">
+  <rect x="-30" y="26" width="580" height="170" rx="10" fill="var(--strip)"/>
+  <rect x="-14" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="-14" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="17" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="17" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="48" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="48" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="79" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="79" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="110" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="110" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="141" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="141" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="172" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="172" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="203" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="203" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="234" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="234" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="265" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="265" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="296" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="296" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="327" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="327" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="358" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="358" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="389" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="389" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="420" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="420" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="451" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="451" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="482" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="482" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="513" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="513" y="178" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="544" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="544" y="178" width="16" height="10" rx="2" fill="var(--bg)"/>
+  <rect x="20" y="54" width="140" height="114" rx="6" fill="var(--frame)"/><rect x="190" y="54" width="140" height="114" rx="6" fill="var(--frame)"/><rect x="360" y="54" width="140" height="114" rx="6" fill="var(--frame)"/>
+<g stroke="var(--frame-ink)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M48 148V100l42 -26 42 26V148z"/><path d="M81 148v-22h18v22"/>
+<path d="M204 134h112M204 148h112"/><rect x="218" y="74" width="84" height="48" rx="4"/>
+<circle cx="462" cy="86" r="12"/><path d="M372 150l30 -34 24 22 18 -16 36 28"/></g>
+  <g><circle class="pulse" cx="262" cy="122" r="58" fill="none" stroke="var(--signal)" stroke-width="3"/>
+<path d="M312.0 122.0L313.4 124.0L314.2 126.1L314.0 128.2L312.8 130.1L311.0 131.8L309.2 133.3L307.8 134.9L307.3 136.7L307.5 138.8L308.2 141.1L308.7 143.5L308.7 145.8L307.7 147.6L305.9 148.9L303.6 149.8L301.3 150.5L299.4 151.5L298.2 152.9L297.6 154.9L297.4 157.4L296.9 159.8L296.0 161.8L294.4 163.1L292.3 163.6L289.8 163.6L287.4 163.4L285.3 163.6L283.6 164.4L282.3 166.1L281.1 168.2L279.8 170.3L278.2 171.8L276.2 172.4L274.0 172.0L271.8 171.0L269.6 169.9L267.6 169.3L265.7 169.5L263.9 170.5L262.0 172.0L260.0 173.4L257.9 174.2L255.8 174.0L253.9 172.8L252.2 171.0L250.7 169.2L249.1 167.8L247.3 167.3L245.2 167.5L242.9 168.2L240.5 168.7L238.2 168.7L236.4 167.7L235.1 165.9L234.2 163.6L233.5 161.3L232.5 159.4L231.1 158.2L229.1 157.6L226.6 157.4L224.2 156.9L222.2 156.0L220.9 154.4L220.4 152.3L220.4 149.8L220.6 147.4L220.4 145.3L219.6 143.6L217.9 142.3L215.8 141.1L213.7 139.8L212.2 138.2L211.6 136.2L212.0 134.0L213.0 131.8L214.1 129.6L214.7 127.6L214.5 125.7L213.5 123.9L212.0 122.0L210.6 120.0L209.8 117.9L210.0 115.8L211.2 113.9L213.0 112.2L214.8 110.7L216.2 109.1L216.7 107.3L216.5 105.2L215.8 102.9L215.3 100.5L215.3 98.2L216.3 96.4L218.1 95.1L220.4 94.2L222.7 93.5L224.6 92.5L225.8 91.1L226.4 89.1L226.6 86.6L227.1 84.2L228.0 82.2L229.6 80.9L231.7 80.4L234.2 80.4L236.6 80.6L238.7 80.4L240.4 79.6L241.7 77.9L242.9 75.8L244.2 73.7L245.8 72.2L247.8 71.6L250.0 72.0L252.2 73.0L254.4 74.1L256.4 74.7L258.3 74.5L260.1 73.5L262.0 72.0L264.0 70.6L266.1 69.8L268.2 70.0L270.1 71.2L271.8 73.0L273.3 74.8L274.9 76.2L276.7 76.7L278.8 76.5L281.1 75.8L283.5 75.3L285.8 75.3L287.6 76.3L288.9 78.1L289.8 80.4L290.5 82.7L291.5 84.6L292.9 85.8L294.9 86.4L297.4 86.6L299.8 87.1L301.8 88.0L303.1 89.6L303.6 91.7L303.6 94.2L303.4 96.6L303.6 98.7L304.4 100.4L306.1 101.7L308.2 102.9L310.3 104.2L311.8 105.8L312.4 107.8L312.0 110.0L311.0 112.2L309.9 114.4L309.3 116.4L309.5 118.3L310.5 120.1L312.0 122.0Z" fill="var(--seal)" stroke="var(--seal-edge)" stroke-width="2.5"/>
+<circle cx="262" cy="122" r="29.0" fill="none" stroke="#fff" stroke-width="6.5"/>
+<circle cx="262" cy="122" r="10.0" fill="#fff"/>
+<circle cx="299.0" cy="85.0" r="8.5" fill="var(--signal)" stroke="var(--bg)" stroke-width="2.5"/></g>
+</g>
+<g>
+  <rect x="48" y="196" width="436" height="214" rx="12" fill="var(--bg)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M48 208a12 12 0 0 1 12-12h412a12 12 0 0 1 12 12v52H48z" fill="var(--ok-bg)"/>
+  <circle cx="86" cy="228" r="16" fill="var(--ok)"/><path d="M78.500 228.500l5.500 5.500 10-11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="114" y="226" font-family="var(--font)" font-size="20" font-weight="600" fill="var(--ok)">Verified: original file</text>
+  <text x="114" y="247" font-family="var(--mono)" font-size="13.500" fill="var(--muted)">Demo clip · camera demo-testpattern</text>
+  <path d="M70 288l5 5 9-10" fill="none" stroke="var(--ok)" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/><text x="98" y="293" font-family="var(--font)" font-size="17" fill="var(--fg)">File fingerprint matches</text><path d="M70 319l5 5 9-10" fill="none" stroke="var(--ok)" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/><text x="98" y="324" font-family="var(--font)" font-size="17" fill="var(--fg)">Seal is valid (ML-DSA-87)</text><path d="M70 350l5 5 9-10" fill="none" stroke="var(--ok)" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/><text x="98" y="355" font-family="var(--font)" font-size="17" fill="var(--fg)">Recorded on QoreChain testnet</text>
+  <rect x="49" y="372" width="434" height="37" fill="var(--surface)"/><path d="M48 372h436" stroke="var(--line)"/>
+  <text x="68" y="396" font-family="var(--mono)" font-size="14" fill="var(--muted)">Existed before 2026-11-12 07:00:49 UTC</text>
+</g></svg>
+</div></div>
+
+<section><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Why it matters</p><h2>Free AI tools made every video easy to doubt.</h2>
+<p>After a break-in or an accident, people ask one question: did anyone change this video? A sealed clip can answer it.</p></div>
+<ul class="grid c3">
+<li class="tile top"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></div><h3>Be believed</h3><p>Show that your clip existed minutes after it was recorded. Show that it has not changed since.</p></li>
+<li class="tile top"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-lock"/></svg></div><h3>Keep your privacy</h3><p>Your video stays at home. Only short fingerprints and times go to the public network. A fingerprint shows nothing about the picture.</p></li>
+<li class="tile top"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-eye"/></svg></div><h3>Check it yourself</h3><p>You do not have to trust us. Anyone can drop the clip and its receipt into a web page and watch every check run in their own browser.</p></li>
+</ul>
+</div></section>
+
+<section class="alt" id="how"><div class="wrap">
+<div class="sec-head"><p class="eyebrow">How it works</p><h2>Seal. Keep. Prove.</h2>
+<p>Think of a letter. You press a wax seal on it. You keep it in a safe place. A postmark shows when it was sent. Anyone can look at both.</p></div>
+<ol class="grid c3" style="list-style:none;padding:0;margin:0">
+<li class="tile"><div class="art"><svg viewBox="0 0 240 130" aria-hidden="true" focusable="false"><rect x="6" y="28" width="228" height="74" rx="6" fill="var(--strip)"/><rect x="14" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="14" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="39" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="39" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="64" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="64" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="89" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="89" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="114" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="114" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="139" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="139" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="164" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="164" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="189" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="189" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="214" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="214" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="16" y="44" width="62" height="42" rx="4" fill="var(--frame)"/><rect x="88" y="44" width="62" height="42" rx="4" fill="var(--frame)"/><rect x="160" y="44" width="62" height="42" rx="4" fill="var(--frame)"/><g>
+<path d="M149.0 66.0L149.9 67.2L150.3 68.5L150.2 69.7L149.5 70.8L148.4 71.9L147.3 72.8L146.5 73.8L146.2 74.8L146.3 76.1L146.7 77.5L147.0 78.9L147.0 80.3L146.4 81.4L145.3 82.1L143.9 82.7L142.6 83.1L141.4 83.7L140.7 84.6L140.4 85.8L140.2 87.2L140.0 88.7L139.4 89.9L138.5 90.7L137.2 91.0L135.7 90.9L134.2 90.8L133.0 90.9L132.0 91.5L131.2 92.4L130.5 93.7L129.7 95.0L128.7 95.9L127.5 96.2L126.2 96.0L124.9 95.4L123.6 94.8L122.4 94.4L121.2 94.5L120.1 95.1L119.0 96.0L117.8 96.9L116.5 97.3L115.3 97.2L114.2 96.5L113.1 95.4L112.2 94.3L111.2 93.5L110.2 93.2L108.9 93.3L107.5 93.7L106.1 94.0L104.7 94.0L103.6 93.4L102.9 92.3L102.3 90.9L101.9 89.6L101.3 88.4L100.4 87.7L99.2 87.4L97.8 87.2L96.3 87.0L95.1 86.4L94.3 85.5L94.0 84.2L94.1 82.7L94.2 81.2L94.1 80.0L93.5 79.0L92.6 78.2L91.3 77.5L90.0 76.7L89.1 75.7L88.8 74.5L89.0 73.2L89.6 71.9L90.2 70.6L90.6 69.4L90.5 68.2L89.9 67.1L89.0 66.0L88.1 64.8L87.7 63.5L87.8 62.3L88.5 61.2L89.6 60.1L90.7 59.2L91.5 58.2L91.8 57.2L91.7 55.9L91.3 54.5L91.0 53.1L91.0 51.7L91.6 50.6L92.7 49.9L94.1 49.3L95.4 48.9L96.6 48.3L97.3 47.4L97.6 46.2L97.8 44.8L98.0 43.3L98.6 42.1L99.5 41.3L100.8 41.0L102.3 41.1L103.8 41.2L105.0 41.1L106.0 40.5L106.8 39.6L107.5 38.3L108.3 37.0L109.3 36.1L110.5 35.8L111.8 36.0L113.1 36.6L114.4 37.2L115.6 37.6L116.8 37.5L117.9 36.9L119.0 36.0L120.2 35.1L121.5 34.7L122.7 34.8L123.8 35.5L124.9 36.6L125.8 37.7L126.8 38.5L127.8 38.8L129.1 38.7L130.5 38.3L131.9 38.0L133.3 38.0L134.4 38.6L135.1 39.7L135.7 41.1L136.1 42.4L136.7 43.6L137.6 44.3L138.8 44.6L140.2 44.8L141.7 45.0L142.9 45.6L143.7 46.5L144.0 47.8L143.9 49.3L143.8 50.8L143.9 52.0L144.5 53.0L145.4 53.8L146.7 54.5L148.0 55.3L148.9 56.3L149.2 57.5L149.0 58.8L148.4 60.1L147.8 61.4L147.4 62.6L147.5 63.8L148.1 64.9L149.0 66.0Z" fill="var(--seal)" stroke="var(--seal-edge)" stroke-width="1.5"/>
+<circle cx="119" cy="66" r="17.4" fill="none" stroke="#fff" stroke-width="3.9"/>
+<circle cx="119" cy="66" r="6.0" fill="#fff"/>
+<circle cx="141.2" cy="43.8" r="5.1" fill="var(--signal)" stroke="var(--bg)" stroke-width="1.5"/></g></svg></div><div class="num">STEP 1</div><h3>Seal</h3><p>Your camera records. Every minute, QoreWitness takes a fingerprint of the clip. Every 10 minutes, it presses your camera's own digital seal on a summary of those fingerprints. Change one pixel later and the seal no longer fits.</p></li>
+<li class="tile"><div class="art"><svg viewBox="0 0 240 130" aria-hidden="true" focusable="false"><rect x="30" y="26" width="150" height="92" rx="8" fill="var(--bg)" stroke="var(--line)" stroke-width="2"/><path d="M30 34l75 52 75-52" fill="none" stroke="var(--line)" stroke-width="2"/><g>
+<path d="M122.0 80.0L122.5 80.7L122.8 81.4L122.7 82.1L122.3 82.7L121.7 83.3L121.0 83.9L120.6 84.4L120.4 85.0L120.5 85.7L120.7 86.5L120.9 87.3L120.9 88.1L120.5 88.7L119.9 89.1L119.1 89.4L118.3 89.7L117.7 90.0L117.3 90.5L117.1 91.2L117.0 92.0L116.9 92.9L116.6 93.5L116.0 94.0L115.3 94.2L114.4 94.1L113.6 94.1L112.9 94.1L112.4 94.4L111.9 95.0L111.5 95.7L111.1 96.4L110.5 96.9L109.8 97.1L109.1 97.0L108.3 96.7L107.6 96.3L106.9 96.1L106.3 96.1L105.6 96.5L105.0 97.0L104.3 97.5L103.6 97.8L102.9 97.7L102.3 97.3L101.7 96.7L101.1 96.0L100.6 95.6L100.0 95.4L99.3 95.5L98.5 95.7L97.7 95.9L96.9 95.9L96.3 95.5L95.9 94.9L95.6 94.1L95.3 93.3L95.0 92.7L94.5 92.3L93.8 92.1L93.0 92.0L92.1 91.9L91.5 91.6L91.0 91.0L90.8 90.3L90.9 89.4L90.9 88.6L90.9 87.9L90.6 87.4L90.0 86.9L89.3 86.5L88.6 86.1L88.1 85.5L87.9 84.8L88.0 84.1L88.3 83.3L88.7 82.6L88.9 81.9L88.9 81.3L88.5 80.6L88.0 80.0L87.5 79.3L87.2 78.6L87.3 77.9L87.7 77.3L88.3 76.7L89.0 76.1L89.4 75.6L89.6 75.0L89.5 74.3L89.3 73.5L89.1 72.7L89.1 71.9L89.5 71.3L90.1 70.9L90.9 70.6L91.7 70.3L92.3 70.0L92.7 69.5L92.9 68.8L93.0 68.0L93.1 67.1L93.4 66.5L94.0 66.0L94.7 65.8L95.6 65.9L96.4 65.9L97.1 65.9L97.6 65.6L98.1 65.0L98.5 64.3L98.9 63.6L99.5 63.1L100.2 62.9L100.9 63.0L101.7 63.3L102.4 63.7L103.1 63.9L103.7 63.9L104.4 63.5L105.0 63.0L105.7 62.5L106.4 62.2L107.1 62.3L107.7 62.7L108.3 63.3L108.9 64.0L109.4 64.4L110.0 64.6L110.7 64.5L111.5 64.3L112.3 64.1L113.1 64.1L113.7 64.5L114.1 65.1L114.4 65.9L114.7 66.7L115.0 67.3L115.5 67.7L116.2 67.9L117.0 68.0L117.9 68.1L118.5 68.4L119.0 69.0L119.2 69.7L119.1 70.6L119.1 71.4L119.1 72.1L119.4 72.6L120.0 73.1L120.7 73.5L121.4 73.9L121.9 74.5L122.1 75.2L122.0 75.9L121.7 76.7L121.3 77.4L121.1 78.1L121.1 78.7L121.5 79.4L122.0 80.0Z" fill="var(--seal)" stroke="var(--seal-edge)" stroke-width="1.5"/>
+<circle cx="105" cy="80" r="9.9" fill="none" stroke="#fff" stroke-width="2.2"/>
+<circle cx="105" cy="80" r="3.4" fill="#fff"/>
+<circle cx="117.6" cy="67.4" r="2.9" fill="var(--signal)" stroke="var(--bg)" stroke-width="0.9"/></g><g transform="translate(176 54)"><circle r="30" fill="var(--bg)" stroke="var(--brand)" stroke-width="2.500"/><circle r="23" fill="none" stroke="var(--brand)" stroke-width="1" stroke-dasharray="3 3"/><text x="0" y="-3" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--fg)">02:20</text><text x="0" y="9" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--muted)">BLOCK</text><path d="M-40 18c10 -6 18 6 28 0s18 6 28 0 18 6 28 0" fill="none" stroke="var(--signal)" stroke-width="2" stroke-linecap="round"/></g></svg></div><div class="num">STEP 2</div><h3>Keep</h3><p>The clips stay on your own box at home. Next to them sits a small receipt file for every 10 minutes. The receipt carries the postmark: the time and place on the public network where the seal was recorded.</p></li>
+<li class="tile"><div class="art"><svg viewBox="0 0 240 130" aria-hidden="true" focusable="false"><rect x="10" y="22" width="96" height="86" rx="8" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5"/><path d="M58 44v28M46 60l12 12 12-12" fill="none" stroke="var(--brand)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="58" y="94" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--muted)">DROP FILES</text><rect x="122" y="22" width="108" height="86" rx="8" fill="var(--bg)" stroke="var(--line)" stroke-width="2"/><path d="M122 30a8 8 0 0 1 8-8h92a8 8 0 0 1 8 8v26h-108z" fill="var(--ok-bg)"/><circle cx="141" cy="42" r="9" fill="var(--ok)"/><path d="M136.500 42.300l3 3 5.500-6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="156" y="35" width="62" height="5" rx="2.500" fill="var(--ok)"/><rect x="156" y="45" width="40" height="4" rx="2" fill="var(--muted)" opacity=".5"/><circle cx="138" cy="68" r="3.500" fill="var(--ok)"/><rect x="148" y="66" width="70" height="4" rx="2" fill="var(--muted)" opacity=".5"/><circle cx="138" cy="80" r="3.500" fill="var(--ok)"/><rect x="148" y="78" width="54" height="4" rx="2" fill="var(--muted)" opacity=".5"/><circle cx="138" cy="92" r="3.500" fill="var(--ok)"/><rect x="148" y="90" width="70" height="4" rx="2" fill="var(--muted)" opacity=".5"/></svg></div><div class="num">STEP 3</div><h3>Prove</h3><p>When you need proof, hand over the clip and its receipt. The other side drops both on the prove page. It checks the seal and the postmark against the public network and shows a green result. If the clip was changed, the result is red and says which check failed.</p></li>
+</ol>
+<p class="small muted" style="margin-top:20px">The seal is a post-quantum signature (ML-DSA-87, NIST FIPS 204). The network checks it before it accepts the record. <a href="how-it-works.html">Read the details</a>.</p>
+</div></section>
+
+<section><div class="wrap">
+<div class="sec-head"><p class="eyebrow">What you need</p><h2>A camera, a small box and a browser.</h2>
+<p>Setup takes about one hour. You run one command. Everything else happens in your browser.</p></div>
+<ul class="grid c3">
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-camera"/></svg></div><h3>A TP-Link Tapo C210</h3><p>This is the camera we test first. Other cameras that give a network video stream may work later.</p></li>
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-box"/></svg></div><h3>A small box that stays on</h3><p>It records the stream and seals it. A Raspberry Pi 5 with an SSD is our reference device.</p></li>
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-browser"/></svg></div><h3>Any browser</h3><p>You set up in a browser. The receiver of a clip checks it in a browser too.</p></li>
+</ul>
+<div class="btns" style="margin-top:28px"><a class="btn primary" href="get-started.html">Read the setup guide <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a><a class="btn" href="plans.html">See the plans</a></div>
+</div></section>
+
+<section class="alt"><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Facts you can check</p><h2>Only what we can show today.</h2>
+<p>Each item links to its proof. We show no logos, no customer counts and no reviews, because we have none.</p></div>
+<ul class="grid c2" style="list-style:none;padding:0;margin:0">
+<li class="tile"><h3>Open source</h3><p>All code is open under Apache-2.0. <a href="https://github.com/fnoufnou/qorewitness">Read it on GitHub</a>.</p></li>
+<li class="tile"><h3>Reviewed with the QCAI Contract Auditor</h3><p>Four review rounds on QoreChain. The reports are published. <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/AUDIT.md">Read the audit notes</a>.</p></li>
+<li class="tile"><h3>Checked on chain</h3><p>The smart contract checks the ML-DSA-87 signature on QoreChain before it accepts a record. <a href="developers.html#pqc">See how</a>.</p></li>
+<li class="tile"><h3>A live pilot camera</h3><p>A real home camera has sealed its footage every 10 minutes on the testnet. <a href="#status">See the status</a>.</p></li>
+<li class="tile"><h3>A verifier in one file</h3><p>The verifier runs in your browser. It is one HTML file with a published fingerprint (SHA-256). <a href="../verifier.html">Open the verifier</a>.</p></li>
+<li class="tile"><h3>We publish what we miss</h3><p>Our own attack drills list what the system catches and what it does not. <a href="trust.html#threats">Read the results</a>.</p></li>
+</ul>
+</div></section>
+
+<section><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Who it is for</p><h2>For everyone who relies on footage.</h2></div>
+<ul class="grid c3">
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-home"/></svg></div><h3>Homes and shops</h3><p>Support a police report or an insurance claim with footage that can show it is original.</p></li>
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-doc"/></svg></div><h3>Insurers and claims teams</h3><p>Check in a browser that a claim video existed before the reported incident.</p></li>
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-scale"/></svg></div><h3>Legal and investigation teams</h3><p>Start the chain of custody minutes after recording, on your own recorder.</p></li>
+</ul>
+</div></section>
+
+<section class="alt" id="status"><div class="wrap split">
+<div class="sec-head"><p class="eyebrow">Status</p><h2>Early alpha, running on a test network.</h2>
+<p>Since 9 November 2026, a home camera has sealed its footage every 10 minutes on the QoreChain testnet. The customer setup in the browser is being finished and tested on a TP-Link Tapo C210.</p></div>
+<div class="panel"><span class="pill warn"><i></i>Alpha · testnet pilot</span>
+<h3>Know the limits</h3>
+<ul class="limits">
+<li>QoreWitness shows that a video has not changed since it was sealed. It cannot show that the scene itself was real.</li>
+<li>Our time stamps are not eIDAS qualified time stamps. A court weighs them as ordinary evidence.</li>
+<li>This is a testnet pilot. A network reset can remove testnet records.</li>
+<li>Pilot records show how the method works. They are not evidence yet.</li>
+</ul>
+<p class="small"><a href="trust.html">Read all limits on Trust and limits</a></p></div>
+</div></section>
+
+<section><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Questions</p><h2>Short answers.</h2></div>
+<div class="narrow"><div class="faq"><details><summary>Does my video leave my home?</summary><div class="in"><p>No. Your video stays on your box at home. Only fingerprints and times go on the public network. The network can also see the account address of your box and when each seal was made.</p><p>A fingerprint shows nothing about what is in the picture or the sound.</p></div></details><details><summary>What if my internet is down?</summary><div class="in"><p>Recording goes on. Sealing needs the internet, so the minutes without a connection probably have no seal. The network shows the gap with its start and length.</p><p>Nobody can fill the gap later with a backdated seal.</p></div></details><details><summary>Is this crypto?</summary><div class="in"><p>It uses a public blockchain as a notary. You do not need to buy or trade anything to look at proof. On Fees included you never touch tokens.</p><p>During the pilot, all tokens are test tokens with no value.</p></div></details><details><summary>What does it cost?</summary><div class="in"><p>Free during the testnet pilot, for both plans. No payment is collected.</p><p>Later, Self-managed stays free software and you pay the network fees yourself. Fees included is planned at about EUR 4 per camera per month (estimate). See <a href="plans.html">Plans</a>.</p></div></details></div><p style="margin-top:20px"><a href="faq.html">See all 12 questions</a></p></div>
+</div></section>
+<div class="band"><div class="wrap"><div><h2>Seal your first clip today.</h2><p>It is free during the pilot. No payment is collected.</p></div><a class="btn primary" href="get-started.html">Start setup <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a></div></div>
+</main>
+<footer class="site-footer"><div class="wrap">
+<div class="cols">
+<div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
+<p>Seal your camera footage. Prove later that nobody changed it.</p>
+<p><b>QoreWitness will never ask for your recovery phrase.</b></p></div>
+<div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
+<div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
+<div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>
+</div>
+<div class="legal"><span>Testnet pilot. Both plans are free and no payment is collected. Records on the test network may be removed when it resets.</span><span>Open source under Apache-2.0. Built by fnoufnou. QoreWitness is not a TP-Link product and has no link with TP-Link. Tapo is a trademark of its owner.</span></div>
+</div></footer>
+<script src="../assets/site.js" defer></script>
+</body>
+</html>
