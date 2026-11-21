@@ -21,7 +21,7 @@ const GH = "https://github.com/fnoufnou/qorewitness";
 const GHDOC = (f) => `${GH}/blob/main/docs/${f}`;
 const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
-const INSTALL = "curl -fsSL https://qorewitness.fnoufnou.com/install.sh | sh";
+const INSTALL = "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash";
 const VERIFIER_SHA = "a995b6e408847daa288aa41ec4e7d03e2ce85bd0088b77c297c9634c5b5eb623";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 
@@ -129,7 +129,7 @@ const footer = `<footer class="site-footer"><div class="wrap">
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
 <p>Seal your camera footage. Prove later that nobody changed it.</p>
-<p><b>QoreWitness will never ask for your recovery phrase.</b></p></div>
+<p><b>QoreWitness will never ask for your keys or your backup files.</b></p></div>
 <div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
 <div><h2>Code</h2><ul><li><a href="${GH}">GitHub</a></li><li><a href="${UP}verifier.html">Verifier</a></li><li><a href="${X}">@fnoufnou on X</a></li><li><a href="${DISCORD}">QoreChain Discord</a></li></ul></div>
@@ -194,11 +194,11 @@ const FAQ = [
   ["What does it cost?", `<p>Free during the testnet pilot, for both plans. No payment is collected.</p><p>Later, Self-managed stays free software and you pay the network fees yourself. Fees included is planned at about EUR 4 per camera per month (estimate). See <a href="plans.html">Plans</a>.</p>`],
   ["Will the police or a court accept it?", `<p>We cannot promise that. A court can accept a QoreWitness record, but it weighs it as ordinary evidence. We are not an EU qualified time stamp provider.</p><p>Pilot records show how the method works. They are not evidence yet. Ask a lawyer about your case.</p>`],
   ["Which cameras work?", `<p>Cameras that give a network video stream (RTSP). One camera runs live today. We are testing the TP-Link Tapo C210 now.</p><p>We plan to publish a tested list and to grow it. We have no partnership with any camera maker.</p>`],
-  ["What if I lose the box?", `<p>The seals on the network stay. To prove a clip you also need the clip and its receipt. So back them up.</p><p>We plan a one-click export of clips and receipts. It is not built yet. Until then, copy the files by hand. See <a href="daily-use.html#backup">Daily use</a>.</p>`],
+  ["What if I lose the box?", `<p>The seals on the network stay. To prove a clip you also need the clip and its receipt. So back them up.</p><p>A one-click export of clips and receipts as one ZIP is coming in the pilot. It is not built yet. Until then, copy the clip by hand and download its receipt from the dashboard. See <a href="daily-use.html#backup">Daily use</a>.</p>`],
   ["Can QoreWitness show that the scene was real?", `<p>No. It shows that the file did not change after it was sealed. A staged scene or a fake stream is sealed the same way as a real one.</p>`],
   ["Can someone fake a clip from inside my home network?", `<p>It is hard but not impossible. Someone who controls your box or your camera before sealing could feed it fake footage.</p><p>Keep the box and the camera on their own network. Use strong passwords. Read more on <a href="trust.html">Trust and limits</a>.</p>`],
   ["Who can see my clips?", `<p>Only you, on your box. A receipt shows fingerprints, times and a camera key. It shows no picture and no sound.</p>`],
-  ["How long are my clips kept?", `<p>The box deletes old clips after 14 days by default. Receipts stay. Export any clip you may need as evidence before it is deleted. You can change the setting.</p>`],
+  ["How long are my clips kept?", `<p>The box deletes old clips after 14 days by default. Receipts stay. Download any clip you may need as evidence before it is deleted. You can change the setting.</p>`],
   ["What happens when the pilot ends?", `<p>The test network can be reset after 15 Dec 2026. A reset can remove pilot records.</p><p>When the main network opens, you would need to seal again. We plan to tell you before that happens and to guide you. We collect nothing from you until then.</p>`],
 ];
 const faqItems = (list) => `<div class="faq">${list.map(([q, a]) => `<details><summary>${q}</summary><div class="in">${a}</div></details>`).join("")}</div>`;
@@ -247,7 +247,7 @@ ${heroArt}
 <p>Setup takes about one hour. You run one command. Everything else happens in your browser.</p></div>
 <ul class="grid c3">
 <li class="tile"><div class="ic">${ico("camera")}</div><h3>A TP-Link Tapo C210</h3><p>This is the camera we test first. Other cameras that give a network video stream may work later.</p></li>
-<li class="tile"><div class="ic">${ico("box")}</div><h3>A small box that stays on</h3><p>It records the stream and seals it. A Raspberry Pi 5 with an SSD is our reference device.</p></li>
+<li class="tile"><div class="ic">${ico("box")}</div><h3>A small box that stays on</h3><p>It records the stream and seals it. A Raspberry Pi 5 with a USB SSD, or any always-on Linux computer.</p></li>
 <li class="tile"><div class="ic">${ico("browser")}</div><h3>Any browser</h3><p>You set up in a browser. The receiver of a clip checks it in a browser too.</p></li>
 </ul>
 <div class="btns" style="margin-top:28px"><a class="btn primary" href="get-started.html">Read the setup guide ${ico("arrow")}</a><a class="btn" href="plans.html">See the plans</a></div>
@@ -277,7 +277,7 @@ ${heroArt}
 
 <section class="alt" id="status"><div class="wrap split">
 <div class="sec-head"><p class="eyebrow">Status</p><h2>Early alpha, running on a test network.</h2>
-<p>Since 9 November 2026, a home camera has sealed its footage every 10 minutes on the QoreChain testnet. The customer setup in the browser is being finished and tested on a TP-Link Tapo C210.</p></div>
+<p>Since 9 November 2026, a home camera has sealed its footage every 10 minutes on the QoreChain testnet. The one-line installer, the setup in your browser and the dashboard are built. We test them on a TP-Link Tapo C210. The evidence ZIP export and phone alerts are planned.</p></div>
 <div class="panel"><span class="pill warn"><i></i>Alpha · testnet pilot</span>
 <h3>Know the limits</h3>
 <ul class="limits">
@@ -351,9 +351,9 @@ const railItems = [
   ["s1", "Make a camera account"],
   ["s2", "Find the camera address"],
   ["s3", "Check the recording options"],
-  ["s4", "Install on the box"],
-  ["s5", "Open the setup wizard"],
-  ["s6", "Choose a plan"],
+  ["s4", "Prepare the box"],
+  ["s5", "Run the installer"],
+  ["s6", "Set up in the browser"],
   ["s7", "Your first seal"],
 ];
 page({
@@ -362,9 +362,9 @@ page({
   title: "Set up your Tapo C210 | QoreWitness",
   desc: "Step-by-step guide to seal the footage of a TP-Link Tapo C210 with QoreWitness. About one hour. Free during the testnet pilot.",
   body: `
-${head("Get started", "Set up your Tapo C210.", "Seven steps from camera to your first seal. You run one command. Everything else is in the Tapo app and in your browser.", ["About 1 hour", "Free during the pilot", "One command in a terminal"])}
+${head("Get started", "Set up your Tapo C210.", "Seven steps from a new camera to Sealing started. You type one command in a terminal. Everything else is in the Tapo app and in your browser.", ["About 1 hour", "Free during the pilot", "One command in a terminal"])}
 <section><div class="wrap">
-<div class="callout warn" style="margin-top:0"><b class="t">Guide status</b>We write this guide before the first test on a real C210 on 24 Nov 2026. Pictures are marked "Screenshot" and come after that test. Some steps may change. Last checked on a real camera: <b>not yet</b>.</div>
+<div class="callout warn" style="margin-top:0"><b class="t">Guide status</b>The installer, the setup in the browser and the dashboard are built. We test the whole guide on a real C210 on 24 Nov 2026. Pictures are marked "Screenshot" and come after that test. Last checked on a real camera: <b>not yet</b>.</div>
 <div class="guide">
 <aside class="rail" aria-label="Steps"><h2>Steps</h2><ol>${railItems.map(([id, t]) => `<li><a href="#${id}">${t}</a></li>`).join("")}</ol></aside>
 <div>
@@ -372,16 +372,16 @@ ${head("Get started", "Set up your Tapo C210.", "Seven steps from camera to your
 <h2 style="margin-bottom:16px">What you need</h2>
 <ul class="checks">
 <li>${ico("check")}<span>A TP-Link Tapo C210, powered, on your Wi-Fi, and set up in the Tapo app.</span></li>
-<li>${ico("check")}<span>A small Linux box that stays on. Our reference device is a Raspberry Pi 5 (4 GB) with Raspberry Pi OS Lite 64-bit and a USB SSD. Any Debian or Ubuntu machine with Docker also works. We confirm the exact shopping list after the first test.</span></li>
-<li>${ico("check")}<span>Room for video. Plan for several GB per day. A 128 GB card or an SSD is a safe start.</span></li>
-<li>${ico("check")}<span>A phone or laptop on the same Wi-Fi as the box.</span></li>
+<li>${ico("check")}<span>A box that stays on: a Raspberry Pi 5 with a USB SSD, or any always-on Linux computer (64-bit Debian or Ubuntu with internet access). When the box is off, it records and seals nothing.</span></li>
+<li>${ico("check")}<span>Room for video: 128 GB or more. A USB SSD lasts longer than an SD card. High quality video likely needs 15 to 20 GB a day (we still measure this).</span></li>
+<li>${ico("check")}<span>The camera and the box on the same home network, and a phone or laptop on that network.</span></li>
 </ul>
 <div class="callout"><b class="t">Aim the camera at your own property</b>If your camera films the street or a neighbour, privacy law may apply to you. Put up a sign and read the guidance of your data protection authority. In the Netherlands this is the Autoriteit Persoonsgegevens. See <a href="trust.html#privacy">Trust and limits</a>.</div>
 
 <ol class="steps" style="margin-top:40px">
 
 <li class="step" id="s1"><h3>Make a camera account</h3><p class="time">About 3 minutes · Tapo app</p><div class="body">
-<p>The box reads the video stream with a separate camera account. It is not your Tapo login. You make it in the Tapo app.</p>
+<p>The box reads the video from the camera over your home network. The camera needs its own account for this. It is not your TP-Link login.</p>
 <ol class="plain">
 <li>Open the Tapo app and tap your camera.</li>
 <li>Tap the gear icon (Settings).</li>
@@ -390,66 +390,76 @@ ${head("Get started", "Set up your Tapo C210.", "Seven steps from camera to your
 <li>Agree to the notice.</li>
 <li>Choose a user name and a password. Each has 6 to 32 characters.</li>
 </ol>
-<div class="callout"><b class="t">Keep the password plain</b>Use letters and digits. Special characters can make the stream fail. Write the user name and password down. You need them in step 5.</div>
+<div class="callout"><b class="t">Keep the password plain</b>Use letters and digits. Special characters can make the stream fail. Use a new password. Do not reuse the password of your TP-Link account. Write the user name and password down. You need them in step 6.</div>
 ${shot("the Tapo app screen Camera Account with the user name and password fields (hide the password)")}
 ${help("Something wrong?", `<ul class="plain"><li>You cannot find Camera Account. Update the Tapo app and the camera firmware, then look again.</li><li>The app says the password is not allowed. Use only letters and digits, 6 to 32 characters.</li></ul>`)}
 </div></li>
 
 <li class="step" id="s2"><h3>Find the camera address</h3><p class="time">About 2 minutes · Tapo app</p><div class="body">
-<p>Your camera has an address on your home network, for example <code>192.168.1.50</code>. The wizard asks for it.</p>
-<ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Device Info</b>.</li><li>Write down the <b>IP Address</b>.</li></ol>
-<p>The address can change after a router restart. In your router, give the camera a fixed address ("address reservation"). This keeps the stream working.</p>
+<p>Your camera has an address on your home network, for example <code>192.168.1.20</code>. The setup asks for it.</p>
+<ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Device Info</b>.</li><li>Write down the <b>IP address</b>.</li></ol>
+<p>The address can change after a router restart, and then the box loses the camera. In your router, give the camera a fixed address. This is often called "DHCP reservation".</p>
 ${shot("the Tapo app Device Info screen with the IP address")}
 ${help("Something wrong?", `<ul class="plain"><li>The IP address field is empty. Check that the camera is online in the app.</li><li>You do not know how to reserve the address. Search for your router model and "DHCP reservation". It takes a few minutes.</li></ul>`)}
 </div></li>
 
 <li class="step" id="s3"><h3>Check the recording options</h3><p class="time">About 2 minutes · Tapo app</p><div class="body">
-<p>TP-Link says a Tapo camera can run only two of these three at the same time: Tapo Care, microSD recording and NVR recording. Your box reads the stream like a recorder. If the test in step 5 says the stream is busy or off, switch one of the three off and test again.</p>
-<p class="small muted">We confirm this rule for QoreWitness on the first real test. We update this step after that.</p>
-${shot("the Tapo app screen with the recording options (Tapo Care, microSD card, NVR)")}
+<p>Tapo Care (cloud), the microSD card and a recorder such as QoreWitness: only two of the three work at the same time. If all three are on, turn one off. The C210 also sends at most two streams at once, and the live view in the Tapo app counts as one.</p>
+${shot("the Tapo app screen with the recording options (Tapo Care, microSD card, recorder)")}
 </div></li>
 
-<li class="step" id="s4"><h3>Install on the box</h3><p class="time">About 10 minutes · Terminal on the box</p><div class="body">
-<p>Open a terminal on the box. Use SSH from your laptop or a keyboard and screen. Paste this one command and press Enter.</p>
-${copybox("install-cmd", INSTALL, "Copy command")}
-<p>The command installs what the box needs, downloads QoreWitness and starts it. At the end, it prints a <b>link</b> and a <b>code</b> in large text. Keep the window open until you have opened the link.</p>
-<div class="callout"><b class="t">Want to read the script first?</b>Open <a href="${SITE}/install.sh">${SITE}/install.sh</a> in your browser. It is plain text. The code is open source on <a href="${GH}">GitHub</a>.</div>
-${shot("the terminal at the end of the install, with the link and the code")}
-${help("Something wrong?", `<ul class="plain"><li><code>curl: command not found</code>. Install it with <code>sudo apt install curl</code> and run the command again.</li><li>The command stops with an error. Run it again. It is safe to run twice. If it fails again, ask on <a href="${X}">X</a> or the <a href="${DISCORD}">QoreChain Discord</a> and paste the last lines.</li><li>You lost the link. Run the command again. It prints the link again.</li></ul>`)}
-</div></li>
-
-<li class="step" id="s5"><h3>Open the setup wizard</h3><p class="time">About 15 minutes · Browser</p><div class="body">
-<p>On your phone or laptop, on the same Wi-Fi, open the link from step 4 and type the code. The wizard guides you in small screens.</p>
+<li class="step" id="s4"><h3>Prepare the box</h3><p class="time">About 15 minutes · Your computer</p><div class="body">
+<p><b>Raspberry Pi 5:</b></p>
 <ol class="plain">
-<li>Choose a password for your dashboard. Use at least 10 characters.</li>
-<li>Type the camera address from step 2, and the user name and password from step 1. Give the camera a name, for example "Front door".</li>
-<li>Tick the box that says the camera films your own property.</li>
-<li>Press <b>Test camera</b>. You should see a picture from your camera within 15 seconds.</li>
-<li>Press <b>Looks right</b>. The box now makes a key for this camera. You do not type anything for this.</li>
+<li>Install Raspberry Pi Imager on your computer.</li>
+<li>Choose <b>Raspberry Pi OS Lite (64-bit)</b>.</li>
+<li>In the settings of the Imager: host name <code>qorewitness</code>, a user name and password, your Wi-Fi (or use a cable) and <b>Enable SSH</b>.</li>
+<li>Write the card, put it in the Pi and start it. Wait two minutes.</li>
+<li>On your computer, open a terminal and connect: <code>ssh &lt;your user&gt;@qorewitness.local</code></li>
 </ol>
-${shot("the wizard screen Test camera with a picture from the camera")}
-${help("Something wrong?", `<ul class="plain"><li><b>The camera refused the password.</b> Check the camera account in the Tapo app (step 1). Check upper and lower case.</li><li><b>Camera not found.</b> Check the address (step 2). Check that the box and the camera are on the same network.</li><li><b>Stream busy or off.</b> Look at step 3.</li><li><b>No picture, but no error.</b> Press <b>Use standard quality</b>. The camera then sends the lighter stream.</li><li>You closed the browser by mistake. Open the link again. The wizard continues where it stopped.</li></ul>`)}
+<p><b>Another Linux computer:</b> any 64-bit Debian or Ubuntu install with internet access and a user with <code>sudo</code>. A mini PC or a virtual machine works.</p>
+<p class="small muted">A ready-made Pi image is planned. Today you install Raspberry Pi OS yourself.</p>
+${shot("Raspberry Pi Imager with the settings for host name, user and SSH")}
 </div></li>
 
-<li class="step" id="s6"><h3>Choose a plan</h3><p class="time">About 10 minutes · Browser</p><div class="body">
-<p>Both plans are free during the testnet pilot. The difference is who looks after the network fees. See <a href="plans.html">Plans</a> for the full picture.</p>
+<li class="step" id="s5"><h3>Run the installer</h3><p class="time">About 10 minutes · Terminal on the box</p><div class="body">
+<p>In the terminal of the box, paste this one line and press Enter.</p>
+${copybox("install-cmd", INSTALL, "Copy command")}
+<p>The installer checks the system, offers to install Docker if it is missing (it asks first), downloads QoreWitness and starts it. At the end it shows a <b>setup link</b> and a <b>pairing code</b> of 6 digits, in large text.</p>
+<div class="callout warn"><b class="t">Do not share the code</b>Anyone with the code can set up the box until you choose a password. The link and the code are also in the file <code>~/qorewitness/SETUP-LINK.txt</code>. Only your user can read it.</div>
+<div class="callout"><b class="t">Want to read the script first?</b>Open it on <a href="${GH}/blob/main/install.sh">GitHub</a>. The code is open source. You can run the installer again at any time. It keeps your camera, keys, account and video.</div>
+${shot("the terminal at the end of the install, with the setup link and the pairing code")}
+${help("Something wrong?", `<ul class="plain"><li><code>curl: command not found</code>. Install it with <code>sudo apt install curl</code> and run the line again.</li><li>You lost the link or the code. Run the installer again. It shows them again.</li><li>The page does not open later. The box and your phone must be on the same network. Guest Wi-Fi often blocks this.</li><li>Still stuck. Ask on <a href="${X}">X</a> or in the <a href="${DISCORD}">QoreChain Discord</a> and paste the last lines.</li></ul>`)}
+</div></li>
+
+<li class="step" id="s6"><h3>Set up in the browser</h3><p class="time">About 15 minutes · Phone or laptop</p><div class="body">
+<p>Open the setup link on your phone or laptop and type the pairing code. The setup moves in small screens. You can close the browser at any time. Open the link again and the setup continues at the right step.</p>
+<ol class="plain">
+<li><b>Password.</b> Choose a password for the dashboard. Use 10 characters or more.</li>
+<li><b>Camera.</b> Type the camera address (step 2) and the user name and password of the camera account (step 1). Give the camera a name, for example <code>camera-1</code>. Tick the box that the camera films your own property. Press <b>Test camera</b>. Within 15 seconds you see a picture from your camera. Press <b>Looks right</b>. For a smaller disk or weak Wi-Fi, press <b>Use standard quality</b>.</li>
+<li><b>Plan.</b> Choose who pays the network fees. See the table below.</li>
+<li><b>Keys.</b> Press <b>Create keys</b>. The box makes an account key and a camera key. Read the backup note, tick the box and continue.</li>
+<li><b>Network fees.</b> Fees included: the pilot adds the fees and the page moves on by itself. Self-managed: copy the address, claim free test tokens in the Faucet of the QoreChain dashboard and wait. You need at least 2 test QOR.</li>
+<li><b>Connect.</b> Press <b>Start</b>. A progress bar shows four steps. It takes 1 to 3 minutes.</li>
+<li><b>Done.</b> The page says <b>Sealing started</b>.</li>
+</ol>
+${shot("the setup screen Test camera with a picture from the camera")}
+${shot("the setup screen Who pays the network fees?")}
 <div class="tablewrap"><table><thead><tr><th>Plan</th><th>What you do</th></tr></thead><tbody>
-<tr><td><b>Self-managed</b></td><td>The wizard makes your own account and shows a recovery phrase of 24 words. Write it on paper and keep it safe. Then you get free test tokens from the faucet. The wizard waits until the account has enough.</td></tr>
-<tr><td><b>Fees included</b></td><td>You enter a pilot code. We pay the network fees for your camera. Pilot places are limited. <a href="plans.html#ask">Ask for a pilot code</a>.</td></tr>
+<tr><td><b>Fees included (pilot)</b></td><td>You enter a pilot code. The pilot service adds free test tokens to your own account. Pilot places are limited. <a href="plans.html#ask">Ask for a pilot code</a>.</td></tr>
+<tr><td><b>Self-managed</b></td><td>You hold the account and add free test tokens yourself, about once a week.</td></tr>
 </tbody></table></div>
-<p><b>Our advice:</b> pick Self-managed unless you hold a pilot code.</p>
-<div class="callout warn"><b class="t">The recovery phrase is yours alone</b>Nobody can recover it for you. QoreWitness will never ask for it. Not on this site and not in a message. Anyone who asks is not us.</div>
-${shot("the wizard screen Choose a plan")}
-${shot("the wizard screen with the recovery phrase and the tick box 'I stored it safely' (do not show real words)")}
-${help("Something wrong?", `<ul class="plain"><li>The faucet says you reached the limit. Wait 24 hours and try again.</li><li>The wizard says no pilot places are left. Choose Self-managed.</li></ul>`)}
+<p>Both plans make the same proof. Both are free in the pilot. <b>Our advice:</b> choose Self-managed unless you hold a pilot code.</p>
+<div class="callout warn"><b class="t">Back up your keys</b>Your keys are files on the box, in the folder <code>qorewitness/data</code>. Copy that folder to a USB stick and keep it somewhere safe. If the box breaks, these files are the only way to keep this camera and its history. Anyone with these files can use your test account. QoreWitness never asks for them, by email or on a website.</div>
+${shot("the setup screen Keys ready with the backup note")}
+${help("Something wrong?", `<ul class="plain"><li><b>The camera refused the password.</b> Make the camera account again in the Tapo app, with letters and digits only.</li><li><b>No camera answers at this address.</b> Check the address in Device Info. Check that the camera is on and in Wi-Fi range.</li><li><b>The camera is busy.</b> Close the live view in the Tapo app and test again.</li><li><b>The camera sends no picture.</b> Look at step 3. Turn one of the three recording options off.</li><li><b>The pilot says the code is not valid, used or the pilot is full.</b> Check the code, or choose Self-managed.</li><li><b>You forgot the dashboard password.</b> Run the installer again with the option <code>--new-password</code>. Camera, keys and account stay.</li></ul>`)}
 </div></li>
 
 <li class="step" id="s7"><h3>Your first seal</h3><p class="time">About 15 minutes · Browser</p><div class="body">
-<p>The wizard registers your camera on the network. A progress list shows each part. When it is done you see <b>Sealing started</b>.</p>
-<p>The first seal appears in about 10 to 15 minutes. Your dashboard then shows a green line: <i>Sealing OK, last seal a few minutes ago</i>.</p>
-${shot("the dashboard with the green line Sealing OK and the first receipt")}
-<div class="callout ok"><b class="t">Done. What now?</b>Your Tapo app works as before. QoreWitness runs in the background. Read <a href="daily-use.html">Daily use</a>. When you need proof of a clip, read <a href="prove.html">Prove a video</a>.</div>
-${help("Something wrong?", `<ul class="plain"><li>No green line after 30 minutes. Open the dashboard and read the line at the top. It says in plain words what is missing.</li><li>The line is red and says there is no video from the camera. Check the power and the Wi-Fi of the camera.</li><li>Still stuck. Ask on <a href="${X}">X</a> or the <a href="${DISCORD}">QoreChain Discord</a>.</li></ul>`)}
+<p>The first seal comes in about 10 to 15 minutes. Press <b>Open my dashboard</b>. The dashboard shows one line in a colour and one thing to do. At first it says <i>Waiting for the first seal</i> in orange. This is normal. Then it turns green: <i>Sealing OK. Last seal 4 minutes ago.</i></p>
+${shot("the dashboard with the green line Sealing OK")}
+<div class="callout ok"><b class="t">Done. What now?</b>Keep using the Tapo app for live view and alerts. Nothing changes there. Read <a href="daily-use.html">Daily use</a>. When you need proof of a clip, read <a href="prove.html">Prove a video</a>.</div>
+${help("Something wrong?", `<ul class="plain"><li>No green line after 30 minutes. Read the line on the dashboard. It says what to do.</li><li>The line is red and says there is no video from the camera. Check the power and Wi-Fi of the camera and its IP address.</li><li>Still stuck. Ask on <a href="${X}">X</a> or in the <a href="${DISCORD}">QoreChain Discord</a>.</li></ul>`)}
 </div></li>
 </ol>
 </div>
@@ -464,22 +474,26 @@ page({
   title: "Daily use | QoreWitness",
   desc: "What changes in your day when QoreWitness runs: nothing. What the dashboard colours mean, retention, power cuts, backup and how to stop.",
   body: `
-${head("Daily use", "Nothing changes in your day.", "Your Tapo app stays your app. QoreWitness runs next to it, on your box. You look at the dashboard when you want to.")}
+${head("Daily use", "Nothing changes in your day.", "Keep using the Tapo app for live view and alerts. QoreWitness works in the background, on your box. Open the dashboard once in a while.")}
 <section><div class="wrap narrow">
 <h2>The dashboard</h2>
-<p style="margin-top:16px">The dashboard shows one line at the top. It tells you if sealing works.</p>
-<div class="tablewrap"><table><thead><tr><th>Colour</th><th>It means</th><th>What to do</th></tr></thead><tbody>
-<tr><td><b style="color:var(--ok)">Green</b></td><td>Sealing is fine. The last seal is a few minutes old.</td><td>Nothing.</td></tr>
-<tr><td><b style="color:var(--warn)">Orange</b></td><td>Something is late. For example the internet is slow or the network is busy.</td><td>Wait 20 minutes. If it stays orange, read the line for the cause.</td></tr>
-<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing has stopped. For example the camera sends no video.</td><td>Check the power and Wi-Fi of the camera and the box.</td></tr>
+<p style="margin-top:16px">The dashboard shows one line in a colour and one thing to do. Open it at the address of your box, for example <code>http://192.168.1.30:8080</code>, and sign in with your dashboard password.</p>
+<div class="tablewrap"><table><thead><tr><th>Colour</th><th>Example</th><th>What to do</th></tr></thead><tbody>
+<tr><td><b style="color:var(--ok)">Green</b></td><td>Sealing OK. Last seal 4 minutes ago.</td><td>Nothing.</td></tr>
+<tr><td><b style="color:var(--warn)">Orange</b></td><td>Waiting for the first seal.</td><td>Nothing. It comes 10 to 15 minutes after setup.</td></tr>
+<tr><td><b style="color:var(--warn)">Orange</b></td><td>Network fees low: about 2 days left.</td><td>Self-managed: add test QOR to the address shown. Fees included: the pilot tops up.</td></tr>
+<tr><td><b style="color:var(--warn)">Orange</b></td><td>The disk is almost full.</td><td>Keep video for fewer days, or connect a bigger disk.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td>No video from the camera.</td><td>Check the power and Wi-Fi of the camera. Check its IP address.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing stopped 40 minutes ago.</td><td>Check the internet connection of the box. Restart the box if this stays.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing stops: the network fees ran out.</td><td>Self-managed: add test QOR. Fees included: the pilot tops up. If this stays for a day, the pilot may be paused.</td></tr>
 </tbody></table></div>
 ${shot("the dashboard in green, orange and red state")}
+<p class="muted">Phone alerts for these states are planned. Today you see them when you open the dashboard.</p>
 </div></section>
 
 <section class="alt"><div class="wrap narrow">
 <h2>Clips are kept for 14 days</h2>
-<p style="margin-top:16px">The box deletes old clips after 14 days. You can change this. Receipts stay. A clip that is gone cannot be proven, so <b>export a clip before it is deleted</b> if you may need it. See <a href="prove.html#owner">Prove a video</a>.</p>
-<p class="muted">Video takes room. If the disk fills up, the box shortens the time it keeps clips. The dashboard tells you.</p>
+<p style="margin-top:16px">The box deletes video older than the retention time. The setup proposes it from the free disk. The default is 14 days. Receipts stay. A clip that is gone cannot be proven, so <b>download a clip before it is deleted</b> if you may need it. See <a href="prove.html#owner">Prove a video</a>.</p>
 </div></section>
 
 <section><div class="wrap narrow">
@@ -494,24 +508,25 @@ ${shot("the dashboard in green, orange and red state")}
 
 <section class="alt" id="backup"><div class="wrap narrow">
 <h2>Backup</h2>
-<p style="margin-top:16px">Keep a copy of these things. Store them away from the box.</p>
+<p style="margin-top:16px">Copy these things to a USB stick or another computer. Keep them away from the box.</p>
 <ul class="checks">
-<li>${ico("check")}<span><b>Your recovery phrase</b> (Self-managed). On paper, in a safe place. Nobody can recover it for you.</span></li>
-<li>${ico("check")}<span><b>The clips you may need</b>, with their receipts. We plan a one-click export. It is not built yet. Until then, copy the clip and its receipt files by hand from the recordings folder.</span></li>
+<li>${ico("check")}<span><b>The folder <code>qorewitness/data</code></b>, at least the file <code>qorewitness.env</code> and the folder <code>keys</code>. These are your keys. Anyone with them can use your test account.</span></li>
+<li>${ico("check")}<span><b>The clips you may need</b>, with their receipts. A one-click export as one ZIP is coming in the pilot. Until then, copy the clip by hand and download its receipt from the dashboard.</span></li>
 </ul>
 <p class="muted">The seals on the network stay if you lose the box. To prove a clip you also need the clip and its receipt.</p>
 </div></section>
 
 <section><div class="wrap narrow">
-<h2>Stop or remove</h2>
+<h2>Update, stop or remove</h2>
 <ul class="plain" style="margin-top:16px">
-<li>To pause, stop QoreWitness on the box. Your camera and the Tapo app keep working.</li>
-<li>To remove it, delete the QoreWitness folder from the box and the camera account in the Tapo app.</li>
+<li><b>Update.</b> QoreWitness never updates itself. The version is pinned on purpose. You choose when to move to a new version.</li>
+<li><b>Pause or remove.</b> Stop QoreWitness with <code>cd ~/qorewitness &amp;&amp; docker compose down</code>. Your camera and the Tapo app keep working. Delete the folder <code>~/qorewitness</code> when you no longer need the video, the receipts or the keys.</li>
 <li>Records on the network cannot be deleted by us or by you. They hold only fingerprints and times.</li>
 <li>If you stop using a camera key, you can revoke it. A revoked key cannot come back.</li>
 </ul>
+<div class="callout"><b class="t">Keep the box on your home network</b>The setup and the dashboard use plain HTTP on your home network. Use a network you trust. Never forward port 8080 on your router.</div>
 </div></section>
-${closing("Need proof of a clip?", "Export it, send it, and let the other side check it in a browser.", "prove.html", "Prove a video")}`,
+${closing("Need proof of a clip?", "Take the clip and its receipt, send them, and let the other side check them in a browser.", "prove.html", "Prove a video")}`,
 });
 
 /* ================= PROVE ================= */
@@ -519,12 +534,12 @@ const emailTpl = `Subject: Video evidence with proof of origin
 
 Hello,
 
-Attached is a video clip from my home camera and its receipt.
+Attached are a video clip from my home camera and its receipt file.
 The footage was sealed by QoreWitness minutes after recording.
 
 To check it:
 1. Open ${SITE}/verifier.html
-2. Drop the clip and the receipt (or the whole ZIP) on the page.
+2. Drop the clip and the receipt file on the page.
 3. The page shows a green result if the clip has not changed since it was sealed.
 
 You do not need to trust me or QoreWitness. The page repeats every check in your own browser.
@@ -534,9 +549,9 @@ page({
   file: "prove.html",
   current: "prove.html",
   title: "Prove a video | QoreWitness",
-  desc: "How to prove that a video did not change: export the evidence package, send it, and let the receiver check it in a browser for a green result.",
+  desc: "How to prove that a video did not change: get the clip and its receipt, send them, and let the receiver check them in a browser for a green result.",
   body: `
-${head("Prove a video", "Show that a clip is the original.", "Two people are involved. The owner sends the clip and its receipt. The receiver drops both on a web page and reads the result.")}
+${head("Prove a video", "Show that a clip is the original.", "Two people are involved. The owner sends the clip and its receipt file. The receiver drops both on a web page and reads the result.")}
 <section id="demo"><div class="wrap">
 <div class="split">
 <div>
@@ -561,14 +576,14 @@ ${head("Prove a video", "Show that a clip is the original.", "Two people are inv
 </div></section>
 
 <section class="alt" id="owner"><div class="wrap narrow">
-<p class="eyebrow">For the owner</p><h2>Export the evidence package.</h2>
+<p class="eyebrow">For the owner</p><h2>Get the clip and its receipt.</h2>
 <p style="margin-top:16px">Do this as soon as you know you may need a clip. Clips are deleted after 14 days by default.</p>
+<div class="callout warn"><b class="t">Coming in the pilot</b>A one-click export as one ZIP, and a verifier that takes that ZIP, are planned. They are not built yet. Today you take two files: the clip and its receipt.</div>
 <ol class="steps" style="margin-top:28px">
-<li class="step"><h3>Pick the time</h3><div class="body"><p>Open your dashboard. Choose the day and the minutes you need. Add a few minutes before and after.</p>${shot("the dashboard with a time range selected")}</div></li>
-<li class="step"><h3>Export</h3><div class="body"><p>Press <b>Export evidence</b>. You get one ZIP file with the clip, its receipt and a short note for the receiver. If some minutes are not sealed, the dashboard tells you before you download.</p>
-<div class="callout warn"><b class="t">Planned. Not built yet</b>The Export button is planned. Until it ships, copy the clip and its receipt files by hand from the recordings folder on the box. The receipt file sits next to the clip it covers.</div>${shot("the dashboard after Export evidence, with the ZIP file")}</div></li>
-<li class="step"><h3>Check it yourself</h3><div class="body"><p>Drop the package on the <a href="${UP}verifier.html">verifier</a> before you send it. You should see the green result.</p></div></li>
-<li class="step"><h3>Send it</h3><div class="body"><p>Send the ZIP to the receiver, for example an insurer or a lawyer. Add the link to the verifier. You can use this text:</p>
+<li class="step"><h3>Find the time</h3><div class="body"><p>Open the dashboard and find the date and time of the clip you need.</p>${shot("the dashboard with the list of recent seals and their receipts")}</div></li>
+<li class="step"><h3>Take the clip and the receipt</h3><div class="body"><p>Copy the clip from the folder <code>~/qorewitness/data/&lt;camera&gt;/segments</code> on the box. Download its receipt from the dashboard. Keep both files together.</p>${shot("the receipt download on the dashboard")}</div></li>
+<li class="step"><h3>Check it yourself</h3><div class="body"><p>Drop the clip and its receipt on the <a href="${UP}verifier.html">verifier</a> before you send them. You should see the green result.</p></div></li>
+<li class="step"><h3>Send it</h3><div class="body"><p>Send both files to the receiver, for example an insurer or a lawyer. Add the link to the verifier. You can use this text:</p>
 <div class="copybox light"><code id="mail-tpl">${emailTpl}</code><button class="btn" type="button" data-copy="mail-tpl">${ico("copy")}<span>Copy text</span></button></div>
 <div class="callout warn"><b class="t">Your video shows people</b>Send it only to people who need it. Use a way to send that you trust. Do not post it in public.</div></div></li>
 </ol>
@@ -603,15 +618,15 @@ ${head("Plans", "Two ways to run QoreWitness.", "Same seal. Same proof page. You
 <h2 id="p-self">Self-managed</h2><p class="for">For people who like to hold their own keys.</p>
 <p class="price">Free software. Always.<small>Network fees: you pay them yourself. About 0.1 test token per seal today.</small></p>
 <h3>You get</h3><ul class="plain"><li>The full QoreWitness software</li><li>The prove page</li><li>The setup guide</li></ul>
-<h3>You do</h3><ul class="plain"><li>Create your own account and keep its recovery phrase safe</li><li>Get free test tokens from the faucet during the pilot</li><li>Later, buy tokens for the fees</li></ul>
-<p class="small muted">If you lose the recovery phrase, nobody can recover it for you.</p>
+<h3>You do</h3><ul class="plain"><li>Keep a backup of your keys (the setup explains how)</li><li>Get free test tokens from the faucet during the pilot</li><li>Later, buy tokens for the fees</li></ul>
+<p class="small muted">If you lose your keys and have no backup, nobody can recover them for you.</p>
 <div class="push"><a class="btn primary" href="get-started.html">Get started ${ico("arrow")}</a></div>
 </article>
 <article class="plan feature" aria-labelledby="p-fees" id="fees">
 <h2 id="p-fees">Fees included</h2><p class="for">For people who want it to just work.</p>
 <p class="price">Planned price: about EUR 4 per camera per month (estimate)<small>Free during the pilot. We plan one plan per camera. The price can change.</small></p>
 <h3>You get</h3><ul class="plain"><li>Everything in Self-managed</li><li>We pay the network fees for your camera</li><li>No wallet to set up and no tokens to buy</li></ul>
-<h3>Good to know</h3><ul class="plain"><li>Fair use: about 144 seals per day per camera (one per 10 minutes). Final limits are open.</li><li>It needs a fee service that is still in development. We run it on the test network only.</li><li>If we stop the service, you switch to Self-managed.</li></ul>
+<h3>Good to know</h3><ul class="plain"><li>Fair use: about 144 seals per day per camera (one per 10 minutes). Final limits are open.</li><li>You enter a pilot code in the setup. The pilot service then tops up your own account with free test tokens. It runs on the test network only.</li><li>If we stop the service, you switch to Self-managed.</li></ul>
 <div class="push" id="ask"><div class="ask"><b>Pilot places limited, ask for a pilot code.</b><br>Message <a href="${X}">@fnoufnou on X</a> or write in the <a href="${DISCORD}">QoreChain Discord</a>. There is no checkout and no form on this site.</div></div>
 </article>
 </div>
@@ -634,7 +649,7 @@ ${head("Plans", "Two ways to run QoreWitness.", "Same seal. Same proof page. You
 <h2>What each plan needs from you</h2>
 <ul class="plain" style="margin-top:16px">
 <li><b>Both:</b> a Tapo C210, a box that stays on, and about one hour. See <a href="get-started.html">Get started</a>.</li>
-<li><b>Self-managed:</b> a recovery phrase on paper, and a few minutes at the faucet.</li>
+<li><b>Self-managed:</b> a backup of your keys, and a few minutes at the faucet about once a week.</li>
 <li><b>Fees included:</b> a pilot code.</li>
 </ul>
 <p>Both plans make the same proof. The verifier shows the same green result for both.</p>
@@ -690,7 +705,7 @@ ${head("Trust and limits", "What it proves, and what it cannot.", "A proof is on
 <tr><td>Seal a second version of an old window</td><td><b>Refused</b></td><td>The contract refuses overlapping windows.</td></tr>
 <tr><td>Swap in footage from another camera, re-encode, delete or add a clip before sealing</td><td><b>Flagged</b></td><td>The record shows a stream change, a gap or an overlap. In our drill, 4 of 5 such attacks were flagged.</td></tr>
 <tr><td>Swap in footage that uses the camera's own settings, before sealing</td><td><b>Missed</b></td><td>The box cannot tell. This is the trust boundary.</td></tr>
-<tr><td>Steal the box</td><td>Risk</td><td>The box holds your camera key and, today, the recovery phrase of your account. Keep the box safe. A mode that keeps the main key offline is planned.</td></tr>
+<tr><td>Steal the box</td><td>Risk</td><td>The box holds your camera key and, today, the keys of your test account. Keep the box safe. A mode that keeps the main key offline is planned.</td></tr>
 <tr><td>An attacker with only the classic (ECDSA) key of the account</td><td><b>Failed</b></td><td>In a dry run of the Q-Day Drill, 13 attacks failed and 0 succeeded. Every change needs a fresh post-quantum signature.</td></tr>
 </tbody></table></div>
 </div></section>
@@ -729,7 +744,7 @@ ${head("Trust and limits", "What it proves, and what it cannot.", "A proof is on
 <li>A fingerprint of a video with people in it may count as personal data in some cases. We keep everything else off the chain.</li>
 </ul>
 <div class="callout warn"><b class="t">If your camera films the street or a neighbour</b>The household exemption likely does not apply then (CJEU, case C-212/13, Rynes). You are the controller of that video. Aim the camera at your own property. Put up a sign. Read the guidance on home cameras from your data protection authority. In the Netherlands this is the <a href="https://www.autoriteitpersoonsgegevens.nl">Autoriteit Persoonsgegevens</a>.</div>
-<p><b>QoreWitness will never ask for your recovery phrase.</b></p>
+<p><b>QoreWitness will never ask for your keys or your backup files.</b></p>
 </div></section>`,
 });
 
@@ -815,8 +830,8 @@ verifier (static page or CLI): clip + receipt
 <h3 style="margin:32px 0 10px">Known limits for the jury</h3>
 <ul class="limits">
 <li>Testnet only. The PQC precompiles are not active on mainnet yet.</li>
-<li>The recovery phrase of the owner account sits on the recorder today. An agent-key mode is designed (<a href="${GHDOC("AGENT_KEY.md")}">notes</a>). A spike passed on the testnet. Relayed calls emit no EVM logs, so the mode waits.</li>
-<li>The customer setup wizard and the Fees included service are in development.</li>
+<li>The keys of the owner account sit on the recorder today. An agent-key mode is designed (<a href="${GHDOC("AGENT_KEY.md")}">notes</a>). A spike passed on the testnet. Relayed calls emit no EVM logs, so the mode waits.</li>
+<li>The installer, the setup in the browser, the dashboard and the pilot top-up service are built. The evidence ZIP export, phone alerts, a Windows installer and a ready-made Pi image are planned.</li>
 </ul>
 </div></section>`,
 });

@@ -48,26 +48,26 @@
 </div></header>
 <main id="main">
 
-<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Get started</p><h1>Set up your Tapo C210.</h1><p class="lead">Seven steps from camera to your first seal. You run one command. Everything else is in the Tapo app and in your browser.</p><ul class="meta"><li>About 1 hour</li><li>Free during the pilot</li><li>One command in a terminal</li></ul></div></div>
+<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Get started</p><h1>Set up your Tapo C210.</h1><p class="lead">Seven steps from a new camera to Sealing started. You type one command in a terminal. Everything else is in the Tapo app and in your browser.</p><ul class="meta"><li>About 1 hour</li><li>Free during the pilot</li><li>One command in a terminal</li></ul></div></div>
 <section><div class="wrap">
-<div class="callout warn" style="margin-top:0"><b class="t">Guide status</b>We write this guide before the first test on a real C210 on 24 Nov 2026. Pictures are marked "Screenshot" and come after that test. Some steps may change. Last checked on a real camera: <b>not yet</b>.</div>
+<div class="callout warn" style="margin-top:0"><b class="t">Guide status</b>The installer, the setup in the browser and the dashboard are built. We test the whole guide on a real C210 on 24 Nov 2026. Pictures are marked "Screenshot" and come after that test. Last checked on a real camera: <b>not yet</b>.</div>
 <div class="guide">
-<aside class="rail" aria-label="Steps"><h2>Steps</h2><ol><li><a href="#s1">Make a camera account</a></li><li><a href="#s2">Find the camera address</a></li><li><a href="#s3">Check the recording options</a></li><li><a href="#s4">Install on the box</a></li><li><a href="#s5">Open the setup wizard</a></li><li><a href="#s6">Choose a plan</a></li><li><a href="#s7">Your first seal</a></li></ol></aside>
+<aside class="rail" aria-label="Steps"><h2>Steps</h2><ol><li><a href="#s1">Make a camera account</a></li><li><a href="#s2">Find the camera address</a></li><li><a href="#s3">Check the recording options</a></li><li><a href="#s4">Prepare the box</a></li><li><a href="#s5">Run the installer</a></li><li><a href="#s6">Set up in the browser</a></li><li><a href="#s7">Your first seal</a></li></ol></aside>
 <div>
 
 <h2 style="margin-bottom:16px">What you need</h2>
 <ul class="checks">
 <li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>A TP-Link Tapo C210, powered, on your Wi-Fi, and set up in the Tapo app.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>A small Linux box that stays on. Our reference device is a Raspberry Pi 5 (4 GB) with Raspberry Pi OS Lite 64-bit and a USB SSD. Any Debian or Ubuntu machine with Docker also works. We confirm the exact shopping list after the first test.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>Room for video. Plan for several GB per day. A 128 GB card or an SSD is a safe start.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>A phone or laptop on the same Wi-Fi as the box.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>A box that stays on: a Raspberry Pi 5 with a USB SSD, or any always-on Linux computer (64-bit Debian or Ubuntu with internet access). When the box is off, it records and seals nothing.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>Room for video: 128 GB or more. A USB SSD lasts longer than an SD card. High quality video likely needs 15 to 20 GB a day (we still measure this).</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The camera and the box on the same home network, and a phone or laptop on that network.</span></li>
 </ul>
 <div class="callout"><b class="t">Aim the camera at your own property</b>If your camera films the street or a neighbour, privacy law may apply to you. Put up a sign and read the guidance of your data protection authority. In the Netherlands this is the Autoriteit Persoonsgegevens. See <a href="trust.html#privacy">Trust and limits</a>.</div>
 
 <ol class="steps" style="margin-top:40px">
 
 <li class="step" id="s1"><h3>Make a camera account</h3><p class="time">About 3 minutes · Tapo app</p><div class="body">
-<p>The box reads the video stream with a separate camera account. It is not your Tapo login. You make it in the Tapo app.</p>
+<p>The box reads the video from the camera over your home network. The camera needs its own account for this. It is not your TP-Link login.</p>
 <ol class="plain">
 <li>Open the Tapo app and tap your camera.</li>
 <li>Tap the gear icon (Settings).</li>
@@ -76,66 +76,76 @@
 <li>Agree to the notice.</li>
 <li>Choose a user name and a password. Each has 6 to 32 characters.</li>
 </ol>
-<div class="callout"><b class="t">Keep the password plain</b>Use letters and digits. Special characters can make the stream fail. Write the user name and password down. You need them in step 5.</div>
+<div class="callout"><b class="t">Keep the password plain</b>Use letters and digits. Special characters can make the stream fail. Use a new password. Do not reuse the password of your TP-Link account. Write the user name and password down. You need them in step 6.</div>
 <figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the Tapo app screen Camera Account with the user name and password fields (hide the password)"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the Tapo app screen Camera Account with the user name and password fields (hide the password)</span></div></figure>
 <details class="help"><summary>Something wrong?</summary><div class="in"><ul class="plain"><li>You cannot find Camera Account. Update the Tapo app and the camera firmware, then look again.</li><li>The app says the password is not allowed. Use only letters and digits, 6 to 32 characters.</li></ul></div></details>
 </div></li>
 
 <li class="step" id="s2"><h3>Find the camera address</h3><p class="time">About 2 minutes · Tapo app</p><div class="body">
-<p>Your camera has an address on your home network, for example <code>192.168.1.50</code>. The wizard asks for it.</p>
-<ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Device Info</b>.</li><li>Write down the <b>IP Address</b>.</li></ol>
-<p>The address can change after a router restart. In your router, give the camera a fixed address ("address reservation"). This keeps the stream working.</p>
+<p>Your camera has an address on your home network, for example <code>192.168.1.20</code>. The setup asks for it.</p>
+<ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Device Info</b>.</li><li>Write down the <b>IP address</b>.</li></ol>
+<p>The address can change after a router restart, and then the box loses the camera. In your router, give the camera a fixed address. This is often called "DHCP reservation".</p>
 <figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the Tapo app Device Info screen with the IP address"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the Tapo app Device Info screen with the IP address</span></div></figure>
 <details class="help"><summary>Something wrong?</summary><div class="in"><ul class="plain"><li>The IP address field is empty. Check that the camera is online in the app.</li><li>You do not know how to reserve the address. Search for your router model and "DHCP reservation". It takes a few minutes.</li></ul></div></details>
 </div></li>
 
 <li class="step" id="s3"><h3>Check the recording options</h3><p class="time">About 2 minutes · Tapo app</p><div class="body">
-<p>TP-Link says a Tapo camera can run only two of these three at the same time: Tapo Care, microSD recording and NVR recording. Your box reads the stream like a recorder. If the test in step 5 says the stream is busy or off, switch one of the three off and test again.</p>
-<p class="small muted">We confirm this rule for QoreWitness on the first real test. We update this step after that.</p>
-<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the Tapo app screen with the recording options (Tapo Care, microSD card, NVR)"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the Tapo app screen with the recording options (Tapo Care, microSD card, NVR)</span></div></figure>
+<p>Tapo Care (cloud), the microSD card and a recorder such as QoreWitness: only two of the three work at the same time. If all three are on, turn one off. The C210 also sends at most two streams at once, and the live view in the Tapo app counts as one.</p>
+<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the Tapo app screen with the recording options (Tapo Care, microSD card, recorder)"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the Tapo app screen with the recording options (Tapo Care, microSD card, recorder)</span></div></figure>
 </div></li>
 
-<li class="step" id="s4"><h3>Install on the box</h3><p class="time">About 10 minutes · Terminal on the box</p><div class="body">
-<p>Open a terminal on the box. Use SSH from your laptop or a keyboard and screen. Paste this one command and press Enter.</p>
-<div class="copybox"><code id="install-cmd">curl -fsSL https://qorewitness.fnoufnou.com/install.sh | sh</code><button class="btn" type="button" data-copy="install-cmd" aria-label="Copy command the text above"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy command</span></button></div>
-<p>The command installs what the box needs, downloads QoreWitness and starts it. At the end, it prints a <b>link</b> and a <b>code</b> in large text. Keep the window open until you have opened the link.</p>
-<div class="callout"><b class="t">Want to read the script first?</b>Open <a href="https://qorewitness.fnoufnou.com/install.sh">https://qorewitness.fnoufnou.com/install.sh</a> in your browser. It is plain text. The code is open source on <a href="https://github.com/fnoufnou/qorewitness">GitHub</a>.</div>
-<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the terminal at the end of the install, with the link and the code"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the terminal at the end of the install, with the link and the code</span></div></figure>
-<details class="help"><summary>Something wrong?</summary><div class="in"><ul class="plain"><li><code>curl: command not found</code>. Install it with <code>sudo apt install curl</code> and run the command again.</li><li>The command stops with an error. Run it again. It is safe to run twice. If it fails again, ask on <a href="https://x.com/fnoufnou">X</a> or the <a href="https://discord.gg/qorechain">QoreChain Discord</a> and paste the last lines.</li><li>You lost the link. Run the command again. It prints the link again.</li></ul></div></details>
-</div></li>
-
-<li class="step" id="s5"><h3>Open the setup wizard</h3><p class="time">About 15 minutes · Browser</p><div class="body">
-<p>On your phone or laptop, on the same Wi-Fi, open the link from step 4 and type the code. The wizard guides you in small screens.</p>
+<li class="step" id="s4"><h3>Prepare the box</h3><p class="time">About 15 minutes · Your computer</p><div class="body">
+<p><b>Raspberry Pi 5:</b></p>
 <ol class="plain">
-<li>Choose a password for your dashboard. Use at least 10 characters.</li>
-<li>Type the camera address from step 2, and the user name and password from step 1. Give the camera a name, for example "Front door".</li>
-<li>Tick the box that says the camera films your own property.</li>
-<li>Press <b>Test camera</b>. You should see a picture from your camera within 15 seconds.</li>
-<li>Press <b>Looks right</b>. The box now makes a key for this camera. You do not type anything for this.</li>
+<li>Install Raspberry Pi Imager on your computer.</li>
+<li>Choose <b>Raspberry Pi OS Lite (64-bit)</b>.</li>
+<li>In the settings of the Imager: host name <code>qorewitness</code>, a user name and password, your Wi-Fi (or use a cable) and <b>Enable SSH</b>.</li>
+<li>Write the card, put it in the Pi and start it. Wait two minutes.</li>
+<li>On your computer, open a terminal and connect: <code>ssh &lt;your user&gt;@qorewitness.local</code></li>
 </ol>
-<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the wizard screen Test camera with a picture from the camera"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the wizard screen Test camera with a picture from the camera</span></div></figure>
-<details class="help"><summary>Something wrong?</summary><div class="in"><ul class="plain"><li><b>The camera refused the password.</b> Check the camera account in the Tapo app (step 1). Check upper and lower case.</li><li><b>Camera not found.</b> Check the address (step 2). Check that the box and the camera are on the same network.</li><li><b>Stream busy or off.</b> Look at step 3.</li><li><b>No picture, but no error.</b> Press <b>Use standard quality</b>. The camera then sends the lighter stream.</li><li>You closed the browser by mistake. Open the link again. The wizard continues where it stopped.</li></ul></div></details>
+<p><b>Another Linux computer:</b> any 64-bit Debian or Ubuntu install with internet access and a user with <code>sudo</code>. A mini PC or a virtual machine works.</p>
+<p class="small muted">A ready-made Pi image is planned. Today you install Raspberry Pi OS yourself.</p>
+<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: Raspberry Pi Imager with the settings for host name, user and SSH"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: Raspberry Pi Imager with the settings for host name, user and SSH</span></div></figure>
 </div></li>
 
-<li class="step" id="s6"><h3>Choose a plan</h3><p class="time">About 10 minutes · Browser</p><div class="body">
-<p>Both plans are free during the testnet pilot. The difference is who looks after the network fees. See <a href="plans.html">Plans</a> for the full picture.</p>
+<li class="step" id="s5"><h3>Run the installer</h3><p class="time">About 10 minutes · Terminal on the box</p><div class="body">
+<p>In the terminal of the box, paste this one line and press Enter.</p>
+<div class="copybox"><code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash</code><button class="btn" type="button" data-copy="install-cmd" aria-label="Copy command the text above"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy command</span></button></div>
+<p>The installer checks the system, offers to install Docker if it is missing (it asks first), downloads QoreWitness and starts it. At the end it shows a <b>setup link</b> and a <b>pairing code</b> of 6 digits, in large text.</p>
+<div class="callout warn"><b class="t">Do not share the code</b>Anyone with the code can set up the box until you choose a password. The link and the code are also in the file <code>~/qorewitness/SETUP-LINK.txt</code>. Only your user can read it.</div>
+<div class="callout"><b class="t">Want to read the script first?</b>Open it on <a href="https://github.com/fnoufnou/qorewitness/blob/main/install.sh">GitHub</a>. The code is open source. You can run the installer again at any time. It keeps your camera, keys, account and video.</div>
+<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the terminal at the end of the install, with the setup link and the pairing code"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the terminal at the end of the install, with the setup link and the pairing code</span></div></figure>
+<details class="help"><summary>Something wrong?</summary><div class="in"><ul class="plain"><li><code>curl: command not found</code>. Install it with <code>sudo apt install curl</code> and run the line again.</li><li>You lost the link or the code. Run the installer again. It shows them again.</li><li>The page does not open later. The box and your phone must be on the same network. Guest Wi-Fi often blocks this.</li><li>Still stuck. Ask on <a href="https://x.com/fnoufnou">X</a> or in the <a href="https://discord.gg/qorechain">QoreChain Discord</a> and paste the last lines.</li></ul></div></details>
+</div></li>
+
+<li class="step" id="s6"><h3>Set up in the browser</h3><p class="time">About 15 minutes · Phone or laptop</p><div class="body">
+<p>Open the setup link on your phone or laptop and type the pairing code. The setup moves in small screens. You can close the browser at any time. Open the link again and the setup continues at the right step.</p>
+<ol class="plain">
+<li><b>Password.</b> Choose a password for the dashboard. Use 10 characters or more.</li>
+<li><b>Camera.</b> Type the camera address (step 2) and the user name and password of the camera account (step 1). Give the camera a name, for example <code>camera-1</code>. Tick the box that the camera films your own property. Press <b>Test camera</b>. Within 15 seconds you see a picture from your camera. Press <b>Looks right</b>. For a smaller disk or weak Wi-Fi, press <b>Use standard quality</b>.</li>
+<li><b>Plan.</b> Choose who pays the network fees. See the table below.</li>
+<li><b>Keys.</b> Press <b>Create keys</b>. The box makes an account key and a camera key. Read the backup note, tick the box and continue.</li>
+<li><b>Network fees.</b> Fees included: the pilot adds the fees and the page moves on by itself. Self-managed: copy the address, claim free test tokens in the Faucet of the QoreChain dashboard and wait. You need at least 2 test QOR.</li>
+<li><b>Connect.</b> Press <b>Start</b>. A progress bar shows four steps. It takes 1 to 3 minutes.</li>
+<li><b>Done.</b> The page says <b>Sealing started</b>.</li>
+</ol>
+<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the setup screen Test camera with a picture from the camera"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the setup screen Test camera with a picture from the camera</span></div></figure>
+<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the setup screen Who pays the network fees?"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the setup screen Who pays the network fees?</span></div></figure>
 <div class="tablewrap"><table><thead><tr><th>Plan</th><th>What you do</th></tr></thead><tbody>
-<tr><td><b>Self-managed</b></td><td>The wizard makes your own account and shows a recovery phrase of 24 words. Write it on paper and keep it safe. Then you get free test tokens from the faucet. The wizard waits until the account has enough.</td></tr>
-<tr><td><b>Fees included</b></td><td>You enter a pilot code. We pay the network fees for your camera. Pilot places are limited. <a href="plans.html#ask">Ask for a pilot code</a>.</td></tr>
+<tr><td><b>Fees included (pilot)</b></td><td>You enter a pilot code. The pilot service adds free test tokens to your own account. Pilot places are limited. <a href="plans.html#ask">Ask for a pilot code</a>.</td></tr>
+<tr><td><b>Self-managed</b></td><td>You hold the account and add free test tokens yourself, about once a week.</td></tr>
 </tbody></table></div>
-<p><b>Our advice:</b> pick Self-managed unless you hold a pilot code.</p>
-<div class="callout warn"><b class="t">The recovery phrase is yours alone</b>Nobody can recover it for you. QoreWitness will never ask for it. Not on this site and not in a message. Anyone who asks is not us.</div>
-<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the wizard screen Choose a plan"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the wizard screen Choose a plan</span></div></figure>
-<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the wizard screen with the recovery phrase and the tick box 'I stored it safely' (do not show real words)"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the wizard screen with the recovery phrase and the tick box 'I stored it safely' (do not show real words)</span></div></figure>
-<details class="help"><summary>Something wrong?</summary><div class="in"><ul class="plain"><li>The faucet says you reached the limit. Wait 24 hours and try again.</li><li>The wizard says no pilot places are left. Choose Self-managed.</li></ul></div></details>
+<p>Both plans make the same proof. Both are free in the pilot. <b>Our advice:</b> choose Self-managed unless you hold a pilot code.</p>
+<div class="callout warn"><b class="t">Back up your keys</b>Your keys are files on the box, in the folder <code>qorewitness/data</code>. Copy that folder to a USB stick and keep it somewhere safe. If the box breaks, these files are the only way to keep this camera and its history. Anyone with these files can use your test account. QoreWitness never asks for them, by email or on a website.</div>
+<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the setup screen Keys ready with the backup note"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the setup screen Keys ready with the backup note</span></div></figure>
+<details class="help"><summary>Something wrong?</summary><div class="in"><ul class="plain"><li><b>The camera refused the password.</b> Make the camera account again in the Tapo app, with letters and digits only.</li><li><b>No camera answers at this address.</b> Check the address in Device Info. Check that the camera is on and in Wi-Fi range.</li><li><b>The camera is busy.</b> Close the live view in the Tapo app and test again.</li><li><b>The camera sends no picture.</b> Look at step 3. Turn one of the three recording options off.</li><li><b>The pilot says the code is not valid, used or the pilot is full.</b> Check the code, or choose Self-managed.</li><li><b>You forgot the dashboard password.</b> Run the installer again with the option <code>--new-password</code>. Camera, keys and account stay.</li></ul></div></details>
 </div></li>
 
 <li class="step" id="s7"><h3>Your first seal</h3><p class="time">About 15 minutes · Browser</p><div class="body">
-<p>The wizard registers your camera on the network. A progress list shows each part. When it is done you see <b>Sealing started</b>.</p>
-<p>The first seal appears in about 10 to 15 minutes. Your dashboard then shows a green line: <i>Sealing OK, last seal a few minutes ago</i>.</p>
-<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the dashboard with the green line Sealing OK and the first receipt"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the dashboard with the green line Sealing OK and the first receipt</span></div></figure>
-<div class="callout ok"><b class="t">Done. What now?</b>Your Tapo app works as before. QoreWitness runs in the background. Read <a href="daily-use.html">Daily use</a>. When you need proof of a clip, read <a href="prove.html">Prove a video</a>.</div>
-<details class="help"><summary>Something wrong?</summary><div class="in"><ul class="plain"><li>No green line after 30 minutes. Open the dashboard and read the line at the top. It says in plain words what is missing.</li><li>The line is red and says there is no video from the camera. Check the power and the Wi-Fi of the camera.</li><li>Still stuck. Ask on <a href="https://x.com/fnoufnou">X</a> or the <a href="https://discord.gg/qorechain">QoreChain Discord</a>.</li></ul></div></details>
+<p>The first seal comes in about 10 to 15 minutes. Press <b>Open my dashboard</b>. The dashboard shows one line in a colour and one thing to do. At first it says <i>Waiting for the first seal</i> in orange. This is normal. Then it turns green: <i>Sealing OK. Last seal 4 minutes ago.</i></p>
+<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the dashboard with the green line Sealing OK"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the dashboard with the green line Sealing OK</span></div></figure>
+<div class="callout ok"><b class="t">Done. What now?</b>Keep using the Tapo app for live view and alerts. Nothing changes there. Read <a href="daily-use.html">Daily use</a>. When you need proof of a clip, read <a href="prove.html">Prove a video</a>.</div>
+<details class="help"><summary>Something wrong?</summary><div class="in"><ul class="plain"><li>No green line after 30 minutes. Read the line on the dashboard. It says what to do.</li><li>The line is red and says there is no video from the camera. Check the power and Wi-Fi of the camera and its IP address.</li><li>Still stuck. Ask on <a href="https://x.com/fnoufnou">X</a> or in the <a href="https://discord.gg/qorechain">QoreChain Discord</a>.</li></ul></div></details>
 </div></li>
 </ol>
 </div>
@@ -146,7 +156,7 @@
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
 <p>Seal your camera footage. Prove later that nobody changed it.</p>
-<p><b>QoreWitness will never ask for your recovery phrase.</b></p></div>
+<p><b>QoreWitness will never ask for your keys or your backup files.</b></p></div>
 <div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
 <div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>

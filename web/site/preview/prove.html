@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Prove a video | QoreWitness</title>
-<meta name="description" content="How to prove that a video did not change: export the evidence package, send it, and let the receiver check it in a browser for a green result.">
+<meta name="description" content="How to prove that a video did not change: get the clip and its receipt, send them, and let the receiver check them in a browser for a green result.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#17483A">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Prove a video | QoreWitness">
-<meta property="og:description" content="How to prove that a video did not change: export the evidence package, send it, and let the receiver check it in a browser for a green result.">
+<meta property="og:description" content="How to prove that a video did not change: get the clip and its receipt, send them, and let the receiver check them in a browser for a green result.">
 <meta property="og:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -48,7 +48,7 @@
 </div></header>
 <main id="main">
 
-<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Prove a video</p><h1>Show that a clip is the original.</h1><p class="lead">Two people are involved. The owner sends the clip and its receipt. The receiver drops both on a web page and reads the result.</p></div></div>
+<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Prove a video</p><h1>Show that a clip is the original.</h1><p class="lead">Two people are involved. The owner sends the clip and its receipt file. The receiver drops both on a web page and reads the result.</p></div></div>
 <section id="demo"><div class="wrap">
 <div class="split">
 <div>
@@ -81,24 +81,24 @@
 </div></section>
 
 <section class="alt" id="owner"><div class="wrap narrow">
-<p class="eyebrow">For the owner</p><h2>Export the evidence package.</h2>
+<p class="eyebrow">For the owner</p><h2>Get the clip and its receipt.</h2>
 <p style="margin-top:16px">Do this as soon as you know you may need a clip. Clips are deleted after 14 days by default.</p>
+<div class="callout warn"><b class="t">Coming in the pilot</b>A one-click export as one ZIP, and a verifier that takes that ZIP, are planned. They are not built yet. Today you take two files: the clip and its receipt.</div>
 <ol class="steps" style="margin-top:28px">
-<li class="step"><h3>Pick the time</h3><div class="body"><p>Open your dashboard. Choose the day and the minutes you need. Add a few minutes before and after.</p><figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the dashboard with a time range selected"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the dashboard with a time range selected</span></div></figure></div></li>
-<li class="step"><h3>Export</h3><div class="body"><p>Press <b>Export evidence</b>. You get one ZIP file with the clip, its receipt and a short note for the receiver. If some minutes are not sealed, the dashboard tells you before you download.</p>
-<div class="callout warn"><b class="t">Planned. Not built yet</b>The Export button is planned. Until it ships, copy the clip and its receipt files by hand from the recordings folder on the box. The receipt file sits next to the clip it covers.</div><figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the dashboard after Export evidence, with the ZIP file"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the dashboard after Export evidence, with the ZIP file</span></div></figure></div></li>
-<li class="step"><h3>Check it yourself</h3><div class="body"><p>Drop the package on the <a href="../verifier.html">verifier</a> before you send it. You should see the green result.</p></div></li>
-<li class="step"><h3>Send it</h3><div class="body"><p>Send the ZIP to the receiver, for example an insurer or a lawyer. Add the link to the verifier. You can use this text:</p>
+<li class="step"><h3>Find the time</h3><div class="body"><p>Open the dashboard and find the date and time of the clip you need.</p><figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the dashboard with the list of recent seals and their receipts"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the dashboard with the list of recent seals and their receipts</span></div></figure></div></li>
+<li class="step"><h3>Take the clip and the receipt</h3><div class="body"><p>Copy the clip from the folder <code>~/qorewitness/data/&lt;camera&gt;/segments</code> on the box. Download its receipt from the dashboard. Keep both files together.</p><figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the receipt download on the dashboard"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the receipt download on the dashboard</span></div></figure></div></li>
+<li class="step"><h3>Check it yourself</h3><div class="body"><p>Drop the clip and its receipt on the <a href="../verifier.html">verifier</a> before you send them. You should see the green result.</p></div></li>
+<li class="step"><h3>Send it</h3><div class="body"><p>Send both files to the receiver, for example an insurer or a lawyer. Add the link to the verifier. You can use this text:</p>
 <div class="copybox light"><code id="mail-tpl">Subject: Video evidence with proof of origin
 
 Hello,
 
-Attached is a video clip from my home camera and its receipt.
+Attached are a video clip from my home camera and its receipt file.
 The footage was sealed by QoreWitness minutes after recording.
 
 To check it:
 1. Open https://qorewitness.fnoufnou.com/verifier.html
-2. Drop the clip and the receipt (or the whole ZIP) on the page.
+2. Drop the clip and the receipt file on the page.
 3. The page shows a green result if the clip has not changed since it was sealed.
 
 You do not need to trust me or QoreWitness. The page repeats every check in your own browser.
@@ -129,7 +129,7 @@ Note: the video shows people. Please handle it with care.</code><button class="b
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
 <p>Seal your camera footage. Prove later that nobody changed it.</p>
-<p><b>QoreWitness will never ask for your recovery phrase.</b></p></div>
+<p><b>QoreWitness will never ask for your keys or your backup files.</b></p></div>
 <div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
 <div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>
