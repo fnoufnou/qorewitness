@@ -79,6 +79,7 @@ From here on, the document is written for technical reviewers.
 | A6 validators collude | 8 validators, all likely team-run. Accepted for the pilot. For the product, the security of the mainnet validator set is a dependency, and an optional second record on another chain reduces it. | Pilot: accepted. Product: roadmap |
 | A7 changed verifier | Single static HTML file with its SHA-256 on the demo site. Receipts name the release and commit. `docs/SPEC.md` and an independent Python check with only the standard library. Signed releases still open. | Mostly done (T22) |
 | A8 learns activity from anchor timing | Fixed cadence: one anchor per 10 minutes, independent of motion. Leaf count stays constant with 60-second segments. Hashes reveal no content. | Done |
+| A9 another device on the home network, or a web page in the owner's browser, takes over the browser setup or the dashboard | Pairing token or 6-digit code (shown only in the installer terminal), then a scrypt password and signed sessions. Host allowlist against DNS rebinding, Origin must match Host, CSRF token per session, private clients only, no proxy headers. Secrets are never shown back. Camera passwords are masked in logs. | Done (0.6, browser setup) |
 
 ## Post-quantum rationale
 
@@ -93,6 +94,8 @@ From here on, the document is written for technical reviewers.
 - A fake or staged camera feed is anchored as if real. Camera-side signing narrows this. Staging in front of the lens stays.
 - QoreChain libraries are pre-1.0. An API change can break the agent.
 - A network upgrade can change how the PQC precompiles answer. By design the contract then refuses anchors (fail closed): an empty or short answer reverts. A halted anchor is visible and harmless. A wrongly accepted one would not be.
+- The `ui` container serves the setup and the dashboard with `/data` mounted read-write. During setup it reads the recovery phrase from its file to sign. After setup it does not read it, but the file stays reachable for that process. A bug in the dashboard could expose it. A separate one-shot setup container would shrink this (open decision).
+- The setup and the dashboard use plain HTTP on the home network. Someone on the same Wi-Fi can read the dashboard password or the camera password while it is typed.
 - The verifier depends on a public RPC to read the chain. A wrong RPC can lie. Mitigation: the Python check and a second RPC.
 
 ## Running out of funds
@@ -106,6 +109,7 @@ Funds affect new anchors only. They never touch existing records.
 | Scope | Risk | Control |
 |---|---|---|
 | Pilot | The faucet stops or its limit is too low (about 5 test QOR per day per camera) | Health check sends a Telegram message below 10 test QOR. Top up from the faucet. |
+| Pilot (box) | The owner does not see that fees run low | The dashboard turns orange below 3 days of fees (Self-managed) and red when sealing stops. With Fees included the pilot sponsor tops up. |
 | Product | The QOR budget runs out (the owner's own, or the operator's in a subscription plan) | Balance alert, a budget per camera (about 144 anchors per day), and an option for a longer window at lower cost. |
 
 ## Chain of custody

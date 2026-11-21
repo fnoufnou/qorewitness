@@ -2,6 +2,21 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
+## Unreleased
+
+### 2026-11-21: the QoreWitness box (browser setup)
+- Security: `camera.env` and every secret file are written with mode 600, also when an older version left 644. `record.sh` masks `user:pass@` in all ffmpeg output, with the same rule as `src/core/redact.ts`. The `ui` no longer loads `qorewitness.env`. `docker-compose.yml` pins `QW_VERSION` instead of `latest`.
+- Docker: new `supervise recorder|agent` mode. Both wait for `data/setup.done`, read `camera.env` as data (never as shell code) and restart when it changes. Older terminal installs with receipts count as done.
+- Compose: the `ui` publishes on `QW_UI_BIND` (default `127.0.0.1:8080`) and mounts `/data` read-write for the setup. No `env_file`, so compose needs no read access to the secrets. Default image `0.6.0-alpha.1`.
+- Installer: pulls the GHCR image (`--build` builds from source), offers to install Docker after a yes, detects the LAN IP, a free port and a public IP, starts the box and prints the setup link and a 6-digit pairing code. `--terminal` keeps the old flow, `--new-password` resets the dashboard password, `--local-only` binds to 127.0.0.1.
+- Setup steps in `src/setup/steps.ts`, shared by the terminal and the browser. Every step checks first and skips what exists. Chain access sits behind an interface, and every write checks EVM chain 9800 and qorechain-diana first.
+- Browser setup (`src/web/wizard.ts`): pairing, password, camera with a Tapo C210 helper and a "Test camera" picture, plan (Fees included with a pilot code, or Self-managed), keys with a backup note, network fees, registration with a progress bar, done. Resumes after a closed browser or a restart.
+- Auth (`src/web/auth.ts`): pairing token and code, scrypt password, signed sessions, CSRF per session, Host allowlist, same-origin POST, private clients only, failure limits.
+- Pilot sponsor client (`src/web/sponsor.ts`): challenge, camera ML-DSA-87 signature over `qorewitness-sponsor-v1|9800|<registry>|<deviceId>|<owner>|<nonce>`, enroll and status. Only public data leaves the box.
+- Dashboard: health in green, orange or red with one action per problem (camera offline, sealing stopped, fees low from the owner balance, first seal pending, disk almost full). Fonts from `web/site/fonts`.
+- Docs: `docs/INSTALL.md` (Linux path, browser setup, Tapo C210 reference), README, threat model (A9, residual risks of the browser setup).
+- Tests: auth, CSRF, Host check, secret masking, file modes, entrypoint supervise mode, installer with a fake docker, wizard state machine and a full HTTP walk with a mocked chain, camera and sponsor (139 tests).
+
 ## 0.5.0-alpha.1 (21 Nov 2026, first tester build)
 
 ### 2026-11-21

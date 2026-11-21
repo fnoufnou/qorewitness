@@ -75,6 +75,8 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 | `contracts/` | `AnchorRegistry`, `MerkleSha256`, `QorePqc` (safe precompile wrappers), test mocks |
 | `src/core/` | Merkle tree, signed messages and receipt checks, shared by agent, CLI and browser verifier |
 | `src/agent/` | Agent: segment watcher, windows, device key, ML-DSA signing, scoped EVM window renewal, receipts |
+| `src/setup/` | Setup steps shared by the terminal and the browser setup (idempotent, chain access behind an interface) |
+| `src/web/` | Box web server: pairing and auth, setup wizard, Tapo camera test, pilot sponsor client, dashboard |
 | `web/verifier/` | Browser verifier (single HTML file after `pnpm build:verifier`) |
 | `deploy/` | Recorder (ffmpeg) and agent systemd units, per-camera config |
 | `scripts/` | Device CLI, EVM window helper, anchor and verify CLIs, live precompile probes |
@@ -83,13 +85,15 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 
 ## Install (Docker, early alpha)
 
-On a Linux machine with Docker (Debian, Ubuntu, Raspberry Pi OS 64-bit) and a camera stream:
+On a 64-bit Linux machine (Raspberry Pi OS Lite 64-bit, Debian, Ubuntu) on your home network:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash
 ```
 
-The setup asks for a camera name and its stream URL. It creates a testnet account from a fresh mnemonic, waits until you claim test QOR from the faucet, registers the account's ML-DSA-87 key and the camera key, and starts the recorder and the agent. Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
+The installer offers to install Docker (it asks first), pulls the published image `ghcr.io/fnoufnou/qorewitness:<QW_VERSION>`, starts the box and prints a setup link with a pairing code. The rest happens in the browser on your phone or laptop: dashboard password, camera with a "Test camera" picture (Tapo C210 helper), plan (Fees included with a pilot code, or Self-managed), keys, network fees, registration with a progress bar. Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
+
+Step by step, with a Tapo C210 section: `docs/INSTALL.md`. The older terminal setup stays available: `install.sh --terminal` or `docker compose run --rm agent setup`.
 
 Stream types (`QW_STREAM_URL` in `data/camera.env`):
 
@@ -100,7 +104,12 @@ Stream types (`QW_STREAM_URL` in `data/camera.env`):
 | `http://` `https://` | Pull an HLS (`.m3u8`) or HTTP-FLV stream. |
 | `rtmp://0.0.0.0:1935/live/<secret>` with `QW_STREAM_LISTEN=1` | The camera or an app pushes to this machine. Open port 1935 in `docker-compose.yml`, on the camera network only: anyone who reaches the port and knows the path can push video. |
 
-The `ui` service is a local dashboard: health, latest anchors with explorer links, and receipt downloads. It listens on 127.0.0.1:8080 only and holds no keys. Open the link with the token from `docker compose logs ui`.
+The `ui` service serves the browser setup and the dashboard on one port. Before setup it needs the pairing code. After setup it needs the dashboard password. It shows the health of the box in plain words (green, orange, red) with one action per problem, the latest seals with explorer links, and receipt downloads.
+- Port: `QW_UI_BIND` in `~/qorewitness/.env`. The installer sets `0.0.0.0:8080` on a home network and `127.0.0.1:8080` on a host with a public IP. Never forward this port on your router.
+- Checks: Host allowlist (private IPs, `localhost`, `*.local`, `QW_UI_HOSTNAME`), same-origin POST with a CSRF token, private clients only, scrypt password, signed sessions.
+- During setup the `ui` writes secrets to `/data` (camera password in `camera.env`, recovery phrase in `qorewitness.env`, camera key), all with mode 600. Its process never loads the recovery phrase into its environment, and it reads the phrase from the file only for the setup steps that sign.
+
+`recorder` and `agent` run in supervise mode: they wait for `data/setup.done`, read `data/camera.env` themselves and restart when it changes. Camera passwords are masked in all logs.
 
 The `retention` service deletes segments older than `QW_RETENTION_DAYS` (default 14). Receipts stay. Export the clips you need as evidence first.
 

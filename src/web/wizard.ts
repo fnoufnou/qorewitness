@@ -591,7 +591,7 @@ export function renderDone(device: string): string {
 <p>Your box records camera <strong>${esc(device)}</strong> and seals the video every 10 minutes. The first seal comes in about 10 to 15 minutes.</p>
 <a class="btn" href="/">Open my dashboard</a>
 <h2>How to prove a video later</h2>
-<ol><li>Open the dashboard and find the date and time.</li><li>Download the clip and its receipt.</li><li>Send both. The receiver checks them at <a href="https://qorewitness.fnoufnou.com/verifier.html" target="_blank" rel="noreferrer">qorewitness.fnoufnou.com</a>. Nobody needs to trust you or us.</li></ol>
+<ol><li>Open the dashboard and find the date and time.</li><li>Take the clip from the box and download its receipt. A one-click export comes in the next version.</li><li>Send both. The receiver checks them at <a href="https://qorewitness.fnoufnou.com/verifier.html" target="_blank" rel="noreferrer">qorewitness.fnoufnou.com</a>. Nobody needs to trust you or us.</li></ol>
 <div class="note">Keep using the Tapo app for live view and alerts. Nothing changes there.</div></div>`;
 }
 
