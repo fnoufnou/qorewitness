@@ -36,6 +36,17 @@ Script: `scripts/probe-keystatus.ts`.
 - Measured on the first anchor: 340,949 gas in total (3 files).
 - At the 0.1 uqor per gas minimum this is about 0.04 QOR per anchor. One anchor per minute is about 58 QOR per day. The faucet gives 100 QOR per 24 h. A 5-minute window is the default.
 
+### Measured cost on registry v4 (20 to 21 Nov 2026)
+
+Live agent account, 195 anchors from 20 Nov 08:30 to 21 Nov 16:50 UTC, no window missed.
+
+- Gas used per anchor: 406,132 on average (405,845 to 406,337).
+- Gas price charged: 0.1125 uqor per gas (base fee 0.1 + tip 0.0125).
+- Fee per anchor: about **0.0457 test QOR** (45,700 uqor). Measured as the balance change across one anchor block.
+- EVM window open: 0.1 test QOR each (fixed fee 100,000 uqor for 800,000 gas). One opens about every 6 h 50 min, so about 3.5 per day per owner account.
+- One camera with 10-minute windows: 144 anchors + 3.5 window opens = about 6.9 test QOR per day, about 208 per month.
+- Explorers show about 0.104 QOR per anchor. That is the Cosmos `fee` field (gas limit x max fee per gas, 255 gwei). The chain charges gas used x effective gas price, so the account loses about 0.0457 QOR. Earlier notes that said "about 0.1 QOR per anchor" used the explorer number.
+
 ## First deployment and anchor (9 Nov 2026)
 
 - `AnchorRegistry`: `0xA73d4347b50C2A373533915d698Bf03a01c65aAF`, `requirePossessionProof = true`.
@@ -159,7 +170,7 @@ After feedback from the QoreChain team on chain of custody and time bounds. Rule
 
 Findings:
 - `MsgExecuteEVM` runs the call from the owner's EVM address, and it needs no EVM window. The owner's recovery phrase can leave the recorder.
-- Gas: the relayed anchor used 895,024 gas (direct anchor: about 406,000 EVM gas). With 1,500,000 gas wanted at 0.1 uqor, the fee was 0.15 QOR. With about 1,100,000 gas wanted it would be about 0.11 QOR, close to a direct anchor (about 0.104 QOR).
+- Gas: the relayed anchor used 895,024 gas (direct anchor: about 406,000 EVM gas). With 1,500,000 gas wanted at 0.1 uqor, the fee was 0.15 QOR. With about 1,100,000 gas wanted it would be about 0.11 QOR. A relayed call pays for the gas wanted, so a relayed anchor costs about 2.4 times a direct anchor (about 0.0457 QOR charged, see "Measured cost on registry v4" above).
 - A refused execution does not revert the transaction. It emits `abstractaccount_execution_failed` and uses the key's nonce. The agent must read that event, not only the tx code.
 
 ### Follow-up, 21 Nov: no EVM logs for relayed calls
