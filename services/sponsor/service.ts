@@ -1,21 +1,24 @@
 /**
  * Sponsor service core: challenge, enrol, status, start grants and the top-up loop.
- * No network or file access of its own except the state, payout log, codes and
- * pause files. The chain and the hot wallet come in as ChainReader and Payer.
+ * No network or file access of its own except the state, payout log and pause
+ * files. The chain and the hot wallet come in as ChainReader and Payer.
  *
  * Two enrol paths:
  * - on chain: the camera is registered already. Its key comes from the registry.
  *   The enrolment is active at once and refills apply.
  * - bootstrap: the camera is not on chain yet (a new owner has no test QOR). The
  *   signature is checked against the devicePubkey that the box sends. The service
- *   binds code, owner, device id and key hash, and sends one start grant. When the
+ *   binds owner, device id and key hash, and sends one start grant. When the
  *   camera shows up on chain with that key hash under that owner, it becomes active.
+ *
+ * No pilot code is needed. Admission: the camera signature, max cameras in the
+ * pilot, max cameras per owner, one new enrolment per IP per day, and a daily
+ * number of start grants. A pilotCode field is accepted and ignored.
  */
 import { randomBytes } from "node:crypto";
 import { existsSync, writeFileSync } from "node:fs";
 import { getAddress, isAddress, keccak256, type Address, type Hex } from "viem";
 import { assertPilotChain, type ChainReader, type Payer } from "./chain.js";
-import { codeAllowed, loadCodeHashes } from "./codes.js";
 import type { SponsorConfig } from "./config.js";
 import { silentLogger, type Logger } from "./log.js";
 import { ML_DSA_87_PUBKEY_BYTES, ML_DSA_87_SIG_BYTES, verifySponsorSignature } from "./message.js";
@@ -60,6 +63,9 @@ export interface EnrollAnswer {
 export class Sponsor {
   private state: SponsorState;
   private readonly nonces = new Map<string, { deviceId: string; expires: number }>();
+  /** New enrolments per IP for the current UTC day. Memory only, never written to disk. */
+  private ipDay = "";
+  private readonly ipCount = new Map<string, number>();
   private queue: Promise<unknown> = Promise.resolve();
 
   constructor(
@@ -138,16 +144,28 @@ export class Sponsor {
     return Object.values(this.state.enrollments).filter((e) => LIVE.has(e.state) && (!owner || e.owner === owner)).length;
   }
 
-  private checkRoom(owner: string): void {
-    if (this.liveCount() >= this.cfg.maxCameras) throw refuse("full", "the pilot is full");
-    if (this.liveCount(owner) >= this.cfg.maxCamerasPerOwner) throw refuse("full", "this owner has the maximum number of pilot cameras");
+  private ipUsed(ip: string): number {
+    const day = utcDay(this.clock.now());
+    if (day !== this.ipDay) {
+      this.ipDay = day;
+      this.ipCount.clear();
+    }
+    return this.ipCount.get(ip) ?? 0;
   }
 
-  async enroll(body: unknown): Promise<EnrollAnswer> {
-    if (this.paused()) throw refuse("paused", "the pilot sponsor is paused");
+  /** Admission for a new camera. Throws "full" with a plain message. */
+  private admit(owner: string, ip: string): void {
+    if (this.liveCount() >= this.cfg.maxCameras) throw refuse("full", "The pilot is full at the moment. Try again later, or choose Self-managed.");
+    if (this.liveCount(owner) >= this.cfg.maxCamerasPerOwner) {
+      throw refuse("full", `The pilot covers at most ${this.cfg.maxCamerasPerOwner} cameras per account.`);
+    }
+    if (this.ipUsed(ip) >= this.cfg.maxEnrolPerIpDay) throw refuse("full", "One new camera per internet connection per day. Try again tomorrow.");
+  }
+
+  async enroll(body: unknown, ip = "unknown"): Promise<EnrollAnswer> {
+    if (this.paused()) throw refuse("paused", "The pilot is paused at the moment. Try again later.");
     const b = (body ?? {}) as Record<string, unknown>;
-    const { pilotCode, deviceId, owner, nonce, signature, devicePubkey } = b;
-    if (typeof pilotCode !== "string" || pilotCode.length < 4 || pilotCode.length > 64) throw refuse("invalid_code", "pilotCode missing");
+    const { deviceId, owner, nonce, signature, devicePubkey } = b;
     if (typeof deviceId !== "string" || !HEX32.test(deviceId)) throw new ApiError(400, "bad_device", "deviceId must be 0x + 64 hex");
     if (typeof owner !== "string" || !isAddress(owner, { strict: false })) throw new ApiError(400, "bad_owner", "owner must be a 0x address");
     if (typeof nonce !== "string" || !HEX32.test(nonce)) throw new ApiError(400, "bad_nonce", "nonce must be 0x + 64 hex");
@@ -167,8 +185,6 @@ export class Sponsor {
 
     const own = owner.toLowerCase();
     const dev = lowerHex(deviceId);
-    const codeHash = codeAllowed(pilotCode, loadCodeHashes(this.cfg.codesFile));
-    if (!codeHash) throw refuse("invalid_code", "unknown pilot code");
     const key = enrollmentKey(own, dev);
     const existing = this.state.enrollments[key];
     const verify = (pub: Hex, keyHash: Hex) => verifySponsorSignature({
@@ -192,18 +208,13 @@ export class Sponsor {
         if (!pub) throw new ApiError(409, "key_not_found", "device key not found on chain: send devicePubkey");
       }
       if (!verify(pub, keyHash)) throw refuse("rejected", "the camera signature does not verify");
-      if (existing) {
-        if (existing.codeHash !== codeHash) throw refuse("used_code", "this camera is enrolled with another pilot code");
-        return this.answer(this.wordOf(existing));
-      }
-      const bound = this.state.codes[codeHash];
-      if (bound && bound.owner !== own) throw refuse("used_code", "this pilot code belongs to another owner");
-      this.checkRoom(own);
+      if (existing) return this.answer(this.wordOf(existing));
+      this.admit(own, ip);
       const now = this.clock.now();
       const count = await this.chain.anchorCount(getAddress(own), dev);
-      this.state.codes[codeHash] ??= { owner: own, deviceId: dev, keyHash, at: now, grant: false };
+      this.ipCount.set(ip, this.ipUsed(ip) + 1);
       this.state.enrollments[key] = {
-        owner: own, deviceId: dev, codeHash, keyHash, path: "onchain", state: "active", enrolledAt: now, activatedAt: now,
+        owner: own, deviceId: dev, keyHash, path: "onchain", state: "active", enrolledAt: now, activatedAt: now,
         paidAnchorCount: count.toString(), paidAt: now,
       };
       this.save();
@@ -216,18 +227,21 @@ export class Sponsor {
     const keyHash = keccak256(pubHex);
     if (!verify(pubHex, keyHash)) throw refuse("rejected", "the camera signature does not verify");
     if (existing) {
-      // A retry of the same enrolment (same code and key) gets its current state, never a second grant.
-      if (existing.codeHash === codeHash && existing.keyHash === keyHash) return this.answer(this.wordOf(existing));
-      throw refuse("rejected", "this camera is enrolled with another key or pilot code");
+      // A retry of the same enrolment (same key) gets its current state, never a second grant.
+      // An expired or rejected camera stays so: one start grant per camera.
+      if (existing.keyHash === keyHash) return this.answer(this.wordOf(existing));
+      throw refuse("rejected", "this camera is enrolled with another key");
     }
-    if (this.state.codes[codeHash]) throw refuse("used_code", "a start grant needs an unused pilot code");
-    this.checkRoom(own);
+    this.admit(own, ip);
     const now = this.clock.now();
     const day = this.dayUsage(utcDay(now));
-    if (this.cfg.capGlobalDayUqor - BigInt(day.globalUqor) < this.cfg.grantUqor) throw refuse("full", "the pilot budget for today is used up");
-    this.state.codes[codeHash] = { owner: own, deviceId: dev, keyHash, at: now, grant: true };
+    if ((day.grants ?? 0) >= this.cfg.maxGrantsPerDay || this.cfg.capGlobalDayUqor - BigInt(day.globalUqor) < this.cfg.grantUqor) {
+      throw refuse("full", "The pilot has started enough new cameras today. Try again tomorrow.");
+    }
+    day.grants = (day.grants ?? 0) + 1;
+    this.ipCount.set(ip, this.ipUsed(ip) + 1);
     this.state.enrollments[key] = {
-      owner: own, deviceId: dev, codeHash, keyHash, path: "bootstrap", state: "pending", enrolledAt: now,
+      owner: own, deviceId: dev, keyHash, path: "bootstrap", state: "pending", enrolledAt: now,
       grant: { status: "pending", amountUqor: this.cfg.grantUqor.toString(), at: now, attempts: 0 },
       paidAnchorCount: "0", paidAt: now,
     };

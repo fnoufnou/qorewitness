@@ -1,6 +1,6 @@
 /**
  * Log lines: one JSON object per line to stdout (journald keeps them, see
- * deploy/sponsor). Never pass secrets, request bodies, pilot codes or full IPs.
+ * deploy/sponsor). Never pass secrets, request bodies or full IPs.
  * IPs are truncated: IPv4 to /24 (1.2.3.x), IPv6 to /48 (2001:db8:1::x).
  */
 export function truncateIp(ip: string | undefined): string {

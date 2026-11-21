@@ -11,7 +11,6 @@ import { mldsa } from "@qorechain/pqc";
 import { getAddress, toHex, type Address, type Hex } from "viem";
 import { deviceKeyFromSeed, type DeviceKey } from "../src/agent/device-key.js";
 import { assertPilotChain, type ChainReader, type DeviceInfo, type Payer } from "../services/sponsor/chain.js";
-import { hashCode } from "../services/sponsor/codes.js";
 import { loadConfig, loadMnemonic, REGISTRY_V4, type SponsorConfig } from "../services/sponsor/config.js";
 import { createSponsorServer, RateLimiter } from "../services/sponsor/http.js";
 import { redact, silentLogger, truncateIp } from "../services/sponsor/log.js";
@@ -24,7 +23,7 @@ const OWNER: Address = getAddress("0x1111111111111111111111111111111111111111");
 const OTHER: Address = getAddress("0x2222222222222222222222222222222222222222");
 const DEV: Hex = `0x${"ab".repeat(32)}`;
 const DEV2: Hex = `0x${"cd".repeat(32)}`;
-const CODE = "QW-TEST1-CODE2";
+const CODE = "QW-ANY"; // accepted and ignored: the pilot needs no code
 
 const key = (b: number): DeviceKey => deviceKeyFromSeed(new Uint8Array(32).fill(b));
 const camKey = key(7);
@@ -84,11 +83,10 @@ class FakeClock implements Clock {
 
 function setup(over: Partial<SponsorConfig> = {}) {
   const dir = mkdtempSync(join(tmpdir(), "qw-sponsor-"));
-  writeFileSync(join(dir, "codes.txt"), `# pilot codes\n${hashCode(CODE)}\n${hashCode("QW-SECOND")}\n`);
   const cfg: SponsorConfig = {
     ...loadConfig({ SPONSOR_DATA_DIR: dir }),
-    codesFile: join(dir, "codes.txt"),
     minPayoutIntervalSeconds: 0,
+    maxEnrolPerIpDay: 1000, // the IP limit has its own tests
     ...over,
   };
   const clock = new FakeClock();
@@ -164,13 +162,13 @@ describe("sponsor: camera signature", () => {
     await rejects(sponsor.enroll(body), "rejected");
   });
 
-  it("enrol refuses an unknown pilot code and a code bound to another owner", async () => {
+  it("enrols without a pilot code, and ignores one when sent", async () => {
     const { sponsor, chain } = setup();
     chain.add(OWNER, DEV, camKey);
     chain.add(OTHER, DEV2, strangerKey);
-    await rejects(sponsor.enroll(enrollBody(sponsor, camKey, { code: "QW-NOPE" })), "invalid_code");
-    await sponsor.enroll(enrollBody(sponsor, camKey));
-    await rejects(sponsor.enroll(enrollBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 })), "used_code");
+    const { pilotCode: _ignored, ...noCode } = enrollBody(sponsor, camKey);
+    assert.equal((await sponsor.enroll(noCode)).status, "enrolled");
+    assert.equal((await sponsor.enroll(enrollBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2, code: "anything" }))).status, "enrolled");
   });
 });
 
@@ -187,7 +185,7 @@ describe("sponsor: nonce", () => {
     const { sponsor, chain } = setup();
     chain.add(OWNER, DEV, camKey);
     const body = enrollBody(sponsor, camKey);
-    await rejects(sponsor.enroll({ ...body, pilotCode: "QW-WRONG" }), "invalid_code");
+    await rejects(sponsor.enroll({ ...body, owner: OTHER }), "rejected"); // not on chain, no devicePubkey
     await rejects(sponsor.enroll(body), "bad_nonce");
   });
 
@@ -475,27 +473,58 @@ describe("sponsor: bootstrap (camera not on chain yet)", () => {
     assert.deepEqual(payer.sent, [{ owner: OWNER, uqor: 3n * QOR }]);
     assert.equal(sponsor.status(DEV).status, "funded");
     assert.equal(sponsor.status(DEV).startGrant?.txHash, "TX1");
-    // The wizard retries: same code, same key. Same answer, no second grant.
+    // The wizard retries: same key. Same answer, no second grant.
     assert.equal((await sponsor.enroll(bootBody(sponsor, camKey))).status, "funded");
     await sponsor.runOnce();
     await sponsor.idle();
     assert.equal(payer.sent.length, 1);
     assert.equal(cfg.grantUqor, 3n * QOR);
-    const st = sponsor.snapshot();
-    const binding = Object.values(st.codes)[0];
-    assert.deepEqual([binding.owner, binding.deviceId, binding.keyHash, binding.grant], [OWNER.toLowerCase(), DEV, camKey.keyHash.toLowerCase(), true]);
+    const e = Object.values(sponsor.snapshot().enrollments)[0];
+    assert.deepEqual([e.owner, e.deviceId, e.keyHash, e.path], [OWNER.toLowerCase(), DEV, camKey.keyHash.toLowerCase(), "bootstrap"]);
   });
 
-  it("refuses a pilot code that is used already", async () => {
-    const { sponsor, payer } = await booted();
-    await rejects(sponsor.enroll(bootBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 })), "used_code");
-    await rejects(sponsor.enroll(bootBody(sponsor, strangerKey, { deviceId: DEV2 })), "used_code"); // same owner, second grant
-    // A code bound on the on-chain path cannot pay a start grant either.
-    const f = setup();
-    f.chain.add(OWNER, DEV, camKey);
-    await f.sponsor.enroll(enrollBody(f.sponsor, camKey));
-    await rejects(f.sponsor.enroll(bootBody(f.sponsor, strangerKey, { deviceId: DEV2 })), "used_code");
-    assert.equal(payer.sent.length + f.payer.sent.length, 1);
+  it("gives one start grant per camera, and a fixed number of grants per day", async () => {
+    const { sponsor, payer } = await booted({ maxGrantsPerDay: 2 });
+    await rejects(sponsor.enroll(bootBody(sponsor, strangerKey)), "rejected"); // same camera, another key
+    assert.equal((await sponsor.enroll(bootBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 }))).status, "pending");
+    const third = key(11);
+    await rejects(sponsor.enroll(bootBody(sponsor, third, { owner: getAddress("0x3333333333333333333333333333333333333333"), deviceId: `0x${"ef".repeat(32)}` })), "full");
+    await sponsor.idle();
+    assert.equal(payer.sent.length, 2);
+  });
+
+  it("allows one new camera per IP per day", async () => {
+    const { sponsor, chain, clock } = setup({ maxEnrolPerIpDay: 1 });
+    assert.equal((await sponsor.enroll(bootBody(sponsor, camKey), "203.0.113.7")).status, "pending");
+    await rejects(sponsor.enroll(bootBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 }), "203.0.113.7"), "full");
+    // A retry of the same camera from that IP still gets its answer.
+    assert.equal((await sponsor.enroll(bootBody(sponsor, camKey), "203.0.113.7")).status, "funded");
+    // The on-chain path counts too.
+    chain.add(OTHER, DEV2, strangerKey);
+    await rejects(sponsor.enroll(enrollBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 }), "203.0.113.7"), "full");
+    assert.equal((await sponsor.enroll(enrollBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 }), "198.51.100.1")).status, "enrolled");
+    clock.t += 86_400; // next UTC day
+    const third = key(11);
+    assert.equal((await sponsor.enroll(bootBody(sponsor, third, { owner: getAddress("0x3333333333333333333333333333333333333333"), deviceId: `0x${"ef".repeat(32)}` }), "203.0.113.7")).status, "pending");
+  });
+
+  it("allows two cameras per owner, then answers full with a plain message", async () => {
+    const { sponsor } = setup();
+    await sponsor.enroll(bootBody(sponsor, camKey));
+    await sponsor.enroll(bootBody(sponsor, strangerKey, { deviceId: DEV2 }));
+    await assert.rejects(
+      sponsor.enroll(bootBody(sponsor, key(11), { deviceId: `0x${"ef".repeat(32)}` })),
+      (e: unknown) => e instanceof ApiError && e.word === "full" && /at most 2 cameras/.test(e.message),
+    );
+  });
+
+  it("answers full when the pilot has its maximum number of cameras", async () => {
+    const { sponsor } = setup({ maxCameras: 1 });
+    await sponsor.enroll(bootBody(sponsor, camKey));
+    await assert.rejects(
+      sponsor.enroll(bootBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 })),
+      (e: unknown) => e instanceof ApiError && e.word === "full" && /pilot is full/.test(e.message),
+    );
   });
 
   it("checks the signature against devicePubkey", async () => {
@@ -529,7 +558,7 @@ describe("sponsor: bootstrap (camera not on chain yet)", () => {
     assert.equal(payer.sent.length, 1); // the start grant only
   });
 
-  it("expires after 48 h without registration, and the code stays used", async () => {
+  it("expires after 48 h without registration, with no second grant", async () => {
     const { sponsor, clock, payer } = await booted();
     clock.t += 47 * 3600;
     await sponsor.runOnce();
@@ -539,7 +568,8 @@ describe("sponsor: bootstrap (camera not on chain yet)", () => {
     assert.equal(sponsor.status(DEV).status, "rejected");
     assert.equal(sponsor.status(DEV).state, "expired");
     assert.equal(sponsor.health().enrolled, 0);
-    await rejects(sponsor.enroll(bootBody(sponsor, strangerKey, { deviceId: DEV2 })), "used_code");
+    assert.equal((await sponsor.enroll(bootBody(sponsor, camKey))).status, "rejected");
+    await sponsor.runOnce();
     assert.equal(payer.sent.length, 1);
   });
 
@@ -612,7 +642,6 @@ describe("sponsor: end to end with the box client (src/web/sponsor.ts)", () => {
     const client = new SponsorClient(base);
     const req = { registry: REGISTRY_V4, deviceId: DEV.toUpperCase().replace("0X", "0x"), owner: OWNER, key: camKey };
     try {
-      assert.equal((await enrollDevice(client, { ...req, pilotCode: "QW-NOPE1" })).status, "invalid_code");
       const a = await enrollDevice(client, { ...req, pilotCode: CODE });
       assert.equal(a.status, "pending");
       assert.equal(a.capPerDayUqor, (9n * QOR).toString());
@@ -620,7 +649,6 @@ describe("sponsor: end to end with the box client (src/web/sponsor.ts)", () => {
       assert.equal((await client.status(DEV)).status, "funded");
       assert.deepEqual(payer.sent, [{ owner: OWNER, uqor: 3n * QOR }]);
       assert.equal((await enrollDevice(client, { ...req, pilotCode: CODE })).status, "funded"); // retry
-      assert.equal((await enrollDevice(client, { ...req, deviceId: DEV2, key: strangerKey, pilotCode: CODE })).status, "used_code");
 
       chain.add(OWNER, DEV, camKey, 0n); // the box registers the camera
       await sponsor.runOnce();
@@ -628,7 +656,7 @@ describe("sponsor: end to end with the box client (src/web/sponsor.ts)", () => {
       assert.equal((await client.status(DEV2)).status, "unknown"); // 404
 
       writeFileSync(cfg.pauseFile, "manual\n");
-      assert.equal((await enrollDevice(client, { ...req, deviceId: DEV2, key: strangerKey, pilotCode: "QW-SECOND" })).status, "paused");
+      assert.equal((await enrollDevice(client, { ...req, deviceId: DEV2, key: strangerKey, pilotCode: CODE })).status, "paused");
       rmSync(cfg.pauseFile);
       const full = setup({ maxCameras: 0 });
       const s2 = createSponsorServer(full.sponsor, silentLogger, ["127.0.0.1"]);
@@ -639,9 +667,21 @@ describe("sponsor: end to end with the box client (src/web/sponsor.ts)", () => {
       } finally {
         s2.close();
       }
+      // One new camera per IP per day, seen through the HTTP layer.
+      const ipl = setup({ maxEnrolPerIpDay: 1 });
+      const s3 = createSponsorServer(ipl.sponsor, silentLogger, ["127.0.0.1"]);
+      await new Promise<void>((ok) => s3.listen(0, "127.0.0.1", ok));
+      try {
+        const c3 = new SponsorClient(sponsorBaseUrl(`http://127.0.0.1:${(s3.address() as { port: number }).port}`));
+        assert.equal((await enrollDevice(c3, { ...req, pilotCode: CODE })).status, "pending");
+        assert.equal((await enrollDevice(c3, { ...req, deviceId: DEV2, key: strangerKey, pilotCode: CODE })).status, "full");
+        await ipl.sponsor.idle();
+      } finally {
+        s3.close();
+      }
       // A camera signed by another key than the one it sends is rejected.
       const bad = await client.enroll({
-        pilotCode: "QW-SECOND", deviceId: DEV2, owner: OWNER.toLowerCase(), nonce: (await client.challenge(DEV2)).nonce,
+        pilotCode: CODE, deviceId: DEV2, owner: OWNER.toLowerCase(), nonce: (await client.challenge(DEV2)).nonce,
         signature: sign(strangerKey, "something else"), devicePubkey: strangerKey.publicKeyHex,
       });
       assert.equal(bad.status, "rejected");

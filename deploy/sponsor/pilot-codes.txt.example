@@ -1,4 +1,0 @@
-# /etc/qw-sponsor/pilot-codes.txt (mode 640, root:qw-sponsor)
-# One SHA-256 hash per line. Never store the codes themselves here.
-# Make codes: pnpm -s tsx services/sponsor/codes.ts new 5
-# Hash one code: pnpm -s tsx services/sponsor/codes.ts hash QW-XXXXX-...

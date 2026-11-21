@@ -27,7 +27,6 @@ export interface SponsorConfig {
   trustedProxies: string[];
   stateFile: string;
   payoutLog: string;
-  codesFile: string;
   pauseFile: string;
   secretFile: string;
   loopMinutes: number;
@@ -54,8 +53,12 @@ export interface SponsorConfig {
   reserveUqor: bigint;
   /** Warn when the hot wallet holds more than this (keep only a small float). */
   maxFloatUqor: bigint;
-  /** One start grant per pilot code for a camera that is not on chain yet. */
+  /** One start grant per camera (owner and device id) that is not on chain yet. */
   grantUqor: bigint;
+  /** Start grants admitted per UTC day, all cameras together. */
+  maxGrantsPerDay: number;
+  /** New enrolments per client IP per UTC day (kept in memory only). */
+  maxEnrolPerIpDay: number;
   /** A pending or funded camera that is not registered within this time expires. */
   pendingTtlSeconds: number;
   /** After an unknown grant result, retry once when the owner still holds 0 after this time. */
@@ -90,7 +93,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): SponsorConfig 
     trustedProxies: (env.SPONSOR_TRUSTED_PROXIES ?? "127.0.0.1,::1,::ffff:127.0.0.1").split(",").map((s) => s.trim()).filter(Boolean),
     stateFile: env.SPONSOR_STATE_FILE ?? `${dir}/state.json`,
     payoutLog: env.SPONSOR_PAYOUT_LOG ?? `${dir}/payouts.jsonl`,
-    codesFile: env.SPONSOR_CODES_FILE ?? "/etc/qw-sponsor/pilot-codes.txt",
     pauseFile: env.SPONSOR_PAUSE_FILE ?? `${dir}/PAUSED`,
     secretFile: env.SPONSOR_SECRET_FILE ?? "/etc/qw-sponsor/secret.env",
     loopMinutes: int(env.SPONSOR_LOOP_MINUTES, 15, 1),
@@ -110,6 +112,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): SponsorConfig 
     reserveUqor: qor(env.SPONSOR_RESERVE_QOR, "1"),
     maxFloatUqor: qor(env.SPONSOR_MAX_FLOAT_QOR, "200"),
     grantUqor: qor(env.SPONSOR_GRANT_QOR, "3"),
+    maxGrantsPerDay: int(env.SPONSOR_MAX_GRANTS_DAY, 6, 0),
+    maxEnrolPerIpDay: int(env.SPONSOR_MAX_ENROL_PER_IP_DAY, 1, 0),
     pendingTtlSeconds: int(env.SPONSOR_PENDING_TTL_SECONDS, 48 * 3600, 60),
     grantRetrySeconds: int(env.SPONSOR_GRANT_RETRY_SECONDS, 600, 60),
     keyLookbackBlocks: BigInt(int(env.SPONSOR_KEY_LOOKBACK_BLOCKS, 120_000, 1)),

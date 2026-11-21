@@ -1,7 +1,7 @@
 /**
  * Sponsor state in one JSON file, written atomically (temp file, fsync, rename).
  * Payouts also go to an append-only JSON-lines log (time, devices, owner, amount, tx).
- * No IP addresses and no pilot codes in clear text are stored.
+ * No IP addresses are stored.
  */
 import { appendFileSync, closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, writeSync } from "node:fs";
 import { dirname } from "node:path";
@@ -26,7 +26,6 @@ export interface Grant {
 export interface Enrollment {
   owner: string; // 0x, lower case
   deviceId: string; // 0x, lower case
-  codeHash: string;
   /** keccak256 of the device public key: from the chain, or of the enrolled devicePubkey. */
   keyHash: string;
   path: "onchain" | "bootstrap";
@@ -51,18 +50,10 @@ export interface Payout {
   txHash?: string;
 }
 
-/** A pilot code is bound to one owner and the first device and key enrolled with it. */
-export interface CodeBinding {
-  owner: string;
-  deviceId: string;
-  keyHash: string;
-  at: number;
-  /** The code paid a start grant. A code pays at most one. */
-  grant: boolean;
-}
-
 export interface DayUsage {
   globalUqor: string;
+  /** Start grants admitted this day. */
+  grants?: number;
   owners: Record<string, string>;
   devices: Record<string, string>; // key: owner|deviceId
 }
@@ -70,14 +61,13 @@ export interface DayUsage {
 export interface SponsorState {
   version: 1;
   enrollments: Record<string, Enrollment>; // key: owner|deviceId
-  codes: Record<string, CodeBinding>; // key: codeHash
   /** Usage per UTC day (YYYY-MM-DD). Older days are pruned. */
   days: Record<string, DayUsage>;
   /** Recent payouts (last 2 days) for the hourly outflow check. The full history is in the payout log. */
   recent: Payout[];
 }
 
-export const emptyState = (): SponsorState => ({ version: 1, enrollments: {}, codes: {}, days: {}, recent: [] });
+export const emptyState = (): SponsorState => ({ version: 1, enrollments: {}, days: {}, recent: [] });
 
 export function loadState(path: string): SponsorState {
   if (!existsSync(path)) return emptyState();

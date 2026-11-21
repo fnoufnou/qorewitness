@@ -3,7 +3,7 @@
  * prefix. JSON only, small bodies, per-IP rate limits kept in memory only.
  *
  *   POST /v1/challenge {deviceId}                                   -> {nonce, expires, expiresAt}
- *   POST /v1/enroll {pilotCode, deviceId, owner, nonce, signature, devicePubkey}
+ *   POST /v1/enroll {deviceId, owner, nonce, signature, devicePubkey[, pilotCode]}
  *                                                                   -> {status, capPerDayUqor, note}
  *   GET  /v1/status/<deviceId>[?owner=0x..]                         -> {status, state, startGrant, lastTopUp, usedTodayUqor, capPerDayUqor}
  *
@@ -101,7 +101,7 @@ export function createSponsorServer(sponsor: Sponsor, log: Logger, trusted: read
       if (req.method === "POST" && path === "/v1/enroll") {
         route = "enroll";
         if (!limiter.allow(ip, route)) throw new ApiError(429, "rate_limited", "too many requests");
-        const out = await sponsor.enroll(await readJson(req));
+        const out = await sponsor.enroll(await readJson(req), ip);
         log.info("http_enroll", { ip: truncateIp(ip), result: out.status });
         return send(res, 200, out);
       }
