@@ -1,50 +1,43 @@
-# QoreWitness: one camera. Run the setup once, then start:
-#   docker compose run --rm agent setup
-#   docker compose up -d
-# All state (account, device key, segments, receipts) lives in ./data.
-# The image tag is pinned (QW_VERSION). Update on purpose: set QW_VERSION, then
-#   docker compose pull && docker compose up -d
+# QoreWitness: one camera.
+#   docker compose up -d        then open the setup link (install.sh prints it)
+# Terminal setup instead of the browser: docker compose run --rm agent setup
+# All state (account, device key, segments, receipts) lives in ./data (owner uid 10001, mode 700).
+#
+# Settings in .env next to this file (install.sh writes it):
+#   QW_VERSION   image tag. Pinned on purpose: update with a new tag, then
+#                docker compose pull && docker compose up -d
+#   QW_UI_BIND   where the dashboard and setup listen on the host.
+#                Default 127.0.0.1:8080 (this machine only). install.sh sets
+#                0.0.0.0:8080 on a home network so a phone can open the setup.
+x-image: &image
+  image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.6.0-alpha.1}
+  restart: unless-stopped
+  volumes: ["./data:/data"]
+
 services:
   recorder:
-    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.5.0-alpha.1}
+    <<: *image
     build:
       context: .
       args: { QW_COMMIT: "${QW_COMMIT:-unknown}" }
-    command: recorder
-    restart: unless-stopped
+    # Waits for setup, reads data/camera.env itself and restarts when it changes.
+    command: [supervise, recorder]
     # RTMP push only (QW_STREAM_LISTEN=1): open the port, on the camera network only.
     # ports: ["1935:1935"]
-    env_file:
-      - path: ./data/camera.env
-        required: false
-    volumes: ["./data:/data"]
   agent:
-    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.5.0-alpha.1}
-    build:
-      context: .
-      args: { QW_COMMIT: "${QW_COMMIT:-unknown}" }
-    command: agent
-    restart: unless-stopped
-    env_file:
-      - path: ./data/camera.env
-        required: false
-    volumes: ["./data:/data"]
+    <<: *image
+    command: [supervise, agent]
     depends_on: [recorder]
   retention:
-    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.5.0-alpha.1}
+    <<: *image
     command: retention
-    restart: unless-stopped
-    env_file:
-      - path: ./data/camera.env
-        required: false
-    volumes: ["./data:/data"]
   ui:
-    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.5.0-alpha.1}
+    <<: *image
     command: ui
-    restart: unless-stopped
-    env_file:
-      - path: ./data/camera.env
-        required: false
-    volumes: ["./data:/data:ro"]
-    # Local only. The token link is in: docker compose logs ui
-    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      QW_UI_HOSTNAME: ${QW_UI_HOSTNAME:-}
+      QW_UI_TRUST_PROXY: ${QW_UI_TRUST_PROXY:-0}
+      QW_SPONSOR_URL: ${QW_SPONSOR_URL:-https://qorewitness.fnoufnou.com/sponsor}
+    # Read-write: the browser setup writes the camera settings, keys and account.
+    # After setup the dashboard needs a password. The recovery phrase is never in its environment.
+    ports: ["${QW_UI_BIND:-127.0.0.1:8080}:8080"]
