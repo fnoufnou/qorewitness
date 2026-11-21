@@ -137,7 +137,7 @@ export function health(s: LocalStatus, windowSeconds: number): { level: "ok" | "
 // ---------------------------------------------------------------- box health for owners (green, orange, red)
 
 /** Seals per day at the default 10-minute window, and the fee per seal (docs/TESTNET_FINDINGS.md). */
-export const FEE_PER_SEAL_UQOR = 100_000;
+export const FEE_PER_SEAL_UQOR = 48_000; // same as FEE_PER_ANCHOR_UQOR in src/setup/steps.ts
 
 export interface BoxFacts {
   windowSeconds: number;
@@ -174,25 +174,26 @@ export function feeDaysLeft(balanceUqor: number | undefined, windowSeconds: numb
 export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
   const age = f.setupAgeSeconds ?? Infinity;
   const days = feeDaysLeft(f.balanceUqor, f.windowSeconds);
-  const addFees = `Add free test QOR to your account${f.qor1 ? ` ${f.qor1}` : ""} on the QoreChain dashboard (Faucet).`;
+  // Self-managed only. The address is under Details: no crypto words on the main view.
+  const addFees = "Add test tokens to your own account. The address is under Details.";
   const lastSealMin = s.lastAnchorAgeSeconds === undefined ? undefined : Math.max(0, Math.round(s.lastAnchorAgeSeconds / 60));
   if (s.unanchored.length) {
     return { level: "bad", title: "Some video could not be sealed.", action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days };
   }
   const camOffline = s.newestSegmentAgeSeconds === undefined ? age > 600 : s.newestSegmentAgeSeconds > 300;
   if (camOffline) {
-    return { level: "bad", title: "No video from the camera.", action: "Check the power and Wi-Fi of the camera. If the camera has a new IP address, give it a fixed address in your router.", feeDaysLeft: days };
+    return { level: "bad", title: "No video from the camera.", action: "Check the power and Wi-Fi of the camera.", feeDaysLeft: days };
   }
   if (days !== undefined && f.balanceUqor! < 3 * FEE_PER_SEAL_UQOR) {
     return f.plan === "sponsored"
-      ? { level: "bad", title: "Sealing stops: the network fees ran out.", action: "The pilot tops up your box. If this stays for more than a day, the pilot may be paused or full.", feeDaysLeft: days }
-      : { level: "bad", title: "Sealing stops: the network fees ran out.", action: addFees, feeDaysLeft: days };
+      ? { level: "bad", title: "Sealing paused: the fees ran out.", action: "The pilot tops up your box by itself. If this stays for a day, the pilot may be paused or full.", feeDaysLeft: days }
+      : { level: "bad", title: "Sealing paused: the fees ran out.", action: addFees, feeDaysLeft: days };
   }
   if (days !== undefined && f.plan !== "sponsored" && days < 3) {
-    return { level: "warn", title: `Network fees low: ${daysText(days)} left.`, action: addFees, feeDaysLeft: days };
+    return { level: "warn", title: "Sealing pauses soon: fees are running out.", action: addFees, feeDaysLeft: days };
   }
   if (days !== undefined && f.plan === "sponsored" && days < 0.25) {
-    return { level: "warn", title: "Network fees low.", action: "The pilot tops up your box by itself. Nothing to do now.", feeDaysLeft: days };
+    return { level: "warn", title: "Sealing pauses soon: fees are running out.", action: "The pilot tops up your box by itself. Nothing to do now.", feeDaysLeft: days };
   }
   if (s.lastAnchorAgeSeconds === undefined) {
     return age > 1800

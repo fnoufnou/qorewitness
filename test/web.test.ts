@@ -76,9 +76,11 @@ describe("local dashboard: server", () => {
   it("escapes every value it shows", () => {
     assert.equal(esc(`<a href="x">'&`), "&lt;a href=&quot;x&quot;&gt;&#39;&amp;");
     const f = fixture();
-    const s = collectStatus({ device: "<script>", receiptDir: f.receipts, segmentDir: f.segments });
+    const s = collectStatus({ device: "<script>x", receiptDir: f.receipts, segmentDir: f.segments });
     const html = page(s, { level: "ok", text: "<b>" }, "0x1234567890");
-    assert.ok(!html.includes("<script>"));
+    assert.ok(!html.includes("<script>x"));
+    // The only script is the hashed box script at the end of the page.
+    assert.ok(!/<main>[\s\S]*<script/.test(html.split("</main>")[0] + "</main>"));
     assert.ok(html.includes("&lt;b&gt;"));
   });
 });
@@ -107,10 +109,11 @@ describe("dashboard: box health in plain words", () => {
   it("orange when fees run low on Self-managed, red when they ran out", () => {
     const low = boxHealth(base, { ...facts, balanceUqor: 20_000_000 });
     assert.equal(low.level, "warn");
-    assert.equal(low.title, "Network fees low: about 1 day left.");
-    assert.match(low.action!, /qor1abc/);
+    assert.equal(low.title, "Sealing pauses soon: fees are running out.");
+    assert.equal(low.action, "Add test tokens to your own account. The address is under Details.");
+    assert.ok(!/QOR|qor1/.test(low.title + low.action));
     assert.equal(boxHealth(base, { ...facts, balanceUqor: 100_000 }).level, "bad");
-    assert.equal(Math.round(feeDaysLeft(14_400_000, 600)! * 10) / 10, 1);
+    assert.equal(Math.round(feeDaysLeft(6_912_000, 600)! * 10) / 10, 1);
   });
 
   it("Fees included: a normal top-up level is not a warning", () => {
