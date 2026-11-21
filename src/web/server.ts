@@ -22,7 +22,7 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { safeError } from "../core/redact.js";
 import {
-  EXPLORER, dataPaths, ensureDirs, fetchBalanceUqor, isSetupDone, liveChain, readAccountInfo, readEnvFile, type AccountInfo, type Paths,
+  EXPLORER, dataPaths, ensureDirs, fetchBalanceUqor, isSetupDone, liveChain, lockSecrets, readAccountInfo, readEnvFile, type AccountInfo, type Paths,
 } from "../setup/steps.js";
 import {
   FailureLimiter, checkPassword, clearPairing, csrfOk, csrfToken, ensurePairing, hasPassword, hostAllowed, issueSession, originOk,
@@ -105,8 +105,9 @@ async function readForm(req: IncomingMessage): Promise<Record<string, string> | 
 
 // ---------------------------------------------------------------- dashboard page
 
-const time = (s: number) => new Date(s * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC";
-const gb = (n?: number) => (n === undefined ? "unknown" : `${(n / 1e9).toFixed(1)} GB`);
+const isoTime = (s: number) => new Date(s * 1000).toISOString();
+const utcTime = (s: number) => isoTime(s).replace("T", " ").slice(0, 16) + " UTC";
+const gb = (n?: number) => (n === undefined ? "unknown" : `${(n / 1e9).toFixed(0)} GB`);
 
 export interface DashboardView {
   status: LocalStatus;
@@ -117,31 +118,37 @@ export interface DashboardView {
   csrf?: string;
 }
 
+/**
+ * The owner's main view: one coloured line with one action, four plain facts,
+ * the latest seals in local time with a Download button each. Every technical
+ * word (block, registry, QOR, key) sits in the folded Details.
+ */
 export function dashboardPage(v: DashboardView): string {
   const s = v.status;
   const h = v.health;
+  const download = (a: LocalStatus["latest"][number]) => v.csrf
+    ? `<form method="post" action="/evidence/download" style="margin:0">${`<input type="hidden" name="_csrf" value="${esc(v.csrf)}">`}<input type="hidden" name="fromMs" value="${a.windowStart * 1000}"><input type="hidden" name="toMs" value="${(a.windowStart + a.windowSeconds) * 1000}"><input type="hidden" name="tz" value="0"><button class="secondary" style="margin:0;padding:8px 12px">Download</button></form>`
+    : "";
   const rows = s.latest.map((a) => `<tr>
-    <td>${esc(time(a.windowStart))}</td><td>${esc(a.segments)}</td>
-    <td>${a.txHash ? `<a href="${EXPLORER}/tx/${esc(a.txHash)}" rel="noreferrer" target="_blank">block ${esc(a.blockNumber ?? "")}</a>` : "-"}</td>
-    <td>${a.warnings ? `<span>${esc(a.warnings)} clip(s) with a gap or a stream change</span>` : "none"}</td>
-    <td><a href="/receipts/${encodeURIComponent(a.file)}" download>receipt</a></td></tr>`).join("");
-  const fees = v.info?.plan === "sponsored"
-    ? "Covered by the pilot"
-    : v.balanceUqor === undefined ? "unknown" : `${(v.balanceUqor / 1e6).toFixed(1)} test QOR${h.feeDaysLeft !== undefined ? `, ${daysText(h.feeDaysLeft)}` : ""}`;
+    <td><time data-local datetime="${esc(isoTime(a.windowStart))}" data-end="${esc(isoTime(a.windowStart + a.windowSeconds))}">${esc(utcTime(a.windowStart))}</time>${a.warnings ? ` <span title="A short gap or a stream change in this part" aria-label="gap">&#9888;</span>` : ""}</td>
+    <td style="text-align:right">${download(a)}</td></tr>`).join("");
+  const fees = v.info?.plan === "self"
+    ? (h.feeDaysLeft === undefined ? "unknown" : `${daysText(h.feeDaysLeft)} left`)
+    : "Covered by the pilot";
   const camera = s.newestSegmentAgeSeconds === undefined ? "no video yet" : s.newestSegmentAgeSeconds <= 300 ? "online" : `no video for ${Math.round(s.newestSegmentAgeSeconds / 60)} min`;
+  const tech = s.latest.filter((a) => a.txHash).map((a) => `${esc(utcTime(a.windowStart))}: <a href="${EXPLORER}/tx/${esc(a.txHash)}" rel="noreferrer" target="_blank">block ${esc(a.blockNumber ?? "")}</a>, ${esc(a.segments)} clips, <a href="/receipts/${encodeURIComponent(a.file)}" download>receipt</a>`).join("<br>");
   return `<div class="status ${h.level}" role="status"><span class="dot"></span><div><strong>${esc(h.title)}</strong>${h.action ? `<p>${esc(h.action)}</p>` : ""}</div></div>
 <div class="facts">
-<div><b>Camera</b>${esc(v.info?.device ?? s.device)}: ${esc(camera)}</div>
+<div><b>Camera</b>${esc(camera)}</div>
 <div><b>Last seal</b>${s.lastAnchorAgeSeconds === undefined ? "none yet" : `${esc(Math.max(0, Math.round(s.lastAnchorAgeSeconds / 60)))} min ago`}</div>
 <div><b>Network fees</b>${esc(fees)}</div>
 <div><b>Video kept</b>${esc(v.retentionDays ?? 14)} days, ${esc(gb(s.diskFreeBytes))} free</div>
 </div>
-<div class="card"><h2 style="margin-top:0">Latest seals</h2><div class="scroll"><table><thead><tr><th>Time</th><th>Clips</th><th>Sealed in</th><th>Notes</th><th></th></tr></thead>
-<tbody>${rows || `<tr><td colspan="5">No seals yet.</td></tr>`}</tbody></table></div>
-<p class="muted" style="margin-top:12px">To prove a clip, send it with its receipt. Anyone can check both in the public verifier: <a href="${VERIFIER}" rel="noreferrer" target="_blank">qorewitness.fnoufnou.com</a>. Your video never leaves this box unless you send it.</p>
-<details><summary>Technical details</summary><p class="mono">Receipts ${esc(s.receipts)}, waiting windows ${esc(s.pendingWindows)}, open segments ${esc(s.openSegments)}, clips on disk ${esc(s.segmentFiles)}<br>
-${v.info ? `Account ${esc(v.info.qor1)}<br>Owner ${esc(v.info.owner)}<br>Device id ${esc(v.info.deviceId)}<br>Camera key ${esc(v.info.keyFingerprint)}<br>Registry <a href="${EXPLORER}/address/${esc(v.info.registry)}" rel="noreferrer" target="_blank">${esc(v.info.registry)}</a>` : ""}</p></details></div>
-${v.csrf ? evidenceForm(v.csrf) : ""}
+<div class="card"><h2 style="margin-top:0">Latest seals</h2><div class="scroll"><table><tbody>${rows || `<tr><td>No seals yet.</td></tr>`}</tbody></table></div>
+<p class="muted" style="margin-top:12px">Press Download next to the time you need. You get one file with the original video and its proof. Send it to an insurer, the police or a lawyer. They check it at <a href="${VERIFIER}" rel="noreferrer" target="_blank">qorewitness.fnoufnou.com</a>.</p>
+<details><summary>Details</summary><p class="mono">${tech}${tech ? "<br>" : ""}Receipts ${esc(s.receipts)}, waiting windows ${esc(s.pendingWindows)}, open segments ${esc(s.openSegments)}, clips on disk ${esc(s.segmentFiles)}<br>
+${v.balanceUqor !== undefined ? `Balance ${esc((v.balanceUqor / 1e6).toFixed(2))} test QOR<br>` : ""}${v.info ? `Account ${esc(v.info.qor1)}<br>Owner ${esc(v.info.owner)}<br>Device id ${esc(v.info.deviceId)}<br>Camera key ${esc(v.info.keyFingerprint)} (ML-DSA-87)<br>Registry <a href="${EXPLORER}/address/${esc(v.info.registry)}" rel="noreferrer" target="_blank">${esc(v.info.registry)}</a>` : ""}</p></details></div>
+${v.csrf ? `<details class="card"><summary>Pick another time</summary>${evidenceForm(v.csrf)}</details>` : ""}
 ${v.csrf ? `<form method="post" action="/logout"><input type="hidden" name="_csrf" value="${esc(v.csrf)}"><button class="secondary">Log out</button></form>` : ""}`;
 }
 
@@ -248,7 +255,7 @@ export function createHandler(o: ServerOptions) {
       }
       if (req.method === "POST" && path === "/setup/pair") {
         if (pairFails.blocked("pair")) return html(res, 429, "Setup", renderClaimCode("Too many wrong codes. On the box, run the installer again to get a new code.", true));
-        if (!safeEqual((form.code ?? "").trim(), pairing.code)) {
+        if (!safeEqual((form.code ?? "").replace(/\s/g, ""), pairing.code)) {
           pairFails.fail("pair");
           return html(res, 403, "Setup", renderClaimCode("This code is not right. Check the code on the installer screen."));
         }
@@ -257,7 +264,7 @@ export function createHandler(o: ServerOptions) {
       }
       if (req.method === "POST" && path === "/setup/password") {
         if (!claimOk || !csrfOk(pairing.token, "claim", form._csrf)) return send(res, 403, "text/plain; charset=utf-8", "Open the setup link again.");
-        const problem = passwordProblem(form.password ?? "", form.again ?? "");
+        const problem = passwordProblem(form.password ?? "");
         if (problem) return html(res, 400, "Setup", renderClaimPassword(claimCsrf, problem));
         setPassword(ui, form.password!);
         clearPairing(ui);
@@ -301,19 +308,21 @@ export function createHandler(o: ServerOptions) {
       if (req.method === "POST" && path.startsWith("/setup/")) {
         const r = await w.post(path, { ...form, _csrf: csrf });
         if (r.redirect) return redirect(res, r.redirect);
-        return html(res, 200, "Setup", r.html ?? "", { script: true });
+        return html(res, 200, "Setup", r.html ?? "");
       }
       if (req.method === "GET" && path === "/setup") {
         w.resumeIfInterrupted();
         const screen = await w.screen();
         if (screen === "done") return redirect(res, "/setup/done");
-        return html(res, 200, "Setup", await w.render(screen, csrf), { refresh: w.refreshFor(screen), script: screen === "funding" });
+        return html(res, 200, "Setup", await w.render(screen, csrf), { refresh: w.refreshFor(screen) });
       }
       return req.method === "GET" ? redirect(res, "/setup") : send(res, 404, "text/plain", "not found");
     }
 
     // 6. Setup is done: dashboard. /setup is closed (no more setup actions), only the done page stays.
-    if (req.method === "GET" && path === "/setup/done") return html(res, 200, "Sealing started", renderDone(readAccountInfo(p)?.device ?? "camera"));
+    // From now on this process never reads the recovery phrase or the camera keys (enforced in steps.ts).
+    lockSecrets();
+    if (req.method === "GET" && path === "/setup/done") return html(res, 200, "Sealing started", renderDone(`http://${req.headers.host ?? ""}`));
     if (req.method === "GET" && path === "/setup") return redirect(res, "/setup/done");
     if (path === "/setup" || path.startsWith("/setup/")) {
       return html(res, 404, "Setup finished", `<div class="card"><h1>Setup is finished</h1><p>This box is set up. Changes to the camera come in a later version.</p><a class="btn" href="/">Open my dashboard</a></div>`);
@@ -386,6 +395,7 @@ export function createHandler(o: ServerOptions) {
 if (process.argv[1] && /server\.(ts|js)$/.test(process.argv[1])) {
   const paths = dataPaths();
   ensureDirs(paths);
+  if (isSetupDone(paths)) lockSecrets();
   const wizard = new Wizard({ paths, chain: liveChain(), sponsor: () => new SponsorClient(), snapshot: (u) => snapshot(u) });
   const host = process.env.QW_UI_HOST?.trim() || "127.0.0.1";
   const port = Number(process.env.QW_UI_PORT ?? 8080);

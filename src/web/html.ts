@@ -10,15 +10,25 @@ export const esc = (v: unknown) =>
 
 export const LOGO = `<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#17483A"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="16" cy="16" r="3" fill="#fff"/><circle cx="25.5" cy="6.5" r="3" fill="#E8663D"/></svg>`;
 
-/** Copies the text of the element named in data-copy. No other script runs on these pages. */
-export const COPY_SCRIPT = `document.querySelectorAll("[data-copy]").forEach(function(b){b.addEventListener("click",function(){var t=document.getElementById(b.getAttribute("data-copy"));if(!t)return;navigator.clipboard&&navigator.clipboard.writeText(t.textContent.trim()).then(function(){b.textContent="Copied";});});});`;
-const COPY_HASH = `'sha256-${createHash("sha256").update(COPY_SCRIPT).digest("base64")}'`;
+/**
+ * The one small script of the box pages (allowed by its CSP hash). Each part does
+ * nothing when its elements are missing, and every page works without it.
+ * - [data-copy]: copy button.  - [data-show]: show the password.
+ * - time[data-local]: the time in the browser's own time zone.  - input[name=tz]: the zone offset.
+ */
+export const BOX_SCRIPT = `(function(){var q=function(s){return document.querySelectorAll(s)};
+q("[data-copy]").forEach(function(b){b.addEventListener("click",function(){var t=document.getElementById(b.getAttribute("data-copy"));if(t&&navigator.clipboard)navigator.clipboard.writeText(t.textContent.trim()).then(function(){b.textContent="Copied";});});});
+q("[data-show]").forEach(function(c){c.addEventListener("change",function(){var i=document.getElementById(c.getAttribute("data-show"));if(i)i.type=c.checked?"text":"password";});});
+var d=function(x){return x.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})},h=function(x){return x.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})};
+q("time[data-local]").forEach(function(t){var a=new Date(t.getAttribute("datetime")),e=t.getAttribute("data-end");if(isNaN(a))return;t.textContent=d(a)+", "+h(a)+(e?" to "+h(new Date(e)):"");});
+q("input[name=tz]").forEach(function(i){i.value=String(-new Date().getTimezoneOffset());});})();`;
+const BOX_HASH = `'sha256-${createHash("sha256").update(BOX_SCRIPT).digest("base64")}'`;
 
 /** Fills the "Save evidence" form: the browser's time zone and the last hour as default. Runs without it too. */
 export const EVIDENCE_SCRIPT = `(function(){var f=document.getElementById("evf");if(!f)return;var p=function(n){return String(n).padStart(2,"0")},t=new Date(),s=new Date(t.getTime()-36e5);f.elements.tz.value=String(-t.getTimezoneOffset());if(!f.elements.date.value){f.elements.date.value=s.getFullYear()+"-"+p(s.getMonth()+1)+"-"+p(s.getDate());f.elements.from.value=p(s.getHours())+":"+p(s.getMinutes());f.elements.to.value=p(t.getHours())+":"+p(t.getMinutes());}})();`;
 const EVIDENCE_HASH = `'sha256-${createHash("sha256").update(EVIDENCE_SCRIPT).digest("base64")}'`;
 
-export const CSP = `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; script-src ${COPY_HASH} ${EVIDENCE_HASH}; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`;
+export const CSP = `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; script-src ${BOX_HASH} ${EVIDENCE_HASH}; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`;
 
 const CSS = `
 @font-face{font-family:"IBM Plex Sans";src:url(/assets/plex-sans.woff2) format("woff2");font-weight:100 700;font-display:swap}
@@ -82,8 +92,8 @@ ${o.refreshSeconds ? `<meta http-equiv="refresh" content="${o.refreshSeconds}">`
 <link rel="icon" href="/favicon.svg"><style>${CSS}${o.wide ? "main,footer{max-width:60rem}" : ""}</style></head><body>
 <header>${LOGO}<strong>QoreWitness</strong>${o.nav ?? ""}<span class="tag">Pilot · test network</span></header>
 <main>${o.body}</main>
-<footer>Pilot on the QoreChain test network. No money is collected. QoreWitness never asks for your recovery phrase.</footer>
-${o.script ? `<script>${COPY_SCRIPT}</script>` : ""}${o.evidence ? `<script>${EVIDENCE_SCRIPT}</script>` : ""}</body></html>`;
+<footer>Pilot on the QoreChain test network. No money is collected. QoreWitness never asks for your passwords or files.</footer>
+<script>${BOX_SCRIPT}</script>${o.evidence ? `<script>${EVIDENCE_SCRIPT}</script>` : ""}</body></html>`;
 }
 
 export const hidden = (name: string, value: string) => `<input type="hidden" name="${esc(name)}" value="${esc(value)}">`;

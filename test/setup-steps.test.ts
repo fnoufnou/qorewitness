@@ -108,3 +108,22 @@ describe("setup steps: registration (mocked chain)", () => {
     await assert.rejects(registerOnChain(p, "cam", m.chain), /another key/);
   });
 });
+
+describe("setup steps: keys are locked after setup (ui least privilege)", () => {
+  it("lockSecrets stops every read of the recovery phrase and the camera keys in this process", async () => {
+    const { lockSecrets, unlockSecretsForTests, loadOwner } = await import("../src/setup/steps.js");
+    const p = tmpData();
+    saveCamera(p, { label: "cam", streamUrl: "rtsp://u:p@10.0.0.2/stream1" });
+    await ensureOwnerAccount(p);
+    ensureDeviceKey(p, "cam");
+    lockSecrets();
+    try {
+      assert.throws(() => readEnvFile(p.accountEnv), /no longer reads keys/);
+      assert.throws(() => ensureDeviceKey(p, "cam"), /no longer reads keys/);
+      await assert.rejects(loadOwner(p), /no longer reads keys/);
+      assert.equal(readEnvFile(p.cameraEnv).QW_DEVICE, "cam", "camera settings stay readable for the dashboard");
+    } finally {
+      unlockSecretsForTests();
+    }
+  });
+});

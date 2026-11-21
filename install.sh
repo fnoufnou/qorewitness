@@ -3,11 +3,14 @@
 #   curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash
 #
 # It installs into ~/qorewitness, pulls the published image, starts the box and
-# prints the link and the pairing code of the browser setup. Testnet pilot only.
+# prints the dashboard address and the pairing code. Testnet pilot only.
 # Run it again at any time: it keeps your camera, keys and account.
 #
+# From your own laptop, in one paste (the box is a Raspberry Pi named qorewitness):
+#   ssh -t <user>@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash -s -- --yes"
+#
 # Options:
-#   --yes            install Docker without asking (when it is missing)
+#   --yes            accept the defaults without questions (installs Docker when it is missing)
 #   --build          build the image from source instead of pulling it (needs git)
 #   --terminal       old flow: setup questions in this terminal, no browser
 #   --new-password   forget the dashboard password and show a new pairing code
@@ -37,11 +40,11 @@ done
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
 say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 die() { printf '\n\033[1;31m%s\033[0m\n' "$*" >&2; exit 1; }
-ask() { # ask "question" -> 0 for yes. Reads from the terminal, also when piped from curl.
+ask() { # ask "question" -> 0 for yes. The default is yes (Enter). Reads the terminal, also when piped from curl.
   [ "$YES" = 1 ] && return 0
-  [ -r /dev/tty ] || return 1
-  local ans; printf '%s [y/N] ' "$1" > /dev/tty; read -r ans < /dev/tty || return 1
-  [[ "$ans" =~ ^[Yy] ]]
+  [ -r /dev/tty ] || return 0
+  local ans; printf '%s [Y/n] ' "$1" > /dev/tty; read -r ans < /dev/tty || return 0
+  [[ ! "$ans" =~ ^[Nn] ]]
 }
 
 say "QoreWitness installer (pilot on the QoreChain test network, no money involved)"
@@ -169,21 +172,18 @@ CODE="$(printf '%s\n' "$PAIR" | sed -n 's/^code=//p')"
 
 echo
 if [ -n "$TOKEN" ] && [ -n "$CODE" ]; then
-  LINK="$BASE/setup?token=$TOKEN"
-  ( umask 077; printf 'Setup link: %s\nPairing code: %s\n' "$LINK" "$CODE" > SETUP-LINK.txt )
-  bold "Open this link on your phone or laptop (same home network):"
+  ( umask 077; printf 'Setup link: %s\nPairing code: %s\n' "$BASE/setup?token=$TOKEN" "$CODE" > SETUP-LINK.txt )
+  bold "Your QoreWitness box is ready. On your phone or laptop, open:"
   echo
-  bold "    $LINK"
+  bold "      $BASE"
   echo
-  bold "Or open $BASE/setup and type the pairing code:   ${CODE:0:3} ${CODE:3:3}"
-  [ "$(hostname)" = "qorewitness" ] && [ "$URL_HOST" != "localhost" ] && echo "The name http://qorewitness.local:$PORT also works on most home networks."
+  bold "      Pairing code:  ${CODE:0:3} ${CODE:3:3}"
   echo
-  echo "The link is also in $DIR/SETUP-LINK.txt (only you can read it)."
-  echo "Anyone with the code can set up this box until you choose a password. Do not share it."
+  echo "Or click this link: $BASE/setup?token=$TOKEN"
 else
-  bold "QoreWitness is running. Open your dashboard: $BASE"
-  echo "Forgot the password? Run the installer again with --new-password."
+  bold "QoreWitness is running. Open your dashboard:"
+  echo
+  bold "      $BASE"
+  echo
+  echo "Forgot the password? Run the same command again and add --new-password."
 fi
-echo
-echo "Your keys and video are in $DIR/data. Back up that folder."
-echo "Status in a terminal: cd $DIR && $DOCKER compose ps"

@@ -4,9 +4,12 @@
  *
  * Contract (implemented by the sponsor service):
  *   POST {SPONSOR_URL}/v1/challenge {deviceId}                 -> {nonce, expires}
- *   POST {SPONSOR_URL}/v1/enroll {pilotCode, deviceId, owner, nonce, signature, devicePubkey}
+ *   POST {SPONSOR_URL}/v1/enroll {deviceId, owner, nonce, signature, devicePubkey[, pilotCode]}
  *                                                              -> {status, capPerDayUqor}
- *   GET  {SPONSOR_URL}/v1/status/<deviceId>                    -> {status, ...}
+ *   GET  {SPONSOR_URL}/v1/status/<deviceId>?owner=<owner>      -> {status, ...}
+ *
+ * The pilot is open within its cap: the box sends no pilot code. Every box uses the
+ * same camera name, so device ids repeat across owners and status needs the owner.
  *
  * signature: the camera's ML-DSA-87 signature (0x hex) over the UTF-8 text
  *   "qorewitness-sponsor-v1|9800|<registry>|<deviceId>|<owner>|<nonce>"
@@ -49,9 +52,9 @@ export const SPONSOR_TEXT: Record<SponsorStatus, string> = {
   pending: "The pilot is adding the network fees to your box.",
   funded: "The pilot added the network fees.",
   active: "Network fees are covered by the pilot.",
-  full: "The pilot is full at the moment. Choose Self-managed, or try again later.",
-  invalid_code: "This pilot code is not valid. Check the code from the website.",
-  used_code: "This pilot code was used already.",
+  full: "The pilot is full at the moment. You can pay the network fees with your own wallet, or try again later.",
+  invalid_code: "The pilot did not accept this box. You can pay the network fees with your own wallet.",
+  used_code: "The pilot did not accept this box. You can pay the network fees with your own wallet.",
   paused: "The pilot is paused at the moment. Your box keeps recording. Try again later.",
   rejected: "The pilot service did not accept this box.",
   unknown: "The pilot service gave an answer we do not know. Try again later.",
@@ -97,15 +100,16 @@ export class SponsorClient {
     return { nonce: b.nonce, expires: typeof b.expires === "string" || typeof b.expires === "number" ? String(b.expires) : undefined };
   }
 
-  async enroll(req: { pilotCode: string; deviceId: string; owner: string; nonce: string; signature: string; devicePubkey: string }): Promise<SponsorAnswer> {
+  async enroll(req: { pilotCode?: string; deviceId: string; owner: string; nonce: string; signature: string; devicePubkey: string }): Promise<SponsorAnswer> {
     const r = await this.call("/v1/enroll", req);
     const a = parseAnswer(r.json);
     if (r.status >= 500) throw new Error(`sponsor enroll failed (HTTP ${r.status})`);
     return a;
   }
 
-  async status(deviceId: string): Promise<SponsorAnswer> {
-    const r = await this.call(`/v1/status/${encodeURIComponent(deviceId.toLowerCase())}`);
+  async status(deviceId: string, owner?: string): Promise<SponsorAnswer> {
+    const q = owner ? `?owner=${encodeURIComponent(owner.toLowerCase())}` : "";
+    const r = await this.call(`/v1/status/${encodeURIComponent(deviceId.toLowerCase())}${q}`);
     if (r.status === 404) return { status: "unknown" };
     if (r.status >= 500) throw new Error(`sponsor status failed (HTTP ${r.status})`);
     return parseAnswer(r.json);
@@ -115,14 +119,14 @@ export class SponsorClient {
 /** Challenge, sign with the camera key, enroll. */
 export async function enrollDevice(
   client: SponsorClient,
-  a: { pilotCode: string; registry: string; deviceId: string; owner: string; key: DeviceKey },
+  a: { pilotCode?: string; registry: string; deviceId: string; owner: string; key: DeviceKey },
 ): Promise<SponsorAnswer> {
-  if (!PILOT_CODE_RE.test(a.pilotCode)) return { status: "invalid_code" };
+  if (a.pilotCode !== undefined && !PILOT_CODE_RE.test(a.pilotCode)) return { status: "invalid_code" };
   const { nonce } = await client.challenge(a.deviceId);
   const msg = new TextEncoder().encode(sponsorMessage(a.registry, a.deviceId, a.owner, nonce));
   const signature = signChecked(a.key.publicKey, a.key.secretKey, msg);
   return client.enroll({
-    pilotCode: a.pilotCode,
+    ...(a.pilotCode !== undefined ? { pilotCode: a.pilotCode } : {}),
     deviceId: a.deviceId.toLowerCase(),
     owner: a.owner.toLowerCase(),
     nonce,
