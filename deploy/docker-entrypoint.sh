@@ -9,6 +9,7 @@
 #   retention  delete segments older than QW_RETENTION_DAYS (default 14), every 6 hours
 #   setup      first-run wizard in the terminal (account, keys, registration)
 #   ui         local dashboard and browser setup on port 8080
+#   pair [--new-password]  print the first-run pairing token and code (for install.sh)
 #   device|window|verify ...   the CLIs, e.g. "device status <label>"
 set -euo pipefail
 cd "${QW_APP:-/opt/qorewitness}"
@@ -119,6 +120,7 @@ case "${1:-agent}" in
     done ;;
   # The dashboard never loads qorewitness.env: the recovery phrase stays out of its environment.
   ui)       export QW_UI_HOST="${QW_UI_HOST:-0.0.0.0}"; exec node --import tsx src/web/server.ts ;;
+  pair)     shift; exec node --import tsx src/web/pair.ts "$@" ;;
   setup)    shift; set_paths; envfile=(); [ -f "$DATA/qorewitness.env" ] && envfile=(--env-file="$DATA/qorewitness.env")
             exec node --import tsx "${envfile[@]}" scripts/setup.ts "$@" ;;
   device)   shift; set_paths; envfile=(); [ -f "$DATA/qorewitness.env" ] && envfile=(--env-file="$DATA/qorewitness.env")
