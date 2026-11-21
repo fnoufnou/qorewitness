@@ -2,7 +2,12 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
-## Unreleased (0.4.0-alpha.1)
+## 0.5.0-alpha.1 (21 Nov 2026, first tester build)
+
+### 2026-11-21
+- Release: first image for testers, built by GitHub Actions (amd64, arm64).
+- Docs: relayed anchors emit no EVM logs (`docs/TESTNET_FINDINGS.md`). Agent-key mode stays an option after the tester release (`docs/AGENT_KEY.md`).
+- Testnet v3.2.9: `probe:pqc` passes, the live agent anchors normally.
 
 ### 2026-11-20
 - Owner key offline (T31): spike on testnet passed 8 of 8 checks. An agent key with an anchor-only spending rule anchored through `MsgExecuteEVM` without an EVM window, and other calls, value transfers and calls after revoke were refused. `AnchorClient.prepareAnchor` added.

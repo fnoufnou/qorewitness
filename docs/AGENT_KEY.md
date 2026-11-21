@@ -70,3 +70,12 @@ Compared with today, a compromised recorder no longer exposes the owner account,
 4. Try a call to another contract and a value transfer with the agent key: both must fail.
 5. Revoke the key and check that the next anchor fails.
 6. Write the result in `docs/TESTNET_FINDINGS.md` and decide whether the agent switches to this mode before the submission.
+
+## Decision (21 Nov 2026)
+
+The spike works, but relayed calls emit no EVM logs and have no EVM transaction hash (`docs/TESTNET_FINDINGS.md`). The receipt format, the Python verifier and crash recovery each need a second path for relayed anchors. Before the submission on 1 Dec, the tester release and the browser setup come first. So:
+
+- The live agent stays in direct mode until the submission.
+- Agent-key mode is built as an option behind a setting, with the three changes above, after the tester release.
+- The submission shows the spike, the design and the decision.
+

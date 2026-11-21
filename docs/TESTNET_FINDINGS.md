@@ -161,3 +161,14 @@ Findings:
 - `MsgExecuteEVM` runs the call from the owner's EVM address, and it needs no EVM window. The owner's recovery phrase can leave the recorder.
 - Gas: the relayed anchor used 895,024 gas (direct anchor: about 406,000 EVM gas). With 1,500,000 gas wanted at 0.1 uqor, the fee was 0.15 QOR. With about 1,100,000 gas wanted it would be about 0.11 QOR, close to a direct anchor (about 0.104 QOR).
 - A refused execution does not revert the transaction. It emits `abstractaccount_execution_failed` and uses the key's nonce. The agent must read that event, not only the tx code.
+
+### Follow-up, 21 Nov: no EVM logs for relayed calls
+
+- The relayed anchor of 20 Nov (block 10,419,865) is stored in the registry: `getAnchor` and `verifyAnchor` return it. But `eth_getLogs` for that block returns no `Anchored` event, and the Cosmos transaction carries no EVM log events either. To our knowledge, events emitted inside a `MsgExecuteEVM` call are not exposed over the EVM JSON-RPC on chain v3.2.8.
+- The relayed call has no EVM transaction hash. The receipt can only name the Cosmos transaction hash.
+- Effects on QoreWitness in agent-key mode:
+  - The browser and CLI verifiers read contract state (`verifyAnchor`), so they keep working.
+  - The Python verifier checks the root in the EVM transaction input (`eth_getTransactionByHash`). For relayed anchors it needs a second path: read the `MsgExecuteEVM` call data from the Cosmos REST API.
+  - Crash recovery finds the transaction through the `Anchored` event. For relayed anchors it must search Cosmos transactions of the relayer at the anchor's block height instead.
+- A question for the QoreChain team: are logs of `MsgExecuteEVM` calls planned in `eth_getLogs`?
+- Testnet moved to v3.2.9 on 20 Nov (about 09:00 UTC). `probe:pqc` passes on 21 Nov and the live agent anchors normally, so the PQC precompiles behave as before.
