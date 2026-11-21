@@ -4,6 +4,11 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+### 2026-11-21: save evidence (dashboard) and ZIP verifier
+- Dashboard: **Save evidence**. Pick a date and a time range (max 60 minutes, default last hour). The box checks each clip against its receipt (both fingerprints, size, chain link, Merkle path), tells you about gaps and clips not sealed yet, then streams one ZIP (stored entries, Node built-ins only, exact Content-Length, 2 GB cap): original clips, receipts, `certificate.html` and `HOW-TO-CHECK.txt`. Same session, CSRF and host rules as every dashboard route. Clip names from receipts must match `seg_*.mp4|ts`, links are never followed, and entry names are made by the box.
+- Verifier: drop the ZIP. It unpacks in the browser (own reader for stored and deflate entries, refuses unsafe names, ZIP64, encryption and entries that inflate past their size), checks every clip with its receipt using the existing code, and shows one verdict first: green "Original", orange "Original, with notes" or "Check not finished", red "Changed after sealing" or "Not confirmed". Then what it proves and cannot prove, a print button and folded technical details. One clip plus receipt and the tamper demo still work. Still one offline HTML file (366 KB).
+- Tests: ZIP round trip (writer to the verifier's reader, also with deflate), range selection, size cap, tampered clip (left out on the box, red in the verifier), path traversal, links, auth and CSRF.
+
 ### 2026-11-21: sponsor start grant (Fees included without a faucet)
 - Sponsor: enrol works before the camera is on chain. The box sends `devicePubkey`. The service checks the camera signature against it, needs an unused pilot code, binds code, owner, device id and key hash, and sends one start grant of 3 test QOR (setup uses about 0.25). When the camera shows up on chain under that owner with that key hash, it becomes active and refills start. Another key or a revoke: rejected. Not registered within 48 h: expired, the code stays used.
 - Sponsor: answers use the status words of the box client (enrolled, pending, funded, active, full, invalid_code, used_code, paused, rejected). Refusals come with HTTP 403, 409 or 423, so the wizard shows the right text.

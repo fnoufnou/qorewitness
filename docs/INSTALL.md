@@ -111,7 +111,17 @@ Open the dashboard (`http://<IP of the box>:8080`) once in a while. It shows one
 
 Video older than the retention time (proposed from the free disk, 14 days by default) is deleted. The receipts stay. Download the clips you need before then.
 
-To prove a clip today: copy the clip from `~/qorewitness/data/<camera>/segments` and download its receipt from the dashboard. The receiver checks both at https://qorewitness.fnoufnou.com/verifier.html. Nobody needs to trust you or us. A one-click evidence export in the dashboard is planned for the next version.
+### Save evidence
+
+To prove what your camera saw, use **Save evidence** on the dashboard:
+
+1. Pick the date and the start and end time (up to 60 minutes), or press **Last hour**. Press **Check this time**.
+2. The box checks every clip against its receipt and tells you what it found. If part of the time has no sealed video, or the newest clips are not sealed yet (sealing takes about 10 minutes), it says so before you download.
+3. Press **Download evidence**. You get one ZIP: the original clips (they play in any video player), their receipts, `certificate.html` (one page to print) and `HOW-TO-CHECK.txt` (3 steps). The limit is 2 GB per ZIP.
+
+Give the ZIP to the receiver. They open https://qorewitness.fnoufnou.com/verifier.html and drop the ZIP on the page. They see one result: green "Original" with the recording date and time and the seal delay, orange for "unchanged, with notes", or red for "Changed after sealing". A button prints the result. Nobody needs to trust you or us.
+
+You can still check one clip with its receipt: copy the clip from `~/qorewitness/data/<camera>/segments`, download its receipt from the dashboard and drop both on the verifier ("Or check one clip with its receipt").
 
 ## Update
 

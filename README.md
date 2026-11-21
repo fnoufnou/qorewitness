@@ -48,6 +48,7 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 - Audit: QCAI audit stages, each finding with its fix, test or reason, and a map of every PQC precompile call with its tests: `docs/AUDIT.md`.
 - Gas and tx hashes: `docs/TESTNET_FINDINGS.md`. One anchor costs about 0.0457 test QOR (about 406,000 gas). The owner account also opens an EVM window (0.1 test QOR) about every 7 hours. Explorers show about 0.104 QOR per anchor: that is the maximum fee, the chain charges less.
 - Fees included (pilot): a sponsor service refills the test QOR that pilot cameras use. Free, test tokens only: `docs/SPONSOR.md`.
+- Save evidence: the dashboard makes one ZIP for a time range (original clips, receipts, a printable `certificate.html`, `HOW-TO-CHECK.txt`). Open `web/verifier/dist/index.html` and drop the ZIP: one plain verdict (green, orange or red), what it proves and cannot prove, and a print button.
 - Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`. Without any QoreWitness code: `python3 tools/verify_receipt.py <receipt> <file>` (standard library only). The exact rules, and how to replay a check with third-party tools, are in `docs/SPEC.md`. The page has a tamper demo: it changes one byte in a copy in memory and checks again.
 
 ## Contract rules
@@ -77,7 +78,7 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 | `src/core/` | Merkle tree, signed messages and receipt checks, shared by agent, CLI and browser verifier |
 | `src/agent/` | Agent: segment watcher, windows, device key, ML-DSA signing, scoped EVM window renewal, receipts |
 | `src/setup/` | Setup steps shared by the terminal and the browser setup (idempotent, chain access behind an interface) |
-| `src/web/` | Box web server: pairing and auth, setup wizard, Tapo camera test, pilot sponsor client, dashboard |
+| `src/web/` | Box web server: pairing and auth, setup wizard, Tapo camera test, pilot sponsor client, dashboard, evidence ZIP (`evidence.ts`, `certificate.ts`) |
 | `services/sponsor/` | Pilot fee sponsor: tops up owner accounts with test QOR (testnet only) |
 | `web/verifier/` | Browser verifier (single HTML file after `pnpm build:verifier`) |
 | `deploy/` | Recorder (ffmpeg) and agent systemd units, per-camera config |
@@ -113,7 +114,7 @@ The `ui` service serves the browser setup and the dashboard on one port. Before 
 
 `recorder` and `agent` run in supervise mode: they wait for `data/setup.done`, read `data/camera.env` themselves and restart when it changes. Camera passwords are masked in all logs.
 
-The `retention` service deletes segments older than `QW_RETENTION_DAYS` (default 14). Receipts stay. Export the clips you need as evidence first.
+The `retention` service deletes segments older than `QW_RETENTION_DAYS` (default 14). Receipts stay. Use Save evidence on the dashboard for the clips you need first.
 
 ## Quick start
 
