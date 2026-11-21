@@ -12,5 +12,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["hardhat.config.ts", "scripts", "test", "ignition", "artifacts/**/*.d.ts", "src", "web/verifier/main.ts"]
+  "include": ["hardhat.config.ts", "scripts", "test", "ignition", "artifacts/**/*.d.ts", "src", "services", "web/verifier/main.ts"]
 }
