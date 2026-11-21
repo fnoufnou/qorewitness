@@ -3,8 +3,14 @@
  * prefix. JSON only, small bodies, per-IP rate limits kept in memory only.
  *
  *   POST /v1/challenge {deviceId}                                   -> {nonce, expires, expiresAt}
- *   POST /v1/enroll {pilotCode, deviceId, owner, nonce, signature}  -> {status, capPerDayUqor, note}
- *   GET  /v1/status/<deviceId>[?owner=0x..]                         -> enrolled, last top-up, used today, cap
+ *   POST /v1/enroll {pilotCode, deviceId, owner, nonce, signature, devicePubkey}
+ *                                                                   -> {status, capPerDayUqor, note}
+ *   GET  /v1/status/<deviceId>[?owner=0x..]                         -> {status, state, startGrant, lastTopUp, usedTodayUqor, capPerDayUqor}
+ *
+ * status is one of the words the setup wizard reads (src/web/sponsor.ts): enrolled,
+ * pending, funded, active, full, invalid_code, used_code, paused, rejected. Refusals
+ * carry their word with HTTP 403 (invalid_code, used_code, rejected), 409 (full) or
+ * 423 (paused), so the client never sees them as a server error.
  *   GET  /healthz
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
@@ -109,7 +115,7 @@ export function createSponsorServer(sponsor: Sponsor, log: Logger, trusted: read
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.status !== 404 && e.status !== 429) log.warn("http_refused", { ip: truncateIp(ip), route, code: e.code });
-        return send(res, e.status, { error: e.code, message: e.message });
+        return send(res, e.status, { ...(e.word ? { status: e.word, capPerDayUqor: sponsor.cfg.capCameraDayUqor.toString() } : {}), error: e.code, message: e.message });
       }
       log.alert("http_error", { ip: truncateIp(ip), route, error: e instanceof Error ? e.message.split("\n")[0] : "error" });
       return send(res, 502, { error: "upstream", message: "chain or server error, try again later" });

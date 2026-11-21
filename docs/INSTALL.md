@@ -87,7 +87,7 @@ Open the link on your phone or laptop. Or open `http://<IP of the box>:8080/setu
    - **Self-managed:** you hold the account and add free test tokens yourself, about once a week.
    Both plans make the same proof. Both are free in the pilot.
 4. **Keys.** Press **Create keys**. The box makes an account key and a camera key. Read the backup note, then confirm.
-5. **Network fees.** With Fees included, the pilot adds the fees and the page moves on by itself. With Self-managed, copy the address, claim test QOR at the QoreChain dashboard (Faucet), and wait. You need at least 2 test QOR to start.
+5. **Network fees.** With Fees included, you need no faucet. The pilot checks your code and the camera signature, sends a free start of 3 test QOR to your account, and the page moves on by itself. Later it refills what the camera uses. With Self-managed, copy the address, claim test QOR at the QoreChain dashboard (Faucet), and wait. You need at least 2 test QOR to start.
 6. **Connect.** Press **Start**. A progress bar shows four steps. This takes 1 to 3 minutes.
 7. **Done.** "Sealing started". The first seal comes in about 10 to 15 minutes.
 

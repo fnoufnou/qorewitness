@@ -4,6 +4,12 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+### 2026-11-21: sponsor start grant (Fees included without a faucet)
+- Sponsor: enrol works before the camera is on chain. The box sends `devicePubkey`. The service checks the camera signature against it, needs an unused pilot code, binds code, owner, device id and key hash, and sends one start grant of 3 test QOR (setup uses about 0.25). When the camera shows up on chain under that owner with that key hash, it becomes active and refills start. Another key or a revoke: rejected. Not registered within 48 h: expired, the code stays used.
+- Sponsor: answers use the status words of the box client (enrolled, pending, funded, active, full, invalid_code, used_code, paused, rejected). Refusals come with HTTP 403, 409 or 423, so the wizard shows the right text.
+- Tests: start grant once, code reuse, key mismatch, expiry, pause, unknown grant result, and an end-to-end run of the box client (`src/web/sponsor.ts`) against the sponsor server with a mocked chain (178 tests).
+- Docs: `docs/SPONSOR.md` (bootstrap path, status words, start grant costs), `docs/INSTALL.md` (no faucet with Fees included). `FEE_PER_ANCHOR_UQOR` set to 0.048 test QOR.
+
 ### 2026-11-21: the QoreWitness box (browser setup)
 - Security: `camera.env` and every secret file are written with mode 600, also when an older version left 644. `record.sh` masks `user:pass@` in all ffmpeg output, with the same rule as `src/core/redact.ts`. The `ui` no longer loads `qorewitness.env`. `docker-compose.yml` pins `QW_VERSION` instead of `latest`.
 - Docker: new `supervise recorder|agent` mode. Both wait for `data/setup.done`, read `camera.env` as data (never as shell code) and restart when it changes. Older terminal installs with receipts count as done.

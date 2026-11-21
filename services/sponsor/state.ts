@@ -6,12 +6,36 @@
 import { appendFileSync, closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, writeSync } from "node:fs";
 import { dirname } from "node:path";
 
+/**
+ * pending:  enrolled before the camera is on chain, start grant not sent yet (or retrying)
+ * funded:   start grant sent, waiting for the camera registration on chain
+ * active:   on chain with the enrolled key and owner, refills apply
+ * rejected: on-chain key or owner differs, or the device was revoked. Final
+ * expired:  not registered within 48 h of enrolment. Final, the code stays used
+ */
+export type EnrollmentState = "pending" | "funded" | "active" | "rejected" | "expired";
+
+export interface Grant {
+  status: "pending" | "sent" | "refused" | "unknown";
+  amountUqor: string;
+  at: number;
+  attempts: number;
+  txHash?: string;
+}
+
 export interface Enrollment {
-  owner: string; // 0x, checksummed
-  deviceId: string; // 0x, lowercase
+  owner: string; // 0x, lower case
+  deviceId: string; // 0x, lower case
   codeHash: string;
+  /** keccak256 of the device public key: from the chain, or of the enrolled devicePubkey. */
+  keyHash: string;
+  path: "onchain" | "bootstrap";
+  state: EnrollmentState;
+  reason?: string;
   enrolledAt: number; // unix seconds
-  /** anchorCount already paid for (or present at enrolment). */
+  activatedAt?: number;
+  grant?: Grant;
+  /** anchorCount already paid for (or present at activation). */
   paidAnchorCount: string; // bigint as decimal string
   paidAt: number; // unix seconds of the baseline
   lastTopUp?: { at: number; amountUqor: string; txHash: string };
@@ -19,11 +43,22 @@ export interface Enrollment {
 
 export interface Payout {
   at: number;
+  kind: "grant" | "refill";
   owner: string;
   devices: { deviceId: string; amountUqor: string }[];
   amountUqor: string;
   status: "pending" | "sent" | "refused" | "unknown";
   txHash?: string;
+}
+
+/** A pilot code is bound to one owner and the first device and key enrolled with it. */
+export interface CodeBinding {
+  owner: string;
+  deviceId: string;
+  keyHash: string;
+  at: number;
+  /** The code paid a start grant. A code pays at most one. */
+  grant: boolean;
 }
 
 export interface DayUsage {
@@ -35,8 +70,7 @@ export interface DayUsage {
 export interface SponsorState {
   version: 1;
   enrollments: Record<string, Enrollment>; // key: owner|deviceId
-  /** codeHash -> owner the code is bound to. */
-  codes: Record<string, string>;
+  codes: Record<string, CodeBinding>; // key: codeHash
   /** Usage per UTC day (YYYY-MM-DD). Older days are pruned. */
   days: Record<string, DayUsage>;
   /** Recent payouts (last 2 days) for the hourly outflow check. The full history is in the payout log. */
