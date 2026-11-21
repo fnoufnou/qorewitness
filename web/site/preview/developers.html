@@ -76,6 +76,17 @@ verifier (static page or CLI): clip + receipt
 </ul>
 </div></section>
 
+<section id="run"><div class="wrap narrow">
+<p class="eyebrow">Run it yourself</p><h2>Install, update, back up, remove.</h2>
+<ul class="plain" style="margin-top:16px">
+<li><b>Install on the box itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/INSTALL.md">INSTALL.md</a>.</li>
+<li><b>Other camera brands:</b> with <code>--terminal</code> you can give a full stream URL, for example <code>rtsp://user:password@192.168.1.20:554/stream</code>. The product is built and tested for the Tapo C210. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CAMERAS.md">CAMERAS.md</a>.</li>
+<li><b>Update:</b> set the new version in <code>~/qorewitness/.env</code> (<code>QW_VERSION</code>), then <code>docker compose pull &amp;&amp; docker compose up -d</code>. The version is pinned and QoreWitness never updates itself.</li>
+<li><b>Back up:</b> copy <code>~/qorewitness/data</code>, at least <code>qorewitness.env</code> and <code>keys</code>. Anyone with these files can use the test account.</li>
+<li><b>Remove:</b> <code>cd ~/qorewitness &amp;&amp; docker compose down</code>, then delete <code>~/qorewitness</code>.</li>
+</ul>
+</div></section>
+
 <section id="contracts"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Contracts</p><h2>Addresses on qorechain-diana.</h2><p>Explorer: <a href="https://explore.qore.network">explore.qore.network</a> (testnet).</p></div>
 <div class="tablewrap"><table><thead><tr><th>What</th><th>Address</th></tr></thead><tbody>
@@ -132,7 +143,7 @@ verifier (static page or CLI): clip + receipt
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
 <p>Seal your camera footage. Prove later that nobody changed it.</p>
-<p><b>QoreWitness will never ask for your keys or your backup files.</b></p></div>
+<p><b>QoreWitness will never ask for your passwords or files.</b></p></div>
 <div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
 <div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>

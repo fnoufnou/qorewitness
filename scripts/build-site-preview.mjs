@@ -21,7 +21,8 @@ const GH = "https://github.com/fnoufnou/qorewitness";
 const GHDOC = (f) => `${GH}/blob/main/docs/${f}`;
 const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
-const INSTALL = "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash";
+// TODO lead: pin a release tag instead of main before launch.
+const INSTALL = 'ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash -s -- --yes"';
 const VERIFIER_SHA = "a995b6e408847daa288aa41ec4e7d03e2ce85bd0088b77c297c9634c5b5eb623";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 
@@ -83,7 +84,7 @@ function filmFrames(y, h, xs, w) {
 
 const heroArt = `<svg class="hero-art" viewBox="0 0 520 420" role="img" aria-labelledby="ha-t ha-d" xmlns="http://www.w3.org/2000/svg">
 <title id="ha-t">A seal on a film strip and a green certificate card</title>
-<desc id="ha-d">A film strip with three frames. A round pine seal is pressed on the middle frame. In front is a green card that says Verified: original file. It is labelled Demo clip.</desc>
+<desc id="ha-d">A film strip with three frames. A round pine seal is pressed on the middle frame. In front is a green card that says Original. It is labelled Demo clip.</desc>
 <g transform="rotate(-5 260 100)">
   <rect x="-30" y="26" width="580" height="170" rx="10" fill="var(--strip)"/>
   ${Array.from({ length: 19 }, (_, i) => `<rect x="${-14 + i * 31}" y="34" width="16" height="10" rx="2" fill="var(--bg)"/><rect x="${-14 + i * 31}" y="178" width="16" height="10" rx="2" fill="var(--bg)"/>`).join("")}
@@ -94,15 +95,15 @@ const heroArt = `<svg class="hero-art" viewBox="0 0 520 420" role="img" aria-lab
   <rect x="48" y="196" width="436" height="214" rx="12" fill="var(--bg)" stroke="var(--line)" stroke-width="1.5"/>
   <path d="M48 208a12 12 0 0 1 12-12h412a12 12 0 0 1 12 12v52H48z" fill="var(--ok-bg)"/>
   <circle cx="86" cy="228" r="16" fill="var(--ok)"/><path d="M78.500 228.500l5.500 5.500 10-11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="114" y="226" font-family="var(--font)" font-size="20" font-weight="600" fill="var(--ok)">Verified: original file</text>
-  <text x="114" y="247" font-family="var(--mono)" font-size="13.500" fill="var(--muted)">Demo clip · camera demo-testpattern</text>
-  ${["File fingerprint matches", "Seal is valid (ML-DSA-87)", "Recorded on QoreChain testnet"].map((t, i) => `<path d="M70 ${288 + i * 31}l5 5 9-10" fill="none" stroke="var(--ok)" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/><text x="98" y="${293 + i * 31}" font-family="var(--font)" font-size="17" fill="var(--fg)">${t}</text>`).join("")}
+  <text x="114" y="226" font-family="var(--font)" font-size="20" font-weight="600" fill="var(--ok)">Original</text>
+  <text x="114" y="247" font-family="var(--mono)" font-size="13.500" fill="var(--muted)">Demo clip. Not changed since sealing.</text>
+  ${["Same file as when it was sealed", "Seal is valid", "Recorded on a public network"].map((t, i) => `<path d="M70 ${288 + i * 31}l5 5 9-10" fill="none" stroke="var(--ok)" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/><text x="98" y="${293 + i * 31}" font-family="var(--font)" font-size="17" fill="var(--fg)">${t}</text>`).join("")}
   <rect x="49" y="372" width="434" height="37" fill="var(--surface)"/><path d="M48 372h436" stroke="var(--line)"/>
-  <text x="68" y="396" font-family="var(--mono)" font-size="14" fill="var(--muted)">Existed before 2026-11-12 07:00:49 UTC</text>
+  <text x="68" y="396" font-family="var(--mono)" font-size="14" fill="var(--muted)">Existed before 12 Nov 2026, 08:00</text>
 </g></svg>`;
 
 const artSeal = `<svg viewBox="0 0 240 130" aria-hidden="true" focusable="false"><rect x="6" y="28" width="228" height="74" rx="6" fill="var(--strip)"/>${Array.from({ length: 9 }, (_, i) => `<rect x="${14 + i * 25}" y="33" width="10" height="6" rx="1.500" fill="var(--bg)"/><rect x="${14 + i * 25}" y="91" width="10" height="6" rx="1.500" fill="var(--bg)"/>`).join("")}<rect x="16" y="44" width="62" height="42" rx="4" fill="var(--frame)"/><rect x="88" y="44" width="62" height="42" rx="4" fill="var(--frame)"/><rect x="160" y="44" width="62" height="42" rx="4" fill="var(--frame)"/>${seal(119, 66, 30)}</svg>`;
-const artKeep = `<svg viewBox="0 0 240 130" aria-hidden="true" focusable="false"><rect x="30" y="26" width="150" height="92" rx="8" fill="var(--bg)" stroke="var(--line)" stroke-width="2"/><path d="M30 34l75 52 75-52" fill="none" stroke="var(--line)" stroke-width="2"/>${seal(105, 80, 17)}<g transform="translate(176 54)"><circle r="30" fill="var(--bg)" stroke="var(--brand)" stroke-width="2.500"/><circle r="23" fill="none" stroke="var(--brand)" stroke-width="1" stroke-dasharray="3 3"/><text x="0" y="-3" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--fg)">02:20</text><text x="0" y="9" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--muted)">BLOCK</text><path d="M-40 18c10 -6 18 6 28 0s18 6 28 0 18 6 28 0" fill="none" stroke="var(--signal)" stroke-width="2" stroke-linecap="round"/></g></svg>`;
+const artKeep = `<svg viewBox="0 0 240 130" aria-hidden="true" focusable="false"><rect x="30" y="26" width="150" height="92" rx="8" fill="var(--bg)" stroke="var(--line)" stroke-width="2"/><path d="M30 34l75 52 75-52" fill="none" stroke="var(--line)" stroke-width="2"/>${seal(105, 80, 17)}<g transform="translate(176 54)"><circle r="30" fill="var(--bg)" stroke="var(--brand)" stroke-width="2.500"/><circle r="23" fill="none" stroke="var(--brand)" stroke-width="1" stroke-dasharray="3 3"/><text x="0" y="-3" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--fg)">02:20</text><text x="0" y="9" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--muted)">RECORD</text><path d="M-40 18c10 -6 18 6 28 0s18 6 28 0 18 6 28 0" fill="none" stroke="var(--signal)" stroke-width="2" stroke-linecap="round"/></g></svg>`;
 const artProve = `<svg viewBox="0 0 240 130" aria-hidden="true" focusable="false"><rect x="10" y="22" width="96" height="86" rx="8" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5"/><path d="M58 44v28M46 60l12 12 12-12" fill="none" stroke="var(--brand)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="58" y="94" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--muted)">DROP FILES</text><rect x="122" y="22" width="108" height="86" rx="8" fill="var(--bg)" stroke="var(--line)" stroke-width="2"/><path d="M122 30a8 8 0 0 1 8-8h92a8 8 0 0 1 8 8v26h-108z" fill="var(--ok-bg)"/><circle cx="141" cy="42" r="9" fill="var(--ok)"/><path d="M136.500 42.300l3 3 5.500-6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="156" y="35" width="62" height="5" rx="2.500" fill="var(--ok)"/><rect x="156" y="45" width="40" height="4" rx="2" fill="var(--muted)" opacity=".5"/>${[68, 80, 92].map((y) => `<circle cx="138" cy="${y}" r="3.500" fill="var(--ok)"/><rect x="148" y="${y - 2}" width="${y === 80 ? 54 : 70}" height="4" rx="2" fill="var(--muted)" opacity=".5"/>`).join("")}</svg>`;
 const artTamper = `<svg viewBox="0 0 240 130" aria-hidden="true" focusable="false">${seal(120, 65, 46, { bad: true })}</svg>`;
 
@@ -129,7 +130,7 @@ const footer = `<footer class="site-footer"><div class="wrap">
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
 <p>Seal your camera footage. Prove later that nobody changed it.</p>
-<p><b>QoreWitness will never ask for your keys or your backup files.</b></p></div>
+<p><b>QoreWitness will never ask for your passwords or files.</b></p></div>
 <div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
 <div><h2>Code</h2><ul><li><a href="${GH}">GitHub</a></li><li><a href="${UP}verifier.html">Verifier</a></li><li><a href="${X}">@fnoufnou on X</a></li><li><a href="${DISCORD}">QoreChain Discord</a></li></ul></div>
@@ -177,28 +178,26 @@ const copybox = (id, text, label = "Copy") => `<div class="copybox"><code id="${
 const head = (eyebrow, h1, lead, meta = []) => `<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">${eyebrow}</p><h1>${h1}</h1><p class="lead">${lead}</p>${meta.length ? `<ul class="meta">${meta.map((m) => `<li>${m}</li>`).join("")}</ul>` : ""}</div></div>`;
 const closing = (h, p, href, label) => `<div class="band"><div class="wrap"><div><h2>${h}</h2><p>${p}</p></div><a class="btn primary" href="${href}">${label} ${ico("arrow")}</a></div></div>`;
 const cert = (tag) => `<div class="cert" role="group" aria-label="Example result for the demo clip"><span class="tag">${tag}</span>
-<div class="head">${ico("check-circle")}<div><b>Verified: original file</b><span>demo-clip.mp4 · camera demo-testpattern</span></div></div>
+<div class="head">${ico("check-circle")}<div><b>Original</b><span>Not changed since it was sealed</span></div></div>
 <ul>
-<li><span>${ico("check")}File fingerprint matches</span><span class="v">03d22bb8…0e6691</span></li>
-<li><span>${ico("check")}Merkle path valid</span><span class="v">root 3563a87a…410d09</span></li>
-<li><span>${ico("check")}Camera key registered</span><span class="v">version 1</span></li>
-<li><span>${ico("check")}ML-DSA-87 signature valid</span><span class="v">post-quantum</span></li>
-<li><span>${ico("check")}Recorded on QoreChain</span><span class="v">block 10,120,133</span></li>
-</ul><div class="foot">Existed before 2026-11-12 07:00:49 UTC</div></div>`;
+<li><span>${ico("check")}Same file as when it was sealed</span></li>
+<li><span>${ico("check")}Seal is valid</span></li>
+<li><span>${ico("check")}Sealed 3 minutes after recording</span></li>
+</ul><div class="foot">Existed before 12 Nov 2026, 08:00</div></div>`;
 
 /* ---------- FAQ ---------- */
 const FAQ = [
-  ["Does my video leave my home?", `<p>No. Your video stays on your box at home. Only fingerprints and times go on the public network. The network can also see the account address of your box and when each seal was made.</p><p>A fingerprint shows nothing about what is in the picture or the sound.</p>`],
-  ["What if my internet is down?", `<p>Recording goes on. Sealing needs the internet, so the minutes without a connection probably have no seal. The network shows the gap with its start and length.</p><p>Nobody can fill the gap later with a backdated seal.</p>`],
-  ["Is this crypto?", `<p>It uses a public blockchain as a notary. You do not need to buy or trade anything to look at proof. On Fees included you never touch tokens.</p><p>During the pilot, all tokens are test tokens with no value.</p>`],
-  ["What does it cost?", `<p>Free during the testnet pilot, for both plans. No payment is collected.</p><p>Later, Self-managed stays free software and you pay the network fees yourself. Fees included is planned at about EUR 4 per camera per month (estimate). See <a href="plans.html">Plans</a>.</p>`],
+  ["Does my video leave my home?", `<p>No. Your video stays on your box at home. Only short fingerprints and times go to the public record. A fingerprint shows nothing about the picture or the sound.</p>`],
+  ["What if my internet is down?", `<p>Recording goes on. Sealing needs the internet, so the minutes without a connection probably have no seal. The public record shows the gap with its start and length.</p><p>Nobody can fill the gap later with a backdated seal.</p>`],
+  ["Is this crypto?", `<p>It uses a public record as a notary. You do not need to buy, hold or trade anything. During the pilot, the network fees are paid for you with test tokens that have no value.</p>`],
+  ["What does it cost?", `<p>Free during the testnet pilot. No payment is collected.</p><p>Planned: about EUR 4 per camera per month (estimate). See <a href="plans.html">Plans</a>.</p>`],
   ["Will the police or a court accept it?", `<p>We cannot promise that. A court can accept a QoreWitness record, but it weighs it as ordinary evidence. We are not an EU qualified time stamp provider.</p><p>Pilot records show how the method works. They are not evidence yet. Ask a lawyer about your case.</p>`],
-  ["Which cameras work?", `<p>Cameras that give a network video stream (RTSP). One camera runs live today. We are testing the TP-Link Tapo C210 now.</p><p>We plan to publish a tested list and to grow it. We have no partnership with any camera maker.</p>`],
-  ["What if I lose the box?", `<p>The seals on the network stay. To prove a clip you also need the clip and its receipt. So back them up.</p><p>A one-click export of clips and receipts as one ZIP is coming in the pilot. It is not built yet. Until then, copy the clip by hand and download its receipt from the dashboard. See <a href="daily-use.html#backup">Daily use</a>.</p>`],
+  ["Which cameras work?", `<p>We are testing the TP-Link Tapo C210 now. One other camera runs live today. We plan to publish a tested list and to grow it. We have no partnership with any camera maker.</p>`],
+  ["What if I lose the box?", `<p>The seals on the public record stay. To prove a clip you also need the clip and its receipt. Press <b>Save evidence</b> in the dashboard for what matters to you, and keep that file somewhere else.</p>`],
   ["Can QoreWitness show that the scene was real?", `<p>No. It shows that the file did not change after it was sealed. A staged scene or a fake stream is sealed the same way as a real one.</p>`],
   ["Can someone fake a clip from inside my home network?", `<p>It is hard but not impossible. Someone who controls your box or your camera before sealing could feed it fake footage.</p><p>Keep the box and the camera on their own network. Use strong passwords. Read more on <a href="trust.html">Trust and limits</a>.</p>`],
-  ["Who can see my clips?", `<p>Only you, on your box. A receipt shows fingerprints, times and a camera key. It shows no picture and no sound.</p>`],
-  ["How long are my clips kept?", `<p>The box deletes old clips after 14 days by default. Receipts stay. Download any clip you may need as evidence before it is deleted. You can change the setting.</p>`],
+  ["Who can see my clips?", `<p>Only you, on your box. A receipt shows fingerprints and times. It shows no picture and no sound.</p>`],
+  ["How long are my clips kept?", `<p>The box deletes old clips after about 2 weeks. Receipts stay. Press <b>Save evidence</b> for any clip you may need before it is deleted.</p>`],
   ["What happens when the pilot ends?", `<p>The test network can be reset after 15 Dec 2026. A reset can remove pilot records.</p><p>When the main network opens, you would need to seal again. We plan to tell you before that happens and to guide you. We collect nothing from you until then.</p>`],
 ];
 const faqItems = (list) => `<div class="faq">${list.map(([q, a]) => `<details><summary>${q}</summary><div class="in">${a}</div></details>`).join("")}</div>`;
@@ -222,76 +221,46 @@ ${heroArt}
 </div></div>
 
 <section><div class="wrap">
-<div class="sec-head"><p class="eyebrow">Why it matters</p><h2>Free AI tools made every video easy to doubt.</h2>
+<div class="sec-head"><p class="eyebrow">Why it matters</p><h2>Any video is easy to doubt now.</h2>
 <p>After a break-in or an accident, people ask one question: did anyone change this video? A sealed clip can answer it.</p></div>
 <ul class="grid c3">
-<li class="tile top"><div class="ic">${ico("scale")}</div><h3>Be believed</h3><p>Show that your clip existed minutes after it was recorded. Show that it has not changed since.</p></li>
-<li class="tile top"><div class="ic">${ico("lock")}</div><h3>Keep your privacy</h3><p>Your video stays at home. Only short fingerprints and times go to the public network. A fingerprint shows nothing about the picture.</p></li>
-<li class="tile top"><div class="ic">${ico("eye")}</div><h3>Check it yourself</h3><p>You do not have to trust us. Anyone can drop the clip and its receipt into a web page and watch every check run in their own browser.</p></li>
+<li class="tile top"><div class="ic">${ico("scale")}</div><h3>Be believed</h3><p>Show that your clip existed minutes after it was recorded and has not changed since.</p></li>
+<li class="tile top"><div class="ic">${ico("lock")}</div><h3>Keep your privacy</h3><p>Your video stays at home. Only short fingerprints and times are kept on a public record.</p></li>
+<li class="tile top"><div class="ic">${ico("eye")}</div><h3>Check it yourself</h3><p>Anyone can drop the file on a web page and see the result in their own browser. Nobody has to trust us.</p></li>
 </ul>
 </div></section>
 
 <section class="alt" id="how"><div class="wrap">
-<div class="sec-head"><p class="eyebrow">How it works</p><h2>Seal. Keep. Prove.</h2>
-<p>Think of a letter. You press a wax seal on it. You keep it in a safe place. A postmark shows when it was sent. Anyone can look at both.</p></div>
+<div class="sec-head"><p class="eyebrow">How it works</p><h2>Seal. Keep. Prove.</h2></div>
 <ol class="grid c3" style="list-style:none;padding:0;margin:0">
-<li class="tile"><div class="art">${artSeal}</div><div class="num">STEP 1</div><h3>Seal</h3><p>Your camera records. Every minute, QoreWitness takes a fingerprint of the clip. Every 10 minutes, it presses your camera's own digital seal on a summary of those fingerprints. Change one pixel later and the seal no longer fits.</p></li>
-<li class="tile"><div class="art">${artKeep}</div><div class="num">STEP 2</div><h3>Keep</h3><p>The clips stay on your own box at home. Next to them sits a small receipt file for every 10 minutes. The receipt carries the postmark: the time and place on the public network where the seal was recorded.</p></li>
-<li class="tile"><div class="art">${artProve}</div><div class="num">STEP 3</div><h3>Prove</h3><p>When you need proof, hand over the clip and its receipt. The other side drops both on the prove page. It checks the seal and the postmark against the public network and shows a green result. If the clip was changed, the result is red and says which check failed.</p></li>
+<li class="tile"><div class="art">${artSeal}</div><h3>1. Seal</h3><p>Your camera records. Every 10 minutes, QoreWitness presses a digital seal on that footage. Change one pixel later and the seal no longer fits.</p></li>
+<li class="tile"><div class="art">${artKeep}</div><h3>2. Keep</h3><p>The clips stay on your box at home. A small receipt file shows when the seal was recorded on the public record.</p></li>
+<li class="tile"><div class="art">${artProve}</div><h3>3. Prove</h3><p>Press Save evidence. Send the one file. The other side drops it on a web page and sees a big green result.</p></li>
 </ol>
-<p class="small muted" style="margin-top:20px">The seal is a post-quantum signature (ML-DSA-87, NIST FIPS 204). The network checks it before it accepts the record. <a href="how-it-works.html">Read the details</a>.</p>
+<p class="small" style="margin-top:20px"><a href="how-it-works.html">Read how it works</a></p>
 </div></section>
 
 <section><div class="wrap">
 <div class="sec-head"><p class="eyebrow">What you need</p><h2>A camera, a small box and a browser.</h2>
-<p>Setup takes about one hour. You run one command. Everything else happens in your browser.</p></div>
+<p>Setup takes about one hour. You paste one line. The rest is clicks.</p></div>
 <ul class="grid c3">
-<li class="tile"><div class="ic">${ico("camera")}</div><h3>A TP-Link Tapo C210</h3><p>This is the camera we test first. Other cameras that give a network video stream may work later.</p></li>
-<li class="tile"><div class="ic">${ico("box")}</div><h3>A small box that stays on</h3><p>It records the stream and seals it. A Raspberry Pi 5 with a USB SSD, or any always-on Linux computer.</p></li>
-<li class="tile"><div class="ic">${ico("browser")}</div><h3>Any browser</h3><p>You set up in a browser. The receiver of a clip checks it in a browser too.</p></li>
+<li class="tile"><div class="ic">${ico("camera")}</div><h3>A TP-Link Tapo C210</h3><p>The camera we test first.</p></li>
+<li class="tile"><div class="ic">${ico("box")}</div><h3>A small box that stays on</h3><p>A Raspberry Pi 5 with a USB SSD, or any always-on Linux computer.</p></li>
+<li class="tile"><div class="ic">${ico("browser")}</div><h3>Any browser</h3><p>For setup, and for checking a clip.</p></li>
 </ul>
 <div class="btns" style="margin-top:28px"><a class="btn primary" href="get-started.html">Read the setup guide ${ico("arrow")}</a><a class="btn" href="plans.html">See the plans</a></div>
 </div></section>
 
-<section class="alt"><div class="wrap">
-<div class="sec-head"><p class="eyebrow">Facts you can check</p><h2>Only what we can show today.</h2>
-<p>Each item links to its proof. We show no logos, no customer counts and no reviews, because we have none.</p></div>
-<ul class="grid c2" style="list-style:none;padding:0;margin:0">
-<li class="tile"><h3>Open source</h3><p>All code is open under Apache-2.0. <a href="${GH}">Read it on GitHub</a>.</p></li>
-<li class="tile"><h3>Reviewed with the QCAI Contract Auditor</h3><p>Four review rounds on QoreChain. The reports are published. <a href="${GHDOC("AUDIT.md")}">Read the audit notes</a>.</p></li>
-<li class="tile"><h3>Checked on chain</h3><p>The smart contract checks the ML-DSA-87 signature on QoreChain before it accepts a record. <a href="developers.html#pqc">See how</a>.</p></li>
-<li class="tile"><h3>A live pilot camera</h3><p>A real home camera has sealed its footage every 10 minutes on the testnet. <a href="#status">See the status</a>.</p></li>
-<li class="tile"><h3>A verifier in one file</h3><p>The verifier runs in your browser. It is one HTML file with a published fingerprint (SHA-256). <a href="${UP}verifier.html">Open the verifier</a>.</p></li>
-<li class="tile"><h3>We publish what we miss</h3><p>Our own attack drills list what the system catches and what it does not. <a href="trust.html#threats">Read the results</a>.</p></li>
-</ul>
-</div></section>
-
-<section><div class="wrap">
-<div class="sec-head"><p class="eyebrow">Who it is for</p><h2>For everyone who relies on footage.</h2></div>
-<ul class="grid c3">
-<li class="tile"><div class="ic">${ico("home")}</div><h3>Homes and shops</h3><p>Support a police report or an insurance claim with footage that can show it is original.</p></li>
-<li class="tile"><div class="ic">${ico("doc")}</div><h3>Insurers and claims teams</h3><p>Check in a browser that a claim video existed before the reported incident.</p></li>
-<li class="tile"><div class="ic">${ico("scale")}</div><h3>Legal and investigation teams</h3><p>Start the chain of custody minutes after recording, on your own recorder.</p></li>
-</ul>
-</div></section>
-
 <section class="alt" id="status"><div class="wrap split">
-<div class="sec-head"><p class="eyebrow">Status</p><h2>Early alpha, running on a test network.</h2>
-<p>Since 9 November 2026, a home camera has sealed its footage every 10 minutes on the QoreChain testnet. The one-line installer, the setup in your browser and the dashboard are built. We test them on a TP-Link Tapo C210. The evidence ZIP export and phone alerts are planned.</p></div>
-<div class="panel"><span class="pill warn"><i></i>Alpha · testnet pilot</span>
+<div class="sec-head"><p class="eyebrow">Status</p><h2>Early alpha, on a test network.</h2>
+<p>Since 9 November 2026, a home camera has sealed its footage every 10 minutes. Open source. <a href="trust.html">See the facts and the limits</a>.</p></div>
+<div class="panel"><span class="pill warn"><i></i>Testnet pilot</span>
 <h3>Know the limits</h3>
 <ul class="limits">
-<li>QoreWitness shows that a video has not changed since it was sealed. It cannot show that the scene itself was real.</li>
-<li>Our time stamps are not eIDAS qualified time stamps. A court weighs them as ordinary evidence.</li>
-<li>This is a testnet pilot. A network reset can remove testnet records.</li>
+<li>It shows that a video has not changed since it was sealed. It cannot show that the scene was real.</li>
+<li>A court weighs it as ordinary evidence.</li>
 <li>Pilot records show how the method works. They are not evidence yet.</li>
-</ul>
-<p class="small"><a href="trust.html">Read all limits on Trust and limits</a></p></div>
-</div></section>
-
-<section><div class="wrap">
-<div class="sec-head"><p class="eyebrow">Questions</p><h2>Short answers.</h2></div>
-<div class="narrow">${faqItems(FAQ.slice(0, 4))}<p style="margin-top:20px"><a href="faq.html">See all 12 questions</a></p></div>
+</ul></div>
 </div></section>
 ${closing("Seal your first clip today.", "It is free during the pilot. No payment is collected.", "get-started.html", "Start setup")}`,
 });
@@ -301,47 +270,54 @@ page({
   file: "how-it-works.html",
   current: "how-it-works.html",
   title: "How it works | QoreWitness",
-  desc: "How QoreWitness seals camera footage: fingerprint, bundle, sign, record. Your video stays at home.",
+  desc: "How QoreWitness seals camera footage: fingerprint, bundle, seal, record. Your video stays at home.",
   body: `
-${head("How it works", "Your camera, now a witness.", "QoreWitness seals the video from your home camera within minutes of recording. Here is what happens, step by step, in plain words.")}
+${head("How it works", "Your camera, now a witness.", "QoreWitness seals the video from your home camera within minutes of recording. Here is what happens, in plain words.")}
 <section><div class="wrap narrow">
 <h2>Your video stays at home.</h2>
-<p style="margin-top:16px">The clips never leave your box. The public network gets only short fingerprints, the times and a signed summary. A fingerprint cannot show a picture or a sound. The network can see the account address of your box and when each seal was made.</p>
-<div class="callout"><b class="t">The letter metaphor</b>You press a wax seal on a letter. You keep the letter in a safe place. A postmark shows when it was sent. Anyone can look at the seal and the postmark. In QoreWitness the seal is a digital signature. The postmark is the record on the public network.</div>
+<p style="margin-top:16px">The clips stay on your box. The public record gets only short fingerprints, the times and a seal. A fingerprint cannot show a picture or a sound.</p>
+<div class="callout"><b class="t">Think of a letter</b>You press a wax seal on a letter. You keep the letter in a safe place. A postmark shows when it was sent. Anyone can look at the seal and the postmark. In QoreWitness the seal is digital. The postmark is the public record.</div>
 </div></section>
 
 <section class="alt"><div class="wrap">
-<div class="sec-head"><p class="eyebrow">Four steps</p><h2>Fingerprint, bundle, sign, record.</h2>
+<div class="sec-head"><p class="eyebrow">Four steps</p><h2>Fingerprint, bundle, seal, record.</h2>
 <p>This runs on its own while your camera records.</p></div>
 <ol class="grid c4" style="list-style:none;padding:0;margin:0">
-<li class="tile"><div class="ic">${ico("finger")}</div><div class="num">01</div><h3>Fingerprint</h3><p>The box cuts the stream into clips of one minute. Each clip gets two independent digital fingerprints (SHA-256 and SHA3-256). Change one byte and the fingerprints change.</p></li>
-<li class="tile"><div class="ic">${ico("layers")}</div><div class="num">02</div><h3>Bundle</h3><p>Every 10 minutes, the box bundles the fingerprints of that window into one short summary. This summary is called a Merkle root. Each clip is also linked to the clip before it.</p></li>
-<li class="tile"><div class="ic">${ico("sign")}</div><div class="num">03</div><h3>Sign</h3><p>Your camera has its own digital key. It signs the summary with ML-DSA-87. This is the seal.</p></li>
-<li class="tile"><div class="ic">${ico("chain")}</div><div class="num">04</div><h3>Record</h3><p>The smart contract on QoreChain checks the signature. If it fits, the contract stores the summary and the time. A receipt file stays next to your clips.</p></li>
+<li class="tile"><div class="ic">${ico("finger")}</div><div class="num">01</div><h3>Fingerprint</h3><p>The box cuts the video into clips of one minute. Each clip gets a fingerprint. Change one byte and the fingerprint changes.</p></li>
+<li class="tile"><div class="ic">${ico("layers")}</div><div class="num">02</div><h3>Bundle</h3><p>Every 10 minutes, the box bundles the fingerprints into one short summary. Each clip is also linked to the clip before it.</p></li>
+<li class="tile"><div class="ic">${ico("sign")}</div><div class="num">03</div><h3>Seal</h3><p>Your camera has its own digital seal. It signs the summary. The seal is built to resist future quantum computers.</p></li>
+<li class="tile"><div class="ic">${ico("chain")}</div><div class="num">04</div><h3>Record</h3><p>The public record checks the seal. If it fits, it stores the summary and the time. A receipt file stays with your clips.</p></li>
 </ol>
 </div></section>
 
 <section><div class="wrap">
 <div class="sec-head"><p class="eyebrow">The picture</p><h2>What goes where.</h2></div>
 <ol class="flow">
-<li class="home"><span class="tag">Stays at home</span><h3>Your camera</h3><p>A Tapo C210 or another camera with a network video stream.</p></li>
-<li class="home"><span class="tag">Stays at home</span><h3>Your box</h3><p>Records the clips. Makes fingerprints. Signs the summary. Keeps clips and receipts.</p></li>
-<li><h3>QoreChain testnet</h3><p>Checks the signature. Stores the summary and the time. Holds no video.</p></li>
-<li><h3>Any browser</h3><p>The verifier takes a clip and a receipt. It repeats every check against the public network.</p></li>
+<li class="home"><span class="tag">Stays at home</span><h3>Your camera</h3><p>A Tapo C210.</p></li>
+<li class="home"><span class="tag">Stays at home</span><h3>Your box</h3><p>Records the clips. Makes the seal. Keeps clips and receipts.</p></li>
+<li><h3>Public record</h3><p>Checks the seal. Stores the summary and the time. Holds no video.</p></li>
+<li><h3>Any browser</h3><p>Takes your evidence file and repeats every check.</p></li>
 </ol>
 </div></section>
 
 <section class="alt"><div class="wrap split">
-<div><p class="eyebrow">Built for later</p><h2>Post-quantum, in two sentences.</h2>
-<p style="margin-top:16px">Common signatures such as ECDSA and RSA may break when large quantum computers exist. QoreWitness signs with ML-DSA-87, a signature standard (NIST FIPS 204) built to resist them, and the network checks every signature before it accepts a record.</p>
-<p class="muted small">Evidence can be needed many years after recording. That is why the signature type matters.</p></div>
-<div class="panel"><h3>What it cannot do</h3>
-<ul class="limits">
+<div><h2>What it cannot do</h2>
+<ul class="limits" style="margin-top:16px">
 <li>It cannot show that the scene was real. A staged scene is sealed the same way.</li>
 <li>It cannot see what happens to the video before the box seals it. Keep the box and the camera safe.</li>
 <li>It is not an EU qualified time stamp. A court weighs it as ordinary evidence.</li>
 <li>On the testnet pilot, records may be removed when the network resets.</li>
-</ul><p class="small" style="margin:0"><a href="trust.html">Read the full list on Trust and limits</a></p></div>
+</ul><p class="small"><a href="trust.html">Read Trust and limits</a></p></div>
+<div>
+<details><summary>Technical names</summary><div class="in">
+<ul class="plain">
+<li>Fingerprints: SHA-256 and SHA3-256, two independent functions.</li>
+<li>The summary: a Merkle root of the fingerprints of a 10-minute window.</li>
+<li>The seal: an ML-DSA-87 signature (NIST FIPS 204) by the camera key. Common signatures such as ECDSA and RSA may break when large quantum computers exist.</li>
+<li>The public record: the AnchorRegistry smart contract on the QoreChain testnet. It checks the signature on chain before it stores the summary.</li>
+</ul>
+<p class="small" style="margin:0"><a href="developers.html">For developers</a></p></div></details>
+</div>
 </div></section>
 ${closing("Ready to seal your first clip?", "Setup takes about one hour. It is free during the pilot.", "get-started.html", "Get started")}`,
 });
@@ -350,11 +326,9 @@ ${closing("Ready to seal your first clip?", "Setup takes about one hour. It is f
 const railItems = [
   ["s1", "Make a camera account"],
   ["s2", "Find the camera address"],
-  ["s3", "Check the recording options"],
-  ["s4", "Prepare the box"],
-  ["s5", "Run the installer"],
-  ["s6", "Set up in the browser"],
-  ["s7", "Your first seal"],
+  ["s3", "Prepare the box"],
+  ["s4", "Paste one line"],
+  ["s5", "Open the link"],
 ];
 page({
   file: "get-started.html",
@@ -362,104 +336,74 @@ page({
   title: "Set up your Tapo C210 | QoreWitness",
   desc: "Step-by-step guide to seal the footage of a TP-Link Tapo C210 with QoreWitness. About one hour. Free during the testnet pilot.",
   body: `
-${head("Get started", "Set up your Tapo C210.", "Seven steps from a new camera to Sealing started. You type one command in a terminal. Everything else is in the Tapo app and in your browser.", ["About 1 hour", "Free during the pilot", "One command in a terminal"])}
+${head("Get started", "Set up your Tapo C210.", "Five steps. You paste one line on your own computer. The rest is the Tapo app and your browser.", ["About 1 hour", "Free during the pilot"])}
 <section><div class="wrap">
-<div class="callout warn" style="margin-top:0"><b class="t">Guide status</b>The installer, the setup in the browser and the dashboard are built. We test the whole guide on a real C210 on 24 Nov 2026. Pictures are marked "Screenshot" and come after that test. Last checked on a real camera: <b>not yet</b>.</div>
+<div class="callout warn" style="margin-top:0"><b class="t">Guide status</b>We test this guide on a real C210 on 24 Nov 2026. Pictures come after that test. Last checked on a real camera: <b>not yet</b>.</div>
 <div class="guide">
 <aside class="rail" aria-label="Steps"><h2>Steps</h2><ol>${railItems.map(([id, t]) => `<li><a href="#${id}">${t}</a></li>`).join("")}</ol></aside>
 <div>
 
 <h2 style="margin-bottom:16px">What you need</h2>
 <ul class="checks">
-<li>${ico("check")}<span>A TP-Link Tapo C210, powered, on your Wi-Fi, and set up in the Tapo app.</span></li>
-<li>${ico("check")}<span>A box that stays on: a Raspberry Pi 5 with a USB SSD, or any always-on Linux computer (64-bit Debian or Ubuntu with internet access). When the box is off, it records and seals nothing.</span></li>
-<li>${ico("check")}<span>Room for video: 128 GB or more. A USB SSD lasts longer than an SD card. High quality video likely needs 15 to 20 GB a day (we still measure this).</span></li>
-<li>${ico("check")}<span>The camera and the box on the same home network, and a phone or laptop on that network.</span></li>
+<li>${ico("check")}<span>A TP-Link Tapo C210, on your Wi-Fi, set up in the Tapo app.</span></li>
+<li>${ico("check")}<span>A box that stays on: a Raspberry Pi 5 with a USB SSD, or any always-on Linux computer. Use 128 GB or more.</span></li>
+<li>${ico("check")}<span>The camera, the box and your computer on the same home network.</span></li>
 </ul>
-<div class="callout"><b class="t">Aim the camera at your own property</b>If your camera films the street or a neighbour, privacy law may apply to you. Put up a sign and read the guidance of your data protection authority. In the Netherlands this is the Autoriteit Persoonsgegevens. See <a href="trust.html#privacy">Trust and limits</a>.</div>
+<div class="callout"><b class="t">Aim the camera at your own property</b>If it films the street or a neighbour, privacy law may apply to you. Put up a sign. See <a href="trust.html#privacy">Trust and limits</a>.</div>
 
-<ol class="steps" style="margin-top:40px">
+<ol class="steps" style="margin-top:36px">
 
-<li class="step" id="s1"><h3>Make a camera account</h3><p class="time">About 3 minutes · Tapo app</p><div class="body">
-<p>The box reads the video from the camera over your home network. The camera needs its own account for this. It is not your TP-Link login.</p>
+<li class="step" id="s1"><h3>Make a camera account</h3><p class="time">3 minutes · Tapo app</p><div class="body">
 <ol class="plain">
 <li>Open the Tapo app and tap your camera.</li>
 <li>Tap the gear icon (Settings).</li>
-<li>Tap <b>Advanced Settings</b>.</li>
-<li>Tap <b>Camera Account</b>.</li>
+<li>Tap <b>Advanced Settings</b>, then <b>Camera Account</b>.</li>
 <li>Agree to the notice.</li>
 <li>Choose a user name and a password. Each has 6 to 32 characters.</li>
 </ol>
-<div class="callout"><b class="t">Keep the password plain</b>Use letters and digits. Special characters can make the stream fail. Use a new password. Do not reuse the password of your TP-Link account. Write the user name and password down. You need them in step 6.</div>
-${shot("the Tapo app screen Camera Account with the user name and password fields (hide the password)")}
-${help("Something wrong?", `<ul class="plain"><li>You cannot find Camera Account. Update the Tapo app and the camera firmware, then look again.</li><li>The app says the password is not allowed. Use only letters and digits, 6 to 32 characters.</li></ul>`)}
+<p>Use letters and digits only. Special characters can make the video fail. Write both down.</p>
+${shot("the Tapo app screen Camera Account (hide the password)")}
 </div></li>
 
-<li class="step" id="s2"><h3>Find the camera address</h3><p class="time">About 2 minutes · Tapo app</p><div class="body">
-<p>Your camera has an address on your home network, for example <code>192.168.1.20</code>. The setup asks for it.</p>
-<ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Device Info</b>.</li><li>Write down the <b>IP address</b>.</li></ol>
-<p>The address can change after a router restart, and then the box loses the camera. In your router, give the camera a fixed address. This is often called "DHCP reservation".</p>
+<li class="step" id="s2"><h3>Find the camera address</h3><p class="time">2 minutes · Tapo app</p><div class="body">
+<p>In the Tapo app, tap your camera, then the gear icon, then <b>Device Info</b>. Write down the <b>IP address</b>, for example <code>192.168.1.20</code>.</p>
 ${shot("the Tapo app Device Info screen with the IP address")}
-${help("Something wrong?", `<ul class="plain"><li>The IP address field is empty. Check that the camera is online in the app.</li><li>You do not know how to reserve the address. Search for your router model and "DHCP reservation". It takes a few minutes.</li></ul>`)}
+${help("Tip: keep the address fixed", `<p>If your router gives the camera a new address, the box loses it. In your router, reserve the address for the camera. Search for your router model and "DHCP reservation".</p>`)}
 </div></li>
 
-<li class="step" id="s3"><h3>Check the recording options</h3><p class="time">About 2 minutes · Tapo app</p><div class="body">
-<p>Tapo Care (cloud), the microSD card and a recorder such as QoreWitness: only two of the three work at the same time. If all three are on, turn one off. The C210 also sends at most two streams at once, and the live view in the Tapo app counts as one.</p>
-${shot("the Tapo app screen with the recording options (Tapo Care, microSD card, recorder)")}
-</div></li>
-
-<li class="step" id="s4"><h3>Prepare the box</h3><p class="time">About 15 minutes · Your computer</p><div class="body">
-<p><b>Raspberry Pi 5:</b></p>
+<li class="step" id="s3"><h3>Prepare the box</h3><p class="time">15 minutes · Your computer</p><div class="body">
+<p>For a Raspberry Pi 5:</p>
 <ol class="plain">
-<li>Install Raspberry Pi Imager on your computer.</li>
-<li>Choose <b>Raspberry Pi OS Lite (64-bit)</b>.</li>
-<li>In the settings of the Imager: host name <code>qorewitness</code>, a user name and password, your Wi-Fi (or use a cable) and <b>Enable SSH</b>.</li>
+<li>Install Raspberry Pi Imager and choose <b>Raspberry Pi OS Lite (64-bit)</b>.</li>
+<li>In its settings, set the host name to <code>qorewitness</code>, choose a user name and password, enter your Wi-Fi (or use a cable) and turn on <b>SSH</b>.</li>
 <li>Write the card, put it in the Pi and start it. Wait two minutes.</li>
-<li>On your computer, open a terminal and connect: <code>ssh &lt;your user&gt;@qorewitness.local</code></li>
 </ol>
-<p><b>Another Linux computer:</b> any 64-bit Debian or Ubuntu install with internet access and a user with <code>sudo</code>. A mini PC or a virtual machine works.</p>
-<p class="small muted">A ready-made Pi image is planned. Today you install Raspberry Pi OS yourself.</p>
 ${shot("Raspberry Pi Imager with the settings for host name, user and SSH")}
+${help("Another Linux computer", `<p>Use any 64-bit Debian or Ubuntu computer with internet access and a user with <code>sudo</code>. In step 4, paste only the part in quotes into its own terminal.</p>`)}
 </div></li>
 
-<li class="step" id="s5"><h3>Run the installer</h3><p class="time">About 10 minutes · Terminal on the box</p><div class="body">
-<p>In the terminal of the box, paste this one line and press Enter.</p>
-${copybox("install-cmd", INSTALL, "Copy command")}
-<p>The installer checks the system, offers to install Docker if it is missing (it asks first), downloads QoreWitness and starts it. At the end it shows a <b>setup link</b> and a <b>pairing code</b> of 6 digits, in large text.</p>
-<div class="callout warn"><b class="t">Do not share the code</b>Anyone with the code can set up the box until you choose a password. The link and the code are also in the file <code>~/qorewitness/SETUP-LINK.txt</code>. Only your user can read it.</div>
-<div class="callout"><b class="t">Want to read the script first?</b>Open it on <a href="${GH}/blob/main/install.sh">GitHub</a>. The code is open source. You can run the installer again at any time. It keeps your camera, keys, account and video.</div>
-${shot("the terminal at the end of the install, with the setup link and the pairing code")}
-${help("Something wrong?", `<ul class="plain"><li><code>curl: command not found</code>. Install it with <code>sudo apt install curl</code> and run the line again.</li><li>You lost the link or the code. Run the installer again. It shows them again.</li><li>The page does not open later. The box and your phone must be on the same network. Guest Wi-Fi often blocks this.</li><li>Still stuck. Ask on <a href="${X}">X</a> or in the <a href="${DISCORD}">QoreChain Discord</a> and paste the last lines.</li></ul>`)}
+<li class="step" id="s4"><h3>Paste one line</h3><p class="time">10 minutes · Terminal on your computer</p><div class="body">
+<p>Open a terminal on your own computer. On a Mac, open <b>Terminal</b>. On Windows, open <b>Terminal</b> or <b>PowerShell</b>.</p>
+<p>Paste this line. Change <code>USER</code> to the user name you chose in step 3. Press Enter.</p>
+${copybox("install-cmd", INSTALL, "Copy line")}
+<p>The terminal asks once if you trust the box. Type <code>yes</code>. Then it asks for the password you chose in step 3. The installer does the rest. At the end it shows a <b>link</b> and a <b>code</b>.</p>
+${shot("the terminal at the end of the install, with the link and the code")}
+${help("Something wrong?", `<ul class="plain"><li><b>qorewitness.local not found.</b> Use the IP address of the box from your router app instead of <code>qorewitness.local</code>.</li><li><b>Permission denied.</b> Check the user name and password you chose in step 3.</li><li><b>Do not share the code.</b> Anyone with it can set up the box until you choose a password.</li><li>Want to read the script first? Open it on <a href="${GH}/blob/main/install.sh">GitHub</a>. You can run the line again at any time.</li></ul>`)}
 </div></li>
 
-<li class="step" id="s6"><h3>Set up in the browser</h3><p class="time">About 15 minutes · Phone or laptop</p><div class="body">
-<p>Open the setup link on your phone or laptop and type the pairing code. The setup moves in small screens. You can close the browser at any time. Open the link again and the setup continues at the right step.</p>
+<li class="step" id="s5"><h3>Open the link</h3><p class="time">15 minutes · Browser</p><div class="body">
+<p>Open the link on your computer or phone and type the code. Three screens follow. Then a progress bar.</p>
 <ol class="plain">
-<li><b>Password.</b> Choose a password for the dashboard. Use 10 characters or more.</li>
-<li><b>Camera.</b> Type the camera address (step 2) and the user name and password of the camera account (step 1). Give the camera a name, for example <code>camera-1</code>. Tick the box that the camera films your own property. Press <b>Test camera</b>. Within 15 seconds you see a picture from your camera. Press <b>Looks right</b>. For a smaller disk or weak Wi-Fi, press <b>Use standard quality</b>.</li>
-<li><b>Plan.</b> Choose who pays the network fees. See the table below.</li>
-<li><b>Keys.</b> Press <b>Create keys</b>. The box makes an account key and a camera key. Read the backup note, tick the box and continue.</li>
-<li><b>Network fees.</b> Fees included: the pilot adds the fees and the page moves on by itself. Self-managed: copy the address, claim free test tokens in the Faucet of the QoreChain dashboard and wait. You need at least 2 test QOR.</li>
-<li><b>Connect.</b> Press <b>Start</b>. A progress bar shows four steps. It takes 1 to 3 minutes.</li>
-<li><b>Done.</b> The page says <b>Sealing started</b>.</li>
+<li><b>Password.</b> Choose a password for the dashboard.</li>
+<li><b>Camera.</b> Type the camera address from step 2 and the user name and password from step 1. Tick that the camera films your own property. Press <b>Test camera</b>.</li>
+<li><b>Is this your camera?</b> You see a picture from your camera within 15 seconds. Press <b>Looks right</b>.</li>
 </ol>
-${shot("the setup screen Test camera with a picture from the camera")}
-${shot("the setup screen Who pays the network fees?")}
-<div class="tablewrap"><table><thead><tr><th>Plan</th><th>What you do</th></tr></thead><tbody>
-<tr><td><b>Fees included (pilot)</b></td><td>You enter a pilot code. The pilot service adds free test tokens to your own account. Pilot places are limited. <a href="plans.html#ask">Ask for a pilot code</a>.</td></tr>
-<tr><td><b>Self-managed</b></td><td>You hold the account and add free test tokens yourself, about once a week.</td></tr>
-</tbody></table></div>
-<p>Both plans make the same proof. Both are free in the pilot. <b>Our advice:</b> choose Self-managed unless you hold a pilot code.</p>
-<div class="callout warn"><b class="t">Back up your keys</b>Your keys are files on the box, in the folder <code>qorewitness/data</code>. Copy that folder to a USB stick and keep it somewhere safe. If the box breaks, these files are the only way to keep this camera and its history. Anyone with these files can use your test account. QoreWitness never asks for them, by email or on a website.</div>
-${shot("the setup screen Keys ready with the backup note")}
-${help("Something wrong?", `<ul class="plain"><li><b>The camera refused the password.</b> Make the camera account again in the Tapo app, with letters and digits only.</li><li><b>No camera answers at this address.</b> Check the address in Device Info. Check that the camera is on and in Wi-Fi range.</li><li><b>The camera is busy.</b> Close the live view in the Tapo app and test again.</li><li><b>The camera sends no picture.</b> Look at step 3. Turn one of the three recording options off.</li><li><b>The pilot says the code is not valid, used or the pilot is full.</b> Check the code, or choose Self-managed.</li><li><b>You forgot the dashboard password.</b> Run the installer again with the option <code>--new-password</code>. Camera, keys and account stay.</li></ul>`)}
-</div></li>
-
-<li class="step" id="s7"><h3>Your first seal</h3><p class="time">About 15 minutes · Browser</p><div class="body">
-<p>The first seal comes in about 10 to 15 minutes. Press <b>Open my dashboard</b>. The dashboard shows one line in a colour and one thing to do. At first it says <i>Waiting for the first seal</i> in orange. This is normal. Then it turns green: <i>Sealing OK. Last seal 4 minutes ago.</i></p>
+<p>A progress bar connects your camera. It takes a few minutes. You can close the page. Then you see <b>Sealing started</b>. The pilot pays the network fees. You do nothing.</p>
+${shot("the screen Is this your camera? with a picture from the camera")}
+<p>The first seal comes in about 10 to 15 minutes. Open the dashboard. The line turns green when sealing works. Save the dashboard address as a bookmark.</p>
 ${shot("the dashboard with the green line Sealing OK")}
-<div class="callout ok"><b class="t">Done. What now?</b>Keep using the Tapo app for live view and alerts. Nothing changes there. Read <a href="daily-use.html">Daily use</a>. When you need proof of a clip, read <a href="prove.html">Prove a video</a>.</div>
-${help("Something wrong?", `<ul class="plain"><li>No green line after 30 minutes. Read the line on the dashboard. It says what to do.</li><li>The line is red and says there is no video from the camera. Check the power and Wi-Fi of the camera and its IP address.</li><li>Still stuck. Ask on <a href="${X}">X</a> or in the <a href="${DISCORD}">QoreChain Discord</a>.</li></ul>`)}
+<div class="callout ok"><b class="t">Done.</b>Keep using the Tapo app for live view and alerts. Read <a href="daily-use.html">Daily use</a>. To prove a clip, read <a href="prove.html">Prove a video</a>.</div>
+${help("Something wrong?", `<ul class="plain"><li><b>The camera refused the password.</b> Make the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the address in Device Info. Check that the camera is on.</li><li><b>The camera is busy, or sends no picture.</b> Close the live view in the Tapo app. Tapo Care, the microSD card and a recorder such as QoreWitness: only two of the three work at the same time. Turn one off.</li><li><b>The pilot is full.</b> The page says so and offers the other plan. See <a href="plans.html">Plans</a>.</li><li><b>You forgot the password.</b> Run the line in step 4 again with <code>--new-password</code> added after <code>--yes</code>.</li></ul>`)}
 </div></li>
 </ol>
 </div>
@@ -472,61 +416,50 @@ page({
   file: "daily-use.html",
   current: "daily-use.html",
   title: "Daily use | QoreWitness",
-  desc: "What changes in your day when QoreWitness runs: nothing. What the dashboard colours mean, retention, power cuts, backup and how to stop.",
+  desc: "What changes in your day when QoreWitness runs: nothing. What the dashboard colours mean, how long clips are kept, and what to do after a power cut.",
   body: `
-${head("Daily use", "Nothing changes in your day.", "Keep using the Tapo app for live view and alerts. QoreWitness works in the background, on your box. Open the dashboard once in a while.")}
+${head("Daily use", "Nothing changes in your day.", "Keep using the Tapo app for live view and alerts. QoreWitness works in the background. Open the dashboard once in a while.")}
 <section><div class="wrap narrow">
 <h2>The dashboard</h2>
-<p style="margin-top:16px">The dashboard shows one line in a colour and one thing to do. Open it at the address of your box, for example <code>http://192.168.1.30:8080</code>, and sign in with your dashboard password.</p>
-<div class="tablewrap"><table><thead><tr><th>Colour</th><th>Example</th><th>What to do</th></tr></thead><tbody>
+<p style="margin-top:16px">It shows one line in a colour and one thing to do. Bookmark its address on your phone and laptop. On a Pi named <code>qorewitness</code> it often is <code>http://qorewitness.local:8080</code>.</p>
+<div class="tablewrap"><table><thead><tr><th>Colour</th><th>It says</th><th>What to do</th></tr></thead><tbody>
 <tr><td><b style="color:var(--ok)">Green</b></td><td>Sealing OK. Last seal 4 minutes ago.</td><td>Nothing.</td></tr>
 <tr><td><b style="color:var(--warn)">Orange</b></td><td>Waiting for the first seal.</td><td>Nothing. It comes 10 to 15 minutes after setup.</td></tr>
-<tr><td><b style="color:var(--warn)">Orange</b></td><td>Network fees low: about 2 days left.</td><td>Self-managed: add test QOR to the address shown. Fees included: the pilot tops up.</td></tr>
+<tr><td><b style="color:var(--warn)">Orange</b></td><td>Network fees low.</td><td>Nothing. The pilot tops up.</td></tr>
 <tr><td><b style="color:var(--warn)">Orange</b></td><td>The disk is almost full.</td><td>Keep video for fewer days, or connect a bigger disk.</td></tr>
-<tr><td><b style="color:var(--bad)">Red</b></td><td>No video from the camera.</td><td>Check the power and Wi-Fi of the camera. Check its IP address.</td></tr>
-<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing stopped 40 minutes ago.</td><td>Check the internet connection of the box. Restart the box if this stays.</td></tr>
-<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing stops: the network fees ran out.</td><td>Self-managed: add test QOR. Fees included: the pilot tops up. If this stays for a day, the pilot may be paused.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td>No video from the camera.</td><td>Check the power and Wi-Fi of the camera.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing stopped 40 minutes ago.</td><td>Check the internet of the box. Restart the box if this stays.</td></tr>
 </tbody></table></div>
 ${shot("the dashboard in green, orange and red state")}
-<p class="muted">Phone alerts for these states are planned. Today you see them when you open the dashboard.</p>
+${help("Self-managed plan: fee messages", `<p>With Self-managed you add free test tokens yourself. If the line says the network fees are low or ran out, add test QOR to the address shown. See <a href="plans.html">Plans</a>.</p>`)}
+<p class="muted">Phone alerts are planned. Today you see these states when you open the dashboard.</p>
 </div></section>
 
 <section class="alt"><div class="wrap narrow">
-<h2>Clips are kept for 14 days</h2>
-<p style="margin-top:16px">The box deletes video older than the retention time. The setup proposes it from the free disk. The default is 14 days. Receipts stay. A clip that is gone cannot be proven, so <b>download a clip before it is deleted</b> if you may need it. See <a href="prove.html#owner">Prove a video</a>.</p>
+<h2>Clips are kept for about 2 weeks</h2>
+<p style="margin-top:16px">The box deletes old video after about 2 weeks. Receipts stay. A clip that is gone cannot be proven. <b>Press Save evidence</b> for any clip you may need. See <a href="prove.html#owner">Prove a video</a>.</p>
 </div></section>
 
 <section><div class="wrap narrow">
 <h2>Power cuts and restarts</h2>
 <ul class="plain" style="margin-top:16px">
-<li><b>Box restarts.</b> Sealing starts again by itself. You do nothing.</li>
-<li><b>Camera loses power.</b> No video is recorded while it is off. Earlier seals stay valid. The dashboard turns red until the camera is back.</li>
-<li><b>Internet is down.</b> Recording goes on. The minutes without a connection probably have no seal. The network shows the gap with its start and length.</li>
-<li><b>Crash during sealing.</b> After a restart, the box rebuilds the lost receipt from public network data. We tested this.</li>
+<li><b>The box restarts.</b> Sealing starts again by itself.</li>
+<li><b>The camera loses power.</b> No video is recorded while it is off. Earlier seals stay valid. The dashboard turns red until the camera is back.</li>
+<li><b>The internet is down.</b> Recording goes on. The minutes without a connection probably have no seal. The public record shows the gap.</li>
 </ul>
 </div></section>
 
-<section class="alt" id="backup"><div class="wrap narrow">
-<h2>Backup</h2>
-<p style="margin-top:16px">Copy these things to a USB stick or another computer. Keep them away from the box.</p>
-<ul class="checks">
-<li>${ico("check")}<span><b>The folder <code>qorewitness/data</code></b>, at least the file <code>qorewitness.env</code> and the folder <code>keys</code>. These are your keys. Anyone with them can use your test account.</span></li>
-<li>${ico("check")}<span><b>The clips you may need</b>, with their receipts. A one-click export as one ZIP is coming in the pilot. Until then, copy the clip by hand and download its receipt from the dashboard.</span></li>
-</ul>
-<p class="muted">The seals on the network stay if you lose the box. To prove a clip you also need the clip and its receipt.</p>
-</div></section>
-
-<section><div class="wrap narrow">
-<h2>Update, stop or remove</h2>
+<section class="alt"><div class="wrap narrow">
+<h2>Pause or remove</h2>
 <ul class="plain" style="margin-top:16px">
-<li><b>Update.</b> QoreWitness never updates itself. The version is pinned on purpose. You choose when to move to a new version.</li>
-<li><b>Pause or remove.</b> Stop QoreWitness with <code>cd ~/qorewitness &amp;&amp; docker compose down</code>. Your camera and the Tapo app keep working. Delete the folder <code>~/qorewitness</code> when you no longer need the video, the receipts or the keys.</li>
-<li>Records on the network cannot be deleted by us or by you. They hold only fingerprints and times.</li>
-<li>If you stop using a camera key, you can revoke it. A revoked key cannot come back.</li>
+<li>To pause, unplug the box. Your camera and the Tapo app keep working.</li>
+<li>To remove QoreWitness, see <a href="developers.html#run">For developers</a>.</li>
+<li>Records on the public record cannot be deleted. They hold only fingerprints and times.</li>
 </ul>
-<div class="callout"><b class="t">Keep the box on your home network</b>The setup and the dashboard use plain HTTP on your home network. Use a network you trust. Never forward port 8080 on your router.</div>
+${help("Advanced: back up the box", `<p>If the box breaks, you set it up again with a new camera. Seals made before stay checkable. To keep the same camera identity, copy the folder <code>~/qorewitness/data</code> to a USB stick. Anyone with these files can use your test account. QoreWitness never asks for them.</p>`)}
+<div class="callout"><b class="t">Keep the box on your home network</b>Use a network you trust. Never forward port 8080 on your router.</div>
 </div></section>
-${closing("Need proof of a clip?", "Take the clip and its receipt, send them, and let the other side check them in a browser.", "prove.html", "Prove a video")}`,
+${closing("Need proof of a clip?", "Press Save evidence, send the file, and let the other side check it in a browser.", "prove.html", "Prove a video")}`,
 });
 
 /* ================= PROVE ================= */
@@ -534,13 +467,13 @@ const emailTpl = `Subject: Video evidence with proof of origin
 
 Hello,
 
-Attached are a video clip from my home camera and its receipt file.
+Attached is a file from my home camera. It holds the video and its proof.
 The footage was sealed by QoreWitness minutes after recording.
 
 To check it:
 1. Open ${SITE}/verifier.html
-2. Drop the clip and the receipt file on the page.
-3. The page shows a green result if the clip has not changed since it was sealed.
+2. Drop the file on the page.
+3. The page shows a big green "Original" if the video has not changed since it was sealed.
 
 You do not need to trust me or QoreWitness. The page repeats every check in your own browser.
 
@@ -549,57 +482,52 @@ page({
   file: "prove.html",
   current: "prove.html",
   title: "Prove a video | QoreWitness",
-  desc: "How to prove that a video did not change: get the clip and its receipt, send them, and let the receiver check them in a browser for a green result.",
+  desc: "How to prove that a video did not change: press Save evidence, send the one file, and let the receiver see a big green Original in a browser.",
   body: `
-${head("Prove a video", "Show that a clip is the original.", "Two people are involved. The owner sends the clip and its receipt file. The receiver drops both on a web page and reads the result.")}
-<section id="demo"><div class="wrap">
+${head("Prove a video", "Show that a clip is the original.", "The owner sends one file. The receiver drops it on a web page and reads the result.")}
+<section id="owner"><div class="wrap">
 <div class="split">
 <div>
-<p class="eyebrow">For the receiver</p><h2>Check a video now.</h2>
-<p style="margin-top:16px">You received a clip and a receipt. You need no account and no software. Everything runs in your browser. Your files stay on your computer.</p>
+<p class="eyebrow">For the owner</p><h2>Save evidence.</h2>
+<ol class="plain" style="margin-top:16px">
+<li>Open your dashboard.</li>
+<li>Press <b>Download</b> next to the time you need. Or press <b>Save evidence</b> and pick a time range.</li>
+<li>You get one file. Send it to the receiver, for example an insurer or a lawyer.</li>
+</ol>
+${shot("the dashboard with the Download button next to a time, and the Save evidence button")}
+<p>Do this soon. The box deletes video after about 2 weeks.</p>
+<div class="callout warn"><b class="t">Your video shows people</b>Send it only to people who need it. Do not post it in public.</div>
+${help("Text you can send with the file", `<div class="copybox light"><code id="mail-tpl">${emailTpl}</code><button class="btn" type="button" data-copy="mail-tpl">${ico("copy")}<span>Copy text</span></button></div>`)}
+</div>
+<div id="demo" class="stack"><p class="eyebrow">For the receiver</p><h2 style="margin-bottom:16px">Check a video now.</h2>
+<p>You received a file. You need no account and no software. Your file stays on your computer.</p>
 <ol class="plain">
 <li>Open the verifier.</li>
-<li>Drop the clip and its receipt on the page.</li>
-<li>Read the result. Green means the clip has not changed since it was sealed. Red means it does not match its receipt.</li>
-<li>To keep a copy of the result, use the print function of your browser and save it as PDF.</li>
+<li>Drop the file on the page.</li>
+<li>Read the result. A big green <b>Original</b> means the video has not changed since it was sealed.</li>
 </ol>
 <div class="btns"><a class="btn primary" href="${UP}verifier.html">Open the verifier ${ico("arrow")}</a></div>
-<h3 style="margin:32px 0 10px">Try it with the demo clip</h3>
-<p>The demo clip is a generated test pattern. It was sealed on the QoreChain testnet. Download both files and drop them in the verifier. Then use the button to change one byte and check again. The result turns red.</p>
-<div class="btns"><a class="btn" href="${UP}demo-clip.mp4" download>Demo clip (MP4)</a><a class="btn" href="${UP}demo-receipt.json" download>Demo receipt (JSON)</a></div>
-<p class="small muted" style="margin-top:14px">Verifier fingerprint (SHA-256): <code style="word-break:break-all">${VERIFIER_SHA}</code></p>
 </div>
-<div class="stack">${cert("Example result · demo clip")}
-<div class="cert bad"><span class="tag">Example result · one byte changed</span><div class="head">${ico("x-circle")}<div><b>Not verified: file does not match its receipt</b><span>The first failed check is shown on top</span></div></div><ul><li><span>${ico("x")}File fingerprint matches</span><span class="v">failed</span></li></ul></div>
-<p class="small muted">These pictures show the idea. The verifier page is the real result.</p></div>
 </div>
 </div></section>
 
-<section class="alt" id="owner"><div class="wrap narrow">
-<p class="eyebrow">For the owner</p><h2>Get the clip and its receipt.</h2>
-<p style="margin-top:16px">Do this as soon as you know you may need a clip. Clips are deleted after 14 days by default.</p>
-<div class="callout warn"><b class="t">Coming in the pilot</b>A one-click export as one ZIP, and a verifier that takes that ZIP, are planned. They are not built yet. Today you take two files: the clip and its receipt.</div>
-<ol class="steps" style="margin-top:28px">
-<li class="step"><h3>Find the time</h3><div class="body"><p>Open the dashboard and find the date and time of the clip you need.</p>${shot("the dashboard with the list of recent seals and their receipts")}</div></li>
-<li class="step"><h3>Take the clip and the receipt</h3><div class="body"><p>Copy the clip from the folder <code>~/qorewitness/data/&lt;camera&gt;/segments</code> on the box. Download its receipt from the dashboard. Keep both files together.</p>${shot("the receipt download on the dashboard")}</div></li>
-<li class="step"><h3>Check it yourself</h3><div class="body"><p>Drop the clip and its receipt on the <a href="${UP}verifier.html">verifier</a> before you send them. You should see the green result.</p></div></li>
-<li class="step"><h3>Send it</h3><div class="body"><p>Send both files to the receiver, for example an insurer or a lawyer. Add the link to the verifier. You can use this text:</p>
-<div class="copybox light"><code id="mail-tpl">${emailTpl}</code><button class="btn" type="button" data-copy="mail-tpl">${ico("copy")}<span>Copy text</span></button></div>
-<div class="callout warn"><b class="t">Your video shows people</b>Send it only to people who need it. Use a way to send that you trust. Do not post it in public.</div></div></li>
-</ol>
-</div></section>
-
-<section><div class="wrap">
+<section class="alt"><div class="wrap">
 <div class="split">
-<div><h2>What a green result means</h2>
-<ul class="checks" style="margin-top:16px"><li>${ico("check")}<span>This file existed at the time the network recorded.</span></li><li>${ico("check")}<span>It has not changed since it was sealed.</span></li><li>${ico("check")}<span>The seal was made by the key of one known camera.</span></li><li>${ico("check")}<span>The clips around it form an unbroken recording.</span></li></ul></div>
-<div><h2>What it does not mean</h2>
-<ul class="checks no" style="margin-top:16px"><li>${ico("x")}<span>That the scene was real. A staged scene is sealed the same way.</span></li><li>${ico("x")}<span>That a court will accept it. A court weighs it as ordinary evidence.</span></li><li>${ico("x")}<span>That the clip is complete. Only sealed minutes can be checked.</span></li></ul>
+<div class="stack"><h2>What the result looks like</h2>
+${cert("Example result · demo clip")}
+<div class="cert bad"><span class="tag">Example result · video changed</span><div class="head">${ico("x-circle")}<div><b>Changed after sealing</b><span>This file does not match its receipt</span></div></div></div>
+<p class="small muted">An orange result means unchanged, with notes. The page says what the notes are. A button prints the result.</p></div>
+<div><h3 style="margin-bottom:10px">Try it with the demo clip</h3>
+<p>The demo clip is a generated test pattern. Download both files and drop them on the verifier. Then use its button to change one byte and check again. The result turns red.</p>
+<div class="btns"><a class="btn" href="${UP}demo-clip.mp4" download>Demo clip</a><a class="btn" href="${UP}demo-receipt.json" download>Demo receipt</a></div>
+<h3 style="margin:32px 0 10px">What a green result means</h3>
+<ul class="checks"><li>${ico("check")}<span>The file existed at the time of the public record.</span></li><li>${ico("check")}<span>It has not changed since it was sealed.</span></li><li>${ico("check")}<span>One known camera made the seal.</span></li></ul>
+<h3 style="margin:24px 0 10px">What it does not mean</h3>
+<ul class="checks no"><li>${ico("x")}<span>That the scene was real. A staged scene is sealed the same way.</span></li><li>${ico("x")}<span>That a court will accept it. A court weighs it as ordinary evidence.</span></li></ul>
 <p class="small"><a href="trust.html">Read Trust and limits</a></p></div>
 </div>
-<div class="art" style="max-width:260px;margin:32px 0 0">${artTamper}</div>
-<p class="small muted">A red result looks like this seal: cracked. The page names the check that failed.</p>
-<p class="muted">You do not need to trust the owner or us. The code is open and the verifier is one file with a published fingerprint.</p>
+<div class="art" style="max-width:220px;margin:32px 0 0">${artTamper}</div>
+<p class="small muted">A red result is a cracked seal. Nobody has to trust the owner or us. The code is open.</p>
 </div></section>`,
 });
 
@@ -608,51 +536,21 @@ page({
   file: "plans.html",
   current: "plans.html",
   title: "Plans | QoreWitness",
-  desc: "Two ways to run QoreWitness: Self-managed and Fees included. Testnet pilot: both plans are free. No payment is collected.",
+  desc: "Fees included is the default plan. Testnet pilot: both plans are free. No payment is collected.",
   body: `
-${head("Plans", "Two ways to run QoreWitness.", "Same seal. Same proof page. You choose who looks after the network fees.")}
+${head("Plans", "Fees included. Nothing to manage.", "Same seal. Same proof page. We look after the network fees for you.")}
 <section style="padding-top:32px"><div class="wrap">
-<div class="banner" role="note"><b>Testnet pilot: both plans are free. No payment is collected.</b> We ask for no card. The price below is a plan for later.</div>
-<div class="plans">
-<article class="plan" aria-labelledby="p-self">
-<h2 id="p-self">Self-managed</h2><p class="for">For people who like to hold their own keys.</p>
-<p class="price">Free software. Always.<small>Network fees: you pay them yourself. About 0.1 test token per seal today.</small></p>
-<h3>You get</h3><ul class="plain"><li>The full QoreWitness software</li><li>The prove page</li><li>The setup guide</li></ul>
-<h3>You do</h3><ul class="plain"><li>Keep a backup of your keys (the setup explains how)</li><li>Get free test tokens from the faucet during the pilot</li><li>Later, buy tokens for the fees</li></ul>
-<p class="small muted">If you lose your keys and have no backup, nobody can recover them for you.</p>
-<div class="push"><a class="btn primary" href="get-started.html">Get started ${ico("arrow")}</a></div>
-</article>
+<div class="banner" role="note"><b>Testnet pilot: both plans are free. No payment is collected.</b> We ask for no card.</div>
+<div class="plans" style="grid-template-columns:minmax(0,1fr)">
 <article class="plan feature" aria-labelledby="p-fees" id="fees">
 <h2 id="p-fees">Fees included</h2><p class="for">For people who want it to just work.</p>
-<p class="price">Planned price: about EUR 4 per camera per month (estimate)<small>Free during the pilot. We plan one plan per camera. The price can change.</small></p>
-<h3>You get</h3><ul class="plain"><li>Everything in Self-managed</li><li>We pay the network fees for your camera</li><li>No wallet to set up and no tokens to buy</li></ul>
-<h3>Good to know</h3><ul class="plain"><li>Fair use: about 144 seals per day per camera (one per 10 minutes). Final limits are open.</li><li>You enter a pilot code in the setup. The pilot service then tops up your own account with free test tokens. It runs on the test network only.</li><li>If we stop the service, you switch to Self-managed.</li></ul>
-<div class="push" id="ask"><div class="ask"><b>Pilot places limited, ask for a pilot code.</b><br>Message <a href="${X}">@fnoufnou on X</a> or write in the <a href="${DISCORD}">QoreChain Discord</a>. There is no checkout and no form on this site.</div></div>
+<p class="price">Free during the pilot.<small>Planned: about EUR 4 per camera per month (estimate). The price can change. One plan per camera.</small></p>
+<ul class="plain" style="margin-top:16px"><li>Everything works after the setup. You do nothing about fees.</li><li>The pilot lets the first cameras in, up to a limit. The setup tells you if the pilot is full.</li><li>No wallet to set up and no tokens to buy.</li></ul>
+<div class="push"><a class="btn primary" href="get-started.html">Get started ${ico("arrow")}</a></div>
 </article>
+${help("Self-managed: for people with their own wallet", `<p><b>Free software. Always.</b> You hold your own account and pay the network fees yourself, with your own QoreChain wallet.</p><ul class="plain"><li>During the pilot, you get free test tokens from the faucet. About 0.1 test token per seal.</li><li>Later, you buy tokens for the fees.</li><li>If you lose your keys and have no backup, nobody can recover them for you.</li></ul><p>You choose this plan in the setup when you want it. It makes the same proof.</p>`)}
 </div>
-</div></section>
-
-<section class="alt"><div class="wrap">
-<div class="sec-head"><h2>Side by side</h2></div>
-<div class="tablewrap"><table><thead><tr><th></th><th>Self-managed</th><th>Fees included</th></tr></thead><tbody>
-<tr><th scope="row">Software</th><td>Free</td><td>Free</td></tr>
-<tr><th scope="row">Account and tokens</th><td>You hold them</td><td>You need none</td></tr>
-<tr><th scope="row">Network fees</th><td>You pay</td><td>We pay</td></tr>
-<tr><th scope="row">Planned price</th><td>Free</td><td>About EUR 4 per camera per month (estimate)</td></tr>
-<tr><th scope="row">Price in the pilot</th><td>Free</td><td>Free</td></tr>
-<tr><th scope="row">Availability</th><td>Open to everyone</td><td>Pilot places limited, ask for a pilot code</td></tr>
-</tbody></table></div>
-<p class="small muted">Plans and prices can change before the main network opens. We will ask before we charge anything.</p>
-</div></section>
-
-<section><div class="wrap narrow">
-<h2>What each plan needs from you</h2>
-<ul class="plain" style="margin-top:16px">
-<li><b>Both:</b> a Tapo C210, a box that stays on, and about one hour. See <a href="get-started.html">Get started</a>.</li>
-<li><b>Self-managed:</b> a backup of your keys, and a few minutes at the faucet about once a week.</li>
-<li><b>Fees included:</b> a pilot code.</li>
-</ul>
-<p>Both plans make the same proof. The verifier shows the same green result for both.</p>
+<p class="small muted">Plans and prices can change before the main network opens. We will ask before we charge anything. If we stop the pilot, you can switch to Self-managed.</p>
 </div></section>`,
 });
 
@@ -694,6 +592,19 @@ ${head("Trust and limits", "What it proves, and what it cannot.", "A proof is on
 <li>${ico("x")}<span>That nobody fed the box fake footage before sealing. The box is the trust boundary.</span></li>
 <li>${ico("x")}<span>That a court accepts it. We are not an EU qualified time stamp provider. A court weighs it as ordinary evidence.</span></li>
 </ul></div>
+</div></section>
+
+<section id="facts"><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Facts you can check</p><h2>Only what we can show today.</h2>
+<p>Each item links to its proof. We show no logos, no customer counts and no reviews, because we have none.</p></div>
+<ul class="grid c2" style="list-style:none;padding:0;margin:0">
+<li class="tile"><h3>Open source</h3><p>All code is open under Apache-2.0. <a href="${GH}">Read it on GitHub</a>.</p></li>
+<li class="tile"><h3>Reviewed with the QCAI Contract Auditor</h3><p>Four review rounds on QoreChain. The reports are published. <a href="${GHDOC("AUDIT.md")}">Read the audit notes</a>.</p></li>
+<li class="tile"><h3>Checked on chain</h3><p>The smart contract checks the ML-DSA-87 signature on QoreChain before it accepts a record. <a href="developers.html#pqc">See how</a>.</p></li>
+<li class="tile"><h3>A live pilot camera</h3><p>A real home camera has sealed its footage every 10 minutes on the testnet since 9 Nov 2026.</p></li>
+<li class="tile"><h3>A verifier in one file</h3><p>The verifier runs in your browser. It is one HTML file with a published fingerprint (SHA-256). <a href="${UP}verifier.html">Open the verifier</a>.</p></li>
+<li class="tile"><h3>We publish what we miss</h3><p>Our own attack drills list what the system catches and what it does not. <a href="#threats">Read the results</a>.</p></li>
+</ul>
 </div></section>
 
 <section class="alt" id="threats"><div class="wrap">
@@ -744,7 +655,7 @@ ${head("Trust and limits", "What it proves, and what it cannot.", "A proof is on
 <li>A fingerprint of a video with people in it may count as personal data in some cases. We keep everything else off the chain.</li>
 </ul>
 <div class="callout warn"><b class="t">If your camera films the street or a neighbour</b>The household exemption likely does not apply then (CJEU, case C-212/13, Rynes). You are the controller of that video. Aim the camera at your own property. Put up a sign. Read the guidance on home cameras from your data protection authority. In the Netherlands this is the <a href="https://www.autoriteitpersoonsgegevens.nl">Autoriteit Persoonsgegevens</a>.</div>
-<p><b>QoreWitness will never ask for your keys or your backup files.</b></p>
+<p><b>QoreWitness will never ask for your passwords or files.</b></p>
 </div></section>`,
 });
 
@@ -780,6 +691,17 @@ verifier (static page or CLI): clip + receipt
 <li>Each window commits to the previous root of its camera. Each segment commits to the previous segment. Gaps are stored on chain.</li>
 <li>The camera signs the hash of a recent block. The root was signed after that block and anchored before the anchor block.</li>
 <li>Anchors are immutable. There is no contract owner and no upgrade path.</li>
+</ul>
+</div></section>
+
+<section id="run"><div class="wrap narrow">
+<p class="eyebrow">Run it yourself</p><h2>Install, update, back up, remove.</h2>
+<ul class="plain" style="margin-top:16px">
+<li><b>Install on the box itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</li>
+<li><b>Other camera brands:</b> with <code>--terminal</code> you can give a full stream URL, for example <code>rtsp://user:password@192.168.1.20:554/stream</code>. The product is built and tested for the Tapo C210. See <a href="${GHDOC("CAMERAS.md")}">CAMERAS.md</a>.</li>
+<li><b>Update:</b> set the new version in <code>~/qorewitness/.env</code> (<code>QW_VERSION</code>), then <code>docker compose pull &amp;&amp; docker compose up -d</code>. The version is pinned and QoreWitness never updates itself.</li>
+<li><b>Back up:</b> copy <code>~/qorewitness/data</code>, at least <code>qorewitness.env</code> and <code>keys</code>. Anyone with these files can use the test account.</li>
+<li><b>Remove:</b> <code>cd ~/qorewitness &amp;&amp; docker compose down</code>, then delete <code>~/qorewitness</code>.</li>
 </ul>
 </div></section>
 

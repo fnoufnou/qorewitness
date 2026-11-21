@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>How it works | QoreWitness</title>
-<meta name="description" content="How QoreWitness seals camera footage: fingerprint, bundle, sign, record. Your video stays at home.">
+<meta name="description" content="How QoreWitness seals camera footage: fingerprint, bundle, seal, record. Your video stays at home.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#17483A">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="How it works | QoreWitness">
-<meta property="og:description" content="How QoreWitness seals camera footage: fingerprint, bundle, sign, record. Your video stays at home.">
+<meta property="og:description" content="How QoreWitness seals camera footage: fingerprint, bundle, seal, record. Your video stays at home.">
 <meta property="og:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -48,45 +48,52 @@
 </div></header>
 <main id="main">
 
-<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">How it works</p><h1>Your camera, now a witness.</h1><p class="lead">QoreWitness seals the video from your home camera within minutes of recording. Here is what happens, step by step, in plain words.</p></div></div>
+<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">How it works</p><h1>Your camera, now a witness.</h1><p class="lead">QoreWitness seals the video from your home camera within minutes of recording. Here is what happens, in plain words.</p></div></div>
 <section><div class="wrap narrow">
 <h2>Your video stays at home.</h2>
-<p style="margin-top:16px">The clips never leave your box. The public network gets only short fingerprints, the times and a signed summary. A fingerprint cannot show a picture or a sound. The network can see the account address of your box and when each seal was made.</p>
-<div class="callout"><b class="t">The letter metaphor</b>You press a wax seal on a letter. You keep the letter in a safe place. A postmark shows when it was sent. Anyone can look at the seal and the postmark. In QoreWitness the seal is a digital signature. The postmark is the record on the public network.</div>
+<p style="margin-top:16px">The clips stay on your box. The public record gets only short fingerprints, the times and a seal. A fingerprint cannot show a picture or a sound.</p>
+<div class="callout"><b class="t">Think of a letter</b>You press a wax seal on a letter. You keep the letter in a safe place. A postmark shows when it was sent. Anyone can look at the seal and the postmark. In QoreWitness the seal is digital. The postmark is the public record.</div>
 </div></section>
 
 <section class="alt"><div class="wrap">
-<div class="sec-head"><p class="eyebrow">Four steps</p><h2>Fingerprint, bundle, sign, record.</h2>
+<div class="sec-head"><p class="eyebrow">Four steps</p><h2>Fingerprint, bundle, seal, record.</h2>
 <p>This runs on its own while your camera records.</p></div>
 <ol class="grid c4" style="list-style:none;padding:0;margin:0">
-<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-finger"/></svg></div><div class="num">01</div><h3>Fingerprint</h3><p>The box cuts the stream into clips of one minute. Each clip gets two independent digital fingerprints (SHA-256 and SHA3-256). Change one byte and the fingerprints change.</p></li>
-<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-layers"/></svg></div><div class="num">02</div><h3>Bundle</h3><p>Every 10 minutes, the box bundles the fingerprints of that window into one short summary. This summary is called a Merkle root. Each clip is also linked to the clip before it.</p></li>
-<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-sign"/></svg></div><div class="num">03</div><h3>Sign</h3><p>Your camera has its own digital key. It signs the summary with ML-DSA-87. This is the seal.</p></li>
-<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-chain"/></svg></div><div class="num">04</div><h3>Record</h3><p>The smart contract on QoreChain checks the signature. If it fits, the contract stores the summary and the time. A receipt file stays next to your clips.</p></li>
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-finger"/></svg></div><div class="num">01</div><h3>Fingerprint</h3><p>The box cuts the video into clips of one minute. Each clip gets a fingerprint. Change one byte and the fingerprint changes.</p></li>
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-layers"/></svg></div><div class="num">02</div><h3>Bundle</h3><p>Every 10 minutes, the box bundles the fingerprints into one short summary. Each clip is also linked to the clip before it.</p></li>
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-sign"/></svg></div><div class="num">03</div><h3>Seal</h3><p>Your camera has its own digital seal. It signs the summary. The seal is built to resist future quantum computers.</p></li>
+<li class="tile"><div class="ic"><svg aria-hidden="true" focusable="false"><use href="#i-chain"/></svg></div><div class="num">04</div><h3>Record</h3><p>The public record checks the seal. If it fits, it stores the summary and the time. A receipt file stays with your clips.</p></li>
 </ol>
 </div></section>
 
 <section><div class="wrap">
 <div class="sec-head"><p class="eyebrow">The picture</p><h2>What goes where.</h2></div>
 <ol class="flow">
-<li class="home"><span class="tag">Stays at home</span><h3>Your camera</h3><p>A Tapo C210 or another camera with a network video stream.</p></li>
-<li class="home"><span class="tag">Stays at home</span><h3>Your box</h3><p>Records the clips. Makes fingerprints. Signs the summary. Keeps clips and receipts.</p></li>
-<li><h3>QoreChain testnet</h3><p>Checks the signature. Stores the summary and the time. Holds no video.</p></li>
-<li><h3>Any browser</h3><p>The verifier takes a clip and a receipt. It repeats every check against the public network.</p></li>
+<li class="home"><span class="tag">Stays at home</span><h3>Your camera</h3><p>A Tapo C210.</p></li>
+<li class="home"><span class="tag">Stays at home</span><h3>Your box</h3><p>Records the clips. Makes the seal. Keeps clips and receipts.</p></li>
+<li><h3>Public record</h3><p>Checks the seal. Stores the summary and the time. Holds no video.</p></li>
+<li><h3>Any browser</h3><p>Takes your evidence file and repeats every check.</p></li>
 </ol>
 </div></section>
 
 <section class="alt"><div class="wrap split">
-<div><p class="eyebrow">Built for later</p><h2>Post-quantum, in two sentences.</h2>
-<p style="margin-top:16px">Common signatures such as ECDSA and RSA may break when large quantum computers exist. QoreWitness signs with ML-DSA-87, a signature standard (NIST FIPS 204) built to resist them, and the network checks every signature before it accepts a record.</p>
-<p class="muted small">Evidence can be needed many years after recording. That is why the signature type matters.</p></div>
-<div class="panel"><h3>What it cannot do</h3>
-<ul class="limits">
+<div><h2>What it cannot do</h2>
+<ul class="limits" style="margin-top:16px">
 <li>It cannot show that the scene was real. A staged scene is sealed the same way.</li>
 <li>It cannot see what happens to the video before the box seals it. Keep the box and the camera safe.</li>
 <li>It is not an EU qualified time stamp. A court weighs it as ordinary evidence.</li>
 <li>On the testnet pilot, records may be removed when the network resets.</li>
-</ul><p class="small" style="margin:0"><a href="trust.html">Read the full list on Trust and limits</a></p></div>
+</ul><p class="small"><a href="trust.html">Read Trust and limits</a></p></div>
+<div>
+<details><summary>Technical names</summary><div class="in">
+<ul class="plain">
+<li>Fingerprints: SHA-256 and SHA3-256, two independent functions.</li>
+<li>The summary: a Merkle root of the fingerprints of a 10-minute window.</li>
+<li>The seal: an ML-DSA-87 signature (NIST FIPS 204) by the camera key. Common signatures such as ECDSA and RSA may break when large quantum computers exist.</li>
+<li>The public record: the AnchorRegistry smart contract on the QoreChain testnet. It checks the signature on chain before it stores the summary.</li>
+</ul>
+<p class="small" style="margin:0"><a href="developers.html">For developers</a></p></div></details>
+</div>
 </div></section>
 <div class="band"><div class="wrap"><div><h2>Ready to seal your first clip?</h2><p>Setup takes about one hour. It is free during the pilot.</p></div><a class="btn primary" href="get-started.html">Get started <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a></div></div>
 </main>
@@ -94,7 +101,7 @@
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
 <p>Seal your camera footage. Prove later that nobody changed it.</p>
-<p><b>QoreWitness will never ask for your keys or your backup files.</b></p></div>
+<p><b>QoreWitness will never ask for your passwords or files.</b></p></div>
 <div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
 <div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>
