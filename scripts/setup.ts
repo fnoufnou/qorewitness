@@ -44,9 +44,10 @@ function readEnv(path: string): Record<string, string> {
     readFileSync(path, "utf8").split("\n").filter((l) => /^[A-Z_]+=/.test(l)).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]),
   );
 }
-function writeEnv(path: string, env: Record<string, string>, secret: boolean): void {
-  writeFileSync(path, Object.entries(env).map(([k, v]) => `${k}=${v}`).join("\n") + "\n", { mode: secret ? 0o600 : 0o644 });
-  if (secret) chmodSync(path, 0o600);
+/** Every env file here holds a secret (camera password in the stream URL, or the mnemonic): mode 600. */
+function writeEnv(path: string, env: Record<string, string>): void {
+  writeFileSync(path, Object.entries(env).map(([k, v]) => `${k}=${v}`).join("\n") + "\n", { mode: 0o600 });
+  chmodSync(path, 0o600); // also for a file that an older version wrote with 644
 }
 
 async function uqor(qor1: string): Promise<bigint> {
@@ -71,7 +72,7 @@ async function main(): Promise<void> {
     QW_DEVICE: label, QW_STREAM_URL: stream,
     QW_SEGMENT_SECONDS: cam.QW_SEGMENT_SECONDS ?? "60", QW_WINDOW_SECONDS: cam.QW_WINDOW_SECONDS ?? "600",
     QW_RETENTION_DAYS: cam.QW_RETENTION_DAYS ?? "14",
-  }, false);
+  });
   say(`  camera "${label}" saved in ${camPath}`);
 
   step(2, "Owner account");
@@ -83,7 +84,7 @@ async function main(): Promise<void> {
   }
   acc.QORE_REGISTRY ??= process.env.QORE_REGISTRY ?? PUBLIC_REGISTRY_V4;
   acc.QORE_NETWORK = "testnet";
-  writeEnv(accPath, acc, true);
+  writeEnv(accPath, acc);
   const owner = await deriveUnifiedAccount(acc.QORE_MNEMONIC, 0);
   say(`  address ${owner.cosmos} (EVM ${owner.evm})`);
   say(`  the mnemonic is in ${accPath} (mode 600). Back it up. Never use it on mainnet.`);

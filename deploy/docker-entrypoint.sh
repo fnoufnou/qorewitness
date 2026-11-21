@@ -16,7 +16,8 @@ case "${1:-agent}" in
   agent)    exec node --import tsx "${envfile[@]}" src/agent/run.ts ;;
   recorder) exec scripts/record.sh ;;
   retention) while true; do deploy/qw-retention.sh || true; sleep 21600; done ;;
-  ui)       export QW_UI_HOST="${QW_UI_HOST:-0.0.0.0}"; exec node --import tsx "${envfile[@]}" src/web/server.ts ;;
+  # The dashboard never loads qorewitness.env: the recovery phrase stays out of its environment.
+  ui)       export QW_UI_HOST="${QW_UI_HOST:-0.0.0.0}"; exec node --import tsx src/web/server.ts ;;
   setup)    shift; exec node --import tsx "${envfile[@]}" scripts/setup.ts "$@" ;;
   device)   shift; exec node --import tsx "${envfile[@]}" scripts/device.ts "$@" ;;
   window)   shift; exec node --import tsx "${envfile[@]}" scripts/window.ts "$@" ;;

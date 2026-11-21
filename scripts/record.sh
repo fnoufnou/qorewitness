@@ -31,6 +31,10 @@ mkdir -p "$QW_SEGMENT_DIR"
 cd "$QW_SEGMENT_DIR"
 # Keep the old list: ffmpeg truncates it on start.
 [ -s segments.csv ] && cat segments.csv >> segments.history.csv
+# ffmpeg prints the input URL in many error lines ("401 Unauthorized", "Connection
+# refused"). The camera password must never reach docker logs or journald, so every
+# stderr line passes through the same redaction as src/core/redact.ts.
+exec 2> >(sed -u -E 's#([A-Za-z][A-Za-z0-9+.-]*://)[^[:space:]/]*@#\1***@#g' >&2)
 exec ffmpeg -hide_banner -loglevel warning -nostdin \
   "${input[@]}" -i "$URL" \
   -map 0:v -c copy -f segment -segment_time "${QW_SEGMENT_SECONDS:-60}" -reset_timestamps 1 \

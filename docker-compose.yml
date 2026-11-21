@@ -2,9 +2,11 @@
 #   docker compose run --rm agent setup
 #   docker compose up -d
 # All state (account, device key, segments, receipts) lives in ./data.
+# The image tag is pinned (QW_VERSION). Update on purpose: set QW_VERSION, then
+#   docker compose pull && docker compose up -d
 services:
   recorder:
-    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-latest}
+    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.5.0-alpha.1}
     build:
       context: .
       args: { QW_COMMIT: "${QW_COMMIT:-unknown}" }
@@ -17,7 +19,7 @@ services:
         required: false
     volumes: ["./data:/data"]
   agent:
-    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-latest}
+    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.5.0-alpha.1}
     build:
       context: .
       args: { QW_COMMIT: "${QW_COMMIT:-unknown}" }
@@ -29,7 +31,7 @@ services:
     volumes: ["./data:/data"]
     depends_on: [recorder]
   retention:
-    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-latest}
+    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.5.0-alpha.1}
     command: retention
     restart: unless-stopped
     env_file:
@@ -37,7 +39,7 @@ services:
         required: false
     volumes: ["./data:/data"]
   ui:
-    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-latest}
+    image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.5.0-alpha.1}
     command: ui
     restart: unless-stopped
     env_file:
