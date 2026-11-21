@@ -73,7 +73,31 @@ export function ensureDirs(p: Paths): void {
   }
 }
 
+// ---------------------------------------------------------------- secret lock
+
+/**
+ * After setup the dashboard process has no reason to read the recovery phrase or
+ * the camera keys. lockSecrets() makes every read of them in this process throw.
+ * The ui calls it as soon as setup.done exists. Defense in depth: the files stay
+ * on the same volume, so a bug that runs code in the process can still reach them.
+ */
+let secretsLocked = false;
+export function lockSecrets(): void {
+  secretsLocked = true;
+}
+export const secretsAreLocked = () => secretsLocked;
+/** For tests only. */
+export function unlockSecretsForTests(): void {
+  secretsLocked = false;
+}
+function assertSecretRead(path: string): void {
+  if (secretsLocked && (/(^|\/)qorewitness\.env$/.test(path) || /(^|\/)keys(\/|$)/.test(path))) {
+    throw new Error("setup is done: this process no longer reads keys");
+  }
+}
+
 export function readEnvFile(path: string): Record<string, string> {
+  assertSecretRead(path);
   if (!existsSync(path)) return {};
   const out: Record<string, string> = {};
   for (const line of readFileSync(path, "utf8").split("\n")) {
@@ -189,8 +213,9 @@ export function deviceKeyPath(p: Paths, label: string): string {
 
 /** Loads the camera key, or creates it once. createDeviceKey refuses to overwrite. */
 export function ensureDeviceKey(p: Paths, label: string): { key: DeviceKey; created: boolean } {
-  ensureDirs(p);
   const path = deviceKeyPath(p, label);
+  assertSecretRead(path);
+  ensureDirs(p);
   if (existsSync(path)) return { key: loadDeviceKey(path), created: false };
   return { key: createDeviceKey(path), created: true };
 }
