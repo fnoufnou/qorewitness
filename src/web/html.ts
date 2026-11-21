@@ -14,7 +14,11 @@ export const LOGO = `<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><r
 export const COPY_SCRIPT = `document.querySelectorAll("[data-copy]").forEach(function(b){b.addEventListener("click",function(){var t=document.getElementById(b.getAttribute("data-copy"));if(!t)return;navigator.clipboard&&navigator.clipboard.writeText(t.textContent.trim()).then(function(){b.textContent="Copied";});});});`;
 const COPY_HASH = `'sha256-${createHash("sha256").update(COPY_SCRIPT).digest("base64")}'`;
 
-export const CSP = `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; script-src ${COPY_HASH}; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`;
+/** Fills the "Save evidence" form: the browser's time zone and the last hour as default. Runs without it too. */
+export const EVIDENCE_SCRIPT = `(function(){var f=document.getElementById("evf");if(!f)return;var p=function(n){return String(n).padStart(2,"0")},t=new Date(),s=new Date(t.getTime()-36e5);f.elements.tz.value=String(-t.getTimezoneOffset());if(!f.elements.date.value){f.elements.date.value=s.getFullYear()+"-"+p(s.getMonth()+1)+"-"+p(s.getDate());f.elements.from.value=p(s.getHours())+":"+p(s.getMinutes());f.elements.to.value=p(t.getHours())+":"+p(t.getMinutes());}})();`;
+const EVIDENCE_HASH = `'sha256-${createHash("sha256").update(EVIDENCE_SCRIPT).digest("base64")}'`;
+
+export const CSP = `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; script-src ${COPY_HASH} ${EVIDENCE_HASH}; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`;
 
 const CSS = `
 @font-face{font-family:"IBM Plex Sans";src:url(/assets/plex-sans.woff2) format("woff2");font-weight:100 700;font-display:swap}
@@ -68,6 +72,7 @@ export interface LayoutOptions {
   refreshSeconds?: number;
   wide?: boolean;
   script?: boolean;
+  evidence?: boolean;
   nav?: string;
 }
 
@@ -78,7 +83,7 @@ ${o.refreshSeconds ? `<meta http-equiv="refresh" content="${o.refreshSeconds}">`
 <header>${LOGO}<strong>QoreWitness</strong>${o.nav ?? ""}<span class="tag">Pilot · test network</span></header>
 <main>${o.body}</main>
 <footer>Pilot on the QoreChain test network. No money is collected. QoreWitness never asks for your recovery phrase.</footer>
-${o.script ? `<script>${COPY_SCRIPT}</script>` : ""}</body></html>`;
+${o.script ? `<script>${COPY_SCRIPT}</script>` : ""}${o.evidence ? `<script>${EVIDENCE_SCRIPT}</script>` : ""}</body></html>`;
 }
 
 export const hidden = (name: string, value: string) => `<input type="hidden" name="${esc(name)}" value="${esc(value)}">`;

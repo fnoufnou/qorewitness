@@ -29,6 +29,7 @@ import {
   passwordProblem, privateAddress, readPairing, safeEqual, sessionSecret, sessionValid, setPassword, SESSION_SECONDS,
 } from "./auth.js";
 import { snapshot } from "./camera.js";
+import { evidenceForm, evidencePage, parseRange, planEvidence, writeZip } from "./evidence.js";
 import { CSP, esc, layout } from "./html.js";
 import { SponsorClient } from "./sponsor.js";
 import { boxHealth, collectStatus, daysText, health, RECEIPT_NAME, type BoxHealth, type LocalStatus } from "./status.js";
@@ -83,8 +84,8 @@ function send(res: ServerResponse, code: number, type: string, body: string | Bu
   res.end(body);
 }
 
-const html = (res: ServerResponse, code: number, title: string, body: string, opts: { refresh?: number; script?: boolean; wide?: boolean; extra?: Record<string, string | string[]> } = {}) =>
-  send(res, code, "text/html; charset=utf-8", layout({ title, body, refreshSeconds: opts.refresh, script: opts.script, wide: opts.wide }), opts.extra);
+const html = (res: ServerResponse, code: number, title: string, body: string, opts: { refresh?: number; script?: boolean; evidence?: boolean; wide?: boolean; extra?: Record<string, string | string[]> } = {}) =>
+  send(res, code, "text/html; charset=utf-8", layout({ title, body, refreshSeconds: opts.refresh, script: opts.script, evidence: opts.evidence, wide: opts.wide }), opts.extra);
 
 const redirect = (res: ServerResponse, to: string, extra: Record<string, string | string[]> = {}) =>
   send(res, 303, "text/plain", "", { location: to, ...extra });
@@ -140,6 +141,7 @@ export function dashboardPage(v: DashboardView): string {
 <p class="muted" style="margin-top:12px">To prove a clip, send it with its receipt. Anyone can check both in the public verifier: <a href="${VERIFIER}" rel="noreferrer" target="_blank">qorewitness.fnoufnou.com</a>. Your video never leaves this box unless you send it.</p>
 <details><summary>Technical details</summary><p class="mono">Receipts ${esc(s.receipts)}, waiting windows ${esc(s.pendingWindows)}, open segments ${esc(s.openSegments)}, clips on disk ${esc(s.segmentFiles)}<br>
 ${v.info ? `Account ${esc(v.info.qor1)}<br>Owner ${esc(v.info.owner)}<br>Device id ${esc(v.info.deviceId)}<br>Camera key ${esc(v.info.keyFingerprint)}<br>Registry <a href="${EXPLORER}/address/${esc(v.info.registry)}" rel="noreferrer" target="_blank">${esc(v.info.registry)}</a>` : ""}</p></details></div>
+${v.csrf ? evidenceForm(v.csrf) : ""}
 ${v.csrf ? `<form method="post" action="/logout"><input type="hidden" name="_csrf" value="${esc(v.csrf)}"><button class="secondary">Log out</button></form>` : ""}`;
 }
 
@@ -160,6 +162,7 @@ export function createHandler(o: ServerOptions) {
   const now = o.now ?? Date.now;
   const pairFails = new FailureLimiter(10, 24 * 3600_000); // then: run "pair" again or restart the ui
   const loginFails = new FailureLimiter(5, 60_000);
+  let exporting = false;
   let balanceCache: { at: number; qor1: string; value?: number } | undefined;
 
   async function balance(qor1: string): Promise<number | undefined> {
@@ -190,7 +193,7 @@ export function createHandler(o: ServerOptions) {
     const bal = info ? await balance(info.qor1) : undefined;
     const h = boxHealth(status, { windowSeconds, plan: info?.plan, balanceUqor: bal, setupAgeSeconds, qor1: info?.qor1 });
     if (json) return send(res, 200, "application/json", JSON.stringify({ ...status, health: h, plan: info?.plan, balanceUqor: bal }));
-    return html(res, 200, device, dashboardPage({ status, health: h, info, balanceUqor: bal, retentionDays: Number(cam.QW_RETENTION_DAYS ?? 14), csrf }), { refresh: 60, wide: true });
+    return html(res, 200, device, dashboardPage({ status, health: h, info, balanceUqor: bal, retentionDays: Number(cam.QW_RETENTION_DAYS ?? 14), csrf }), { refresh: 60, wide: true, evidence: true });
   }
 
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -317,6 +320,38 @@ export function createHandler(o: ServerOptions) {
     }
     if (req.method === "GET" && path === "/") return dashboard(res, csrf, false);
     if (req.method === "GET" && path === "/api/status") return dashboard(res, csrf, true);
+    if (req.method === "POST" && (path === "/evidence/check" || path === "/evidence/download")) {
+      const info = readAccountInfo(p);
+      const cam = readEnvFile(p.cameraEnv);
+      const device = info?.device ?? cam.QW_DEVICE ?? "camera";
+      const range = parseRange(form, now());
+      if (!range) return html(res, 400, "Save evidence", evidencePage({ problems: ["Pick a date and a start and end time."] }, csrf));
+      if (exporting) return html(res, 429, "Save evidence", evidencePage({ problems: ["Another export is running. Try again in a minute."] }, csrf));
+      exporting = true;
+      try {
+        const plan = await planEvidence({
+          device, receiptDir: join(p.data, device, "receipts"), segmentDir: join(p.data, device, "segments"),
+          ...range, now: now(), account: info ? { registry: info.registry, owner: info.owner, deviceId: info.deviceId, keyFingerprint: info.keyFingerprint } : undefined,
+        });
+        if (path === "/evidence/check" || !plan.entries.length) {
+          return html(res, plan.entries.length || path === "/evidence/check" ? 200 : 404, "Save evidence", evidencePage({ plan, range }, csrf));
+        }
+        res.writeHead(200, {
+          "content-type": "application/zip", "content-length": String(plan.zipBytes), "cache-control": "no-store",
+          "content-disposition": `attachment; filename="${plan.zipName}"`, "x-content-type-options": "nosniff",
+        });
+        try {
+          await writeZip(plan.entries, res);
+          res.end();
+        } catch (e) {
+          console.error(`${new Date().toISOString()} evidence export failed: ${safeError(e)}`);
+          res.destroy(); // a cut-off download is better than a ZIP with a wrong file in it
+        }
+        return;
+      } finally {
+        exporting = false;
+      }
+    }
     const m = /^\/receipts\/([^/]+)$/.exec(path);
     if (req.method === "GET" && m) {
       const info = readAccountInfo(p);
