@@ -236,7 +236,8 @@ export function createHandler(o: ServerOptions) {
       const claimCookie = setCookie("qw_claim", pairing.token, 24 * 3600);
       if (req.method === "GET" && url.searchParams.has("token")) {
         if (!safeEqual(url.searchParams.get("token") ?? "", pairing.token)) {
-          pairFails.fail("pair");
+          // Not counted in pairFails: a GET needs no Origin, so any web page could send
+          // bad links and lock the code entry. The 192-bit token needs no limit.
           return html(res, 403, "Setup", renderClaimCode("This setup link is not valid. Type the pairing code instead."));
         }
         // Move the token from the address bar into a cookie. A same-page reload keeps SameSite=Strict happy.

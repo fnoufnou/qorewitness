@@ -16,6 +16,19 @@ cd "${QW_APP:-/opt/qorewitness}"
 DATA="${QW_DATA:-/data}"
 POLL="${QW_SUPERVISE_POLL:-5}"
 
+# Before 0.6 the terminal setup wrote camera.env with mode 644, and it holds the
+# camera password. Tighten the modes on every start, so an update fixes old installs.
+tighten_modes() {
+  local d f
+  for d in "$DATA" "$DATA/keys" "$DATA/ui"; do
+    if [ -d "$d" ]; then chmod 700 "$d" 2>/dev/null || true; fi
+  done
+  for f in "$DATA/camera.env" "$DATA/qorewitness.env"; do
+    if [ -f "$f" ]; then chmod 600 "$f" 2>/dev/null || true; fi
+  done
+}
+tighten_modes
+
 # Reads KEY=VALUE lines without running them as shell code (a camera password
 # can hold $, & or ;). Keys must be upper case.
 load_env() {
