@@ -36,6 +36,7 @@ services:
     command: ui
     environment:
       QW_UI_HOSTNAME: ${QW_UI_HOSTNAME:-}
+      QW_UI_PUBLIC_URL: ${QW_UI_PUBLIC_URL:-}
       QW_UI_TRUST_PROXY: ${QW_UI_TRUST_PROXY:-0}
       QW_SPONSOR_URL: ${QW_SPONSOR_URL:-https://qorewitness.fnoufnou.com/sponsor}
     # Read-write: the browser setup writes the camera settings, keys and account.
