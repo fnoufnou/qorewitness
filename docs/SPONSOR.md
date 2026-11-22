@@ -71,7 +71,7 @@ Malformed requests (bad hex, bad nonce) get HTTP 400 without a status word.
 | Per camera per UTC day | 9 test QOR (one camera uses about 6.9 per day) |
 | Per owner per UTC day | 18 test QOR |
 | Global per UTC day | 90 test QOR (start grants count) |
-| Live cameras | 12 in total, 2 per owner (pending, funded and active) |
+| Live cameras | 12 in total, 2 per owner (pending, funded, and active cameras that sealed in the last 48 h) |
 | Balance | top up below 10, never above 15 test QOR |
 | Payouts | at most 1 per owner per hour, at least 0.5 test QOR |
 | Hourly outflow | 30 test QOR, then automatic pause |
@@ -84,7 +84,7 @@ The sponsor refills what was used. The runway after a sponsor stop is the balanc
 
 Abuse limits of the start grant:
 - Anyone can make a camera key and an owner address and get 3 test QOR (two grants in the rare "unknown result" retry). Residual risk, accepted for the pilot: the coins are test tokens. Limits: 6 start grants per day (18 test QOR), one new camera per IP per day, 12 live cameras.
-- Someone with many IPs could take all 12 places with fake cameras. Expired cameras free their place after 48 h. Mitigation if it happens: pause the sponsor, check `state.json`, and lower `SPONSOR_MAX_GRANTS_DAY`.
+- Someone with many IPs could take all 12 places with fake cameras. Expired cameras free their place after 48 h. An active camera that has not sealed for 48 h frees its place too. It stays enrolled, and refills start again when it seals again. Mitigation if it happens: pause the sponsor, check `state.json`, and lower `SPONSOR_MAX_GRANTS_DAY`.
 - An owner can move the grant away and never register. The camera then expires after 48 h and gets no second grant.
 - The IP counter lives in memory. A restart of the service resets it.
 

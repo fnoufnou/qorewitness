@@ -140,8 +140,22 @@ export class Sponsor {
     return { status, capPerDayUqor: this.cfg.capCameraDayUqor.toString(), note: PILOT_NOTE, ...(message ? { message } : {}) };
   }
 
+  /**
+   * Does this camera hold a place in the pilot? Pending and funded cameras do (they
+   * expire after pendingTtlSeconds). An active camera does while it seals: after
+   * pendingTtlSeconds without a sealed window it frees its place, so abandoned test
+   * boxes and idle fake cameras cannot fill the pilot for ever. It stays enrolled,
+   * and refills start again when it seals again.
+   */
+  private holdsPlace(e: Enrollment, now: number): boolean {
+    if (!LIVE.has(e.state)) return false;
+    if (e.state !== "active") return true;
+    return Math.max(e.activatedAt ?? e.enrolledAt, e.lastSealAt ?? 0) > now - this.cfg.pendingTtlSeconds;
+  }
+
   private liveCount(owner?: string): number {
-    return Object.values(this.state.enrollments).filter((e) => LIVE.has(e.state) && (!owner || e.owner === owner)).length;
+    const now = this.clock.now();
+    return Object.values(this.state.enrollments).filter((e) => this.holdsPlace(e, now) && (!owner || e.owner === owner)).length;
   }
 
   private ipUsed(ip: string): number {
@@ -209,9 +223,11 @@ export class Sponsor {
       }
       if (!verify(pub, keyHash)) throw refuse("rejected", "the camera signature does not verify");
       if (existing) return this.answer(this.wordOf(existing));
+      // Read before admission: no await between the admission check and the write (parallel enrols).
+      const count = await this.chain.anchorCount(getAddress(own), dev);
+      if (this.state.enrollments[key]) return this.answer(this.wordOf(this.state.enrollments[key]));
       this.admit(own, ip);
       const now = this.clock.now();
-      const count = await this.chain.anchorCount(getAddress(own), dev);
       this.ipCount.set(ip, this.ipUsed(ip) + 1);
       this.state.enrollments[key] = {
         owner: own, deviceId: dev, keyHash, path: "onchain", state: "active", enrolledAt: now, activatedAt: now,
@@ -444,6 +460,20 @@ export class Sponsor {
     if (changed) this.save();
   }
 
+  /** Notes the newest sealed window of each active camera (for holdsPlace). Never later than now. */
+  private async refreshLastSeal(now: number): Promise<void> {
+    let changed = false;
+    for (const e of Object.values(this.state.enrollments)) {
+      if (e.state !== "active") continue;
+      const end = Math.min(await this.chain.lastWindowEnd(getAddress(e.owner), e.deviceId as Hex), now);
+      if (end > (e.lastSealAt ?? 0)) {
+        e.lastSealAt = end;
+        changed = true;
+      }
+    }
+    if (changed) this.save();
+  }
+
   // ------------------------------------------------------------ top-up loop
 
   /**
@@ -468,6 +498,7 @@ export class Sponsor {
     const now = this.clock.now();
     this.prune(now);
     await this.checkRegistrations();
+    await this.refreshLastSeal(now);
     result.grants = await this.sendGrants();
     const day = this.dayUsage(utcDay(now));
 

@@ -33,6 +33,8 @@ export interface Enrollment {
   reason?: string;
   enrolledAt: number; // unix seconds
   activatedAt?: number;
+  /** End (unix seconds) of the newest sealed window seen on chain. Idle cameras free their place. */
+  lastSealAt?: number;
   grant?: Grant;
   /** anchorCount already paid for (or present at activation). */
   paidAnchorCount: string; // bigint as decimal string

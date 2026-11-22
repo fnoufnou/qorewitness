@@ -690,3 +690,45 @@ describe("sponsor: end to end with the box client (src/web/sponsor.ts)", () => {
     }
   });
 });
+
+describe("sponsor: security review 2", () => {
+  it("frees the place of an active camera that stopped sealing, and refills it again when it seals", async () => {
+    // Abandoned test boxes or idle fake cameras must not fill the pilot for ever.
+    const { sponsor, chain, clock, payer, cfg } = await enrolled({ maxCameras: 1 });
+    chain.add(OTHER, DEV2, strangerKey);
+    await rejects(sponsor.enroll(enrollBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 })), "full");
+    clock.t += cfg.pendingTtlSeconds + 3600; // no seal for more than 48 h
+    await sponsor.runOnce();
+    assert.equal(sponsor.health().enrolled, 0);
+    assert.equal((await sponsor.enroll(enrollBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 }))).status, "enrolled");
+    // The idle camera stays enrolled: when it seals again, refills apply.
+    assert.equal(sponsor.status(DEV, OWNER).status, "active");
+    clock.t += 3 * 3600;
+    chain.anchor(OWNER, DEV, 18);
+    await sponsor.runOnce();
+    assert.ok(payer.sent.some((p) => p.owner === OWNER));
+  });
+
+  it("keeps the place of a camera that seals", async () => {
+    const { sponsor, chain, clock, cfg } = await enrolled({ maxCameras: 1 });
+    for (let t = 0; t < cfg.pendingTtlSeconds + 7200; t += 3600) {
+      clock.t += 3600;
+      chain.anchor(OWNER, DEV, 1);
+      await sponsor.runOnce();
+    }
+    chain.add(OTHER, DEV2, strangerKey);
+    await rejects(sponsor.enroll(enrollBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 })), "full");
+  });
+
+  it("admits at most maxCameras when enrolments arrive in parallel", async () => {
+    const { sponsor, chain } = setup({ maxCameras: 1 });
+    chain.add(OWNER, DEV, camKey);
+    chain.add(OTHER, DEV2, strangerKey);
+    const r = await Promise.allSettled([
+      sponsor.enroll(enrollBody(sponsor, camKey)),
+      sponsor.enroll(enrollBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 })),
+    ]);
+    assert.equal(r.filter((x) => x.status === "fulfilled").length, 1);
+    assert.equal(sponsor.health().enrolled, 1);
+  });
+});
