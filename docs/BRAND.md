@@ -48,6 +48,8 @@ Dark mode uses deep pine (`#0F211C`, surfaces `#152B25`), never black.
 - Buttons: radius 8 px. Primary in Pine 800 with white text. Secondary white with a border.
 - Icons: 24 px line icons, 1.8 px stroke, in a Pine 100 tile.
 - Show the product. The hero shows three camera frames with seal badges and the verification report that belongs to the main frame.
+- App screens are real screenshots of the app (`web/site/assets/screens/`, WebP, 2x) in simple CSS frames: a phone, a browser window or a terminal. For a camera maker's own app, use the neutral illustrated phone with the menu path as text. Never copy a vendor's app UI.
+- Section edges: a tiny street skyline (some houses carry a camera with an orange recording dot) under the hero and above the footer, a soft wave or a row of chain links between some sections. They are decorative SVG symbols in the colour of the next section and follow light and dark mode.
 
 ## Voice
 

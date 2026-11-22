@@ -27,3 +27,41 @@
     });
   });
 })();
+
+/* Menu button on small screens. Without this file the menu shows as a plain list. */
+(function () {
+  var header = document.querySelector(".site-header");
+  var btn = header && header.querySelector(".menu-btn");
+  var nav = document.getElementById("site-nav");
+  if (!btn || !nav) return;
+  btn.hidden = false;
+  function set(open, focusBtn) {
+    header.classList.toggle("open", open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (!open && focusBtn) btn.focus();
+  }
+  btn.addEventListener("click", function () {
+    var open = btn.getAttribute("aria-expanded") !== "true";
+    set(open, false);
+    if (open) { var first = nav.querySelector("a"); if (first) first.focus(); }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && btn.getAttribute("aria-expanded") === "true") set(false, true);
+  });
+  document.addEventListener("click", function (e) {
+    if (btn.getAttribute("aria-expanded") === "true" && !header.contains(e.target)) set(false, false);
+  });
+})();
+
+/* Rows of app screens and wide tables: a keyboard stop only while they scroll sideways. */
+(function () {
+  var rows = document.querySelectorAll(".screens, .tablewrap");
+  function check() {
+    rows.forEach(function (r) {
+      if (r.scrollWidth > r.clientWidth + 1) r.setAttribute("tabindex", "0");
+      else r.removeAttribute("tabindex");
+    });
+  }
+  check();
+  window.addEventListener("resize", check);
+})();
