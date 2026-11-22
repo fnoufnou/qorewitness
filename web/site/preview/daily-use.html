@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Daily use | QoreWitness</title>
-<meta name="description" content="What changes in your day when QoreWitness runs: nothing. What the dashboard colours mean, how long clips are kept, and what to do after a power cut.">
+<meta name="description" content="Living with QoreWitness: what the dashboard colours mean, how long recordings are kept, and what happens after a power cut.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#17483A">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Daily use | QoreWitness">
-<meta property="og:description" content="What changes in your day when QoreWitness runs: nothing. What the dashboard colours mean, how long clips are kept, and what to do after a power cut.">
+<meta property="og:description" content="Living with QoreWitness: what the dashboard colours mean, how long recordings are kept, and what happens after a power cut.">
 <meta property="og:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -38,69 +38,69 @@
 <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="11" rx="3"/><circle cx="12" cy="11.5" r="3"/><path d="M9 20.5h6M12 17v3.5"/></symbol>
 <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 12h4"/><circle cx="16.5" cy="12" r="1" fill="currentColor"/><path d="M7 20h10"/></symbol>
 <symbol id="i-browser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><path d="M7 6.8h.01M10 6.8h.01"/><path d="M8.5 14l2.5 2.5 4.5-4.5"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.2l8.2 3.2v6.2c0 5.1-3.5 9.3-8.2 10.5-4.7-1.2-8.2-5.4-8.2-10.5V5.4z" fill="currentColor"/><path d="M12 2.2v19.9c-4.7-1.2-8.2-5.4-8.2-10.5V5.4z" fill="#fff" opacity=".14"/><path d="M8.1 12.1l2.7 2.7 5.1-5.3" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </defs></svg>
 <a class="skip" href="#main">Skip to content</a>
+<div class="beta-bar" role="note"><div class="wrap"><p><b>QoreWitness is in beta.</b> It runs on the QoreChain test network, which can be reset, and you can use it free of charge while we build out the service. <a href="trust.html#beta">Learn more</a></p></div></div>
 <header class="site-header"><div class="wrap bar">
 <a class="brand" href="index.html" aria-label="QoreWitness home"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
-<span class="badge-pilot" title="QoreWitness runs on a test network. No payment is collected."><i></i>Testnet pilot</span>
-<nav class="nav" aria-label="Main"><a href="how-it-works.html">How it works</a><a href="get-started.html">Get started</a><a href="prove.html">Prove a video</a><a href="plans.html">Plans</a><a href="faq.html">FAQ</a></nav>
-<a class="btn primary sm cta" href="prove.html#demo">Try the demo</a>
+<nav class="nav" aria-label="Main"><a href="how-it-works.html">How it works</a><a href="get-started.html">Get started</a><a href="cameras.html">Cameras</a><a href="prove.html">Prove a video</a><a href="plans.html">Plans</a><a href="faq.html">FAQ</a></nav>
+<a class="btn primary sm cta" href="get-started.html">Set up your camera</a>
 </div></header>
 <main id="main">
 
-<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Daily use</p><h1>Nothing changes in your day.</h1><p class="lead">Keep using the Tapo app for live view and alerts. QoreWitness works in the background. Open the dashboard once in a while.</p></div></div>
+<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Daily use</p><h1>Set it up once, and it simply keeps going.</h1><p class="lead">Keep using your camera app for live view and alerts, just as you do today. QoreWitness works quietly in the background, and your dashboard tells you at a glance that all is well.</p></div></div>
 <section><div class="wrap narrow">
-<h2>The dashboard</h2>
-<p style="margin-top:16px">It shows one line in a colour and one thing to do. Bookmark its address on your phone and laptop. On a Pi named <code>qorewitness</code> it often is <code>http://qorewitness.local:8080</code>.</p>
-<div class="tablewrap"><table><thead><tr><th>Colour</th><th>It says</th><th>What to do</th></tr></thead><tbody>
-<tr><td><b style="color:var(--ok)">Green</b></td><td>Sealing OK. Last seal 4 minutes ago.</td><td>Nothing.</td></tr>
-<tr><td><b style="color:var(--warn)">Orange</b></td><td>Waiting for the first seal.</td><td>Nothing. It comes 10 to 15 minutes after setup.</td></tr>
-<tr><td><b style="color:var(--warn)">Orange</b></td><td>Network fees low.</td><td>Nothing. The pilot tops up.</td></tr>
-<tr><td><b style="color:var(--warn)">Orange</b></td><td>The disk is almost full.</td><td>Keep video for fewer days, or connect a bigger disk.</td></tr>
-<tr><td><b style="color:var(--bad)">Red</b></td><td>No video from the camera.</td><td>Check the power and Wi-Fi of the camera.</td></tr>
-<tr><td><b style="color:var(--bad)">Red</b></td><td>Sealing stopped 40 minutes ago.</td><td>Check the internet of the box. Restart the box if this stays.</td></tr>
+<h2>Your dashboard</h2>
+<p style="margin-top:16px">It shows one status line in a colour, and when something needs you, exactly one thing to do. Bookmark it on your phone and laptop. On a Raspberry Pi named <code>qorewitness</code>, the address is usually <code>http://qorewitness.local:8080</code>.</p>
+<div class="tablewrap"><table class="stack"><thead><tr><th scope="col">Colour</th><th scope="col">It says</th><th scope="col">What to do</th></tr></thead><tbody>
+<tr><td><b style="color:var(--ok)">Green</b></td><td data-label="It says">Sealing OK.</td><td data-label="What to do">Nothing at all.</td></tr>
+<tr><td><b style="color:var(--warn)">Orange</b></td><td data-label="It says">Waiting for the first seal.</td><td data-label="What to do">Nothing. It arrives shortly after setup.</td></tr>
+<tr><td><b style="color:var(--warn)">Orange</b></td><td data-label="It says">The disk is almost full.</td><td data-label="What to do">Keep video for fewer days, or connect a bigger disk.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td data-label="It says">No video from the camera.</td><td data-label="What to do">Check the camera's power and Wi-Fi.</td></tr>
+<tr><td><b style="color:var(--bad)">Red</b></td><td data-label="It says">Sealing stopped.</td><td data-label="What to do">Check that your QoreWitness computer is online, and restart it if the message stays.</td></tr>
 </tbody></table></div>
 <figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: the dashboard in green, orange and red state"><svg aria-hidden="true" focusable="false"><use href="#i-image"/></svg><span>Screenshot: the dashboard in green, orange and red state</span></div></figure>
-<details class="help"><summary>Self-managed plan: fee messages</summary><div class="in"><p>With Self-managed you add free test tokens yourself. If the line says the network fees are low or ran out, add test QOR to the address shown. See <a href="plans.html">Plans</a>.</p></div></details>
-<p class="muted">Phone alerts are planned. Today you see these states when you open the dashboard.</p>
+<details class="help"><summary>Self-managed plan: fee messages</summary><div class="in"><p>With Self-managed you pay the network fees from your own wallet. If the dashboard says the fees are running out, add tokens to the address it shows. See <a href="plans.html">Plans</a>.</p></div></details>
+<p class="muted">Phone alerts are on our roadmap. For now, you see the status whenever you open the dashboard.</p>
 </div></section>
 
 <section class="alt"><div class="wrap narrow">
-<h2>Clips are kept for about 2 weeks</h2>
-<p style="margin-top:16px">The box deletes old video after about 2 weeks. Receipts stay. A clip that is gone cannot be proven. <b>Press Save evidence</b> for any clip you may need. See <a href="prove.html#owner">Prove a video</a>.</p>
+<h2>About two weeks of video, and seals for good</h2>
+<p style="margin-top:16px">QoreWitness keeps about two weeks of recordings, depending on your disk, and clears the oldest to make room. The seals stay. A clip that has been cleared cannot be proven, so press <b>Save evidence</b> for anything you may need later. <a href="prove.html#owner">Prove a video</a> shows how.</p>
 </div></section>
 
 <section><div class="wrap narrow">
 <h2>Power cuts and restarts</h2>
 <ul class="plain" style="margin-top:16px">
-<li><b>The box restarts.</b> Sealing starts again by itself.</li>
-<li><b>The camera loses power.</b> No video is recorded while it is off. Earlier seals stay valid. The dashboard turns red until the camera is back.</li>
-<li><b>The internet is down.</b> Recording goes on. The minutes without a connection probably have no seal. The public record shows the gap.</li>
+<li><b>Your QoreWitness computer restarts.</b> Sealing picks up again by itself.</li>
+<li><b>The camera loses power.</b> Nothing is recorded while it is off, and every earlier seal stays valid. The dashboard turns red until the camera is back.</li>
+<li><b>The internet goes down.</b> Recording carries on. Footage from while the connection was down may have no seal, and the public record shows that gap openly.</li>
 </ul>
 </div></section>
 
 <section class="alt"><div class="wrap narrow">
 <h2>Pause or remove</h2>
 <ul class="plain" style="margin-top:16px">
-<li>To pause, unplug the box. Your camera and the Tapo app keep working.</li>
+<li>To pause, switch off your QoreWitness computer. Your camera and its app keep working as usual.</li>
 <li>To remove QoreWitness, see <a href="developers.html#run">For developers</a>.</li>
-<li>Records on the public record cannot be deleted. They hold only fingerprints and times.</li>
+<li>Seals on the public record cannot be deleted. They hold only fingerprints and times.</li>
 </ul>
-<details class="help"><summary>Advanced: back up the box</summary><div class="in"><p>If the box breaks, you set it up again with a new camera. Seals made before stay checkable. To keep the same camera identity, copy the folder <code>~/qorewitness/data</code> to a USB stick. Anyone with these files can use your test account. QoreWitness never asks for them.</p></div></details>
-<div class="callout"><b class="t">Keep the box on your home network</b>Use a network you trust. Never forward port 8080 on your router.</div>
+<details class="help"><summary>Advanced: back up your QoreWitness computer</summary><div class="in"><p>If the computer breaks, you set QoreWitness up again with a new camera seal, and every earlier seal stays checkable. To keep the same camera identity, copy the folder <code>~/qorewitness/data</code> to a USB stick and keep it safe. Anyone with these files can use your account, which is why QoreWitness never asks for them.</p></div></details>
+<div class="callout"><b class="t">Keep QoreWitness on your home network</b>Use a network you trust, and never open port 8080 to the internet in your router.</div>
 </div></section>
-<div class="band"><div class="wrap"><div><h2>Need proof of a clip?</h2><p>Press Save evidence, send the file, and let the other side check it in a browser.</p></div><a class="btn primary" href="prove.html">Prove a video <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a></div></div>
+<div class="band"><div class="wrap"><div><h2>Need to prove a clip?</h2><p>Press Save evidence, share the file, and let anyone check it with QoreWitness Verify.</p></div><a class="btn primary" href="prove.html">Prove a video <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a></div></div>
 </main>
 <footer class="site-footer"><div class="wrap">
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
-<p>Seal your camera footage. Prove later that nobody changed it.</p>
+<p>Your camera footage, sealed as it is recorded and ready to prove whenever you need it.</p>
 <p><b>QoreWitness will never ask for your passwords or files.</b></p></div>
-<div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
+<div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="cameras.html">Cameras</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
-<div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>
+<div><h2>Open</h2><ul><li><a href="../verifier.html">QoreWitness Verify</a></li><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>
 </div>
-<div class="legal"><span>Testnet pilot. Both plans are free and no payment is collected. Records on the test network may be removed when it resets.</span><span>Open source under Apache-2.0. Built by fnoufnou. QoreWitness is not a TP-Link product and has no link with TP-Link. Tapo is a trademark of its owner.</span></div>
+<div class="legal"><span>Open source under Apache-2.0. Built by fnoufnou.</span><span>QoreWitness has no link with the camera makers named on this site. Their names and brands belong to their owners.</span></div>
 </div></footer>
 <script src="../assets/site.js" defer></script>
 </body>

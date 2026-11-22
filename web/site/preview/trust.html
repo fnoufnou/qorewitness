@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Trust and limits | QoreWitness</title>
-<meta name="description" content="What QoreWitness proves, what it cannot prove, who could attack it, how it was reviewed, and what happens if the test network resets.">
+<meta name="description" content="What QoreWitness proves and what it cannot, who could attack it, how it was reviewed, what the beta on the test network means, and what leaves your home.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#17483A">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Trust and limits | QoreWitness">
-<meta property="og:description" content="What QoreWitness proves, what it cannot prove, who could attack it, how it was reviewed, and what happens if the test network resets.">
+<meta property="og:description" content="What QoreWitness proves and what it cannot, who could attack it, how it was reviewed, what the beta on the test network means, and what leaves your home.">
 <meta property="og:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -38,109 +38,112 @@
 <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="11" rx="3"/><circle cx="12" cy="11.5" r="3"/><path d="M9 20.5h6M12 17v3.5"/></symbol>
 <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 12h4"/><circle cx="16.5" cy="12" r="1" fill="currentColor"/><path d="M7 20h10"/></symbol>
 <symbol id="i-browser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18"/><path d="M7 6.8h.01M10 6.8h.01"/><path d="M8.5 14l2.5 2.5 4.5-4.5"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.2l8.2 3.2v6.2c0 5.1-3.5 9.3-8.2 10.5-4.7-1.2-8.2-5.4-8.2-10.5V5.4z" fill="currentColor"/><path d="M12 2.2v19.9c-4.7-1.2-8.2-5.4-8.2-10.5V5.4z" fill="#fff" opacity=".14"/><path d="M8.1 12.1l2.7 2.7 5.1-5.3" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </defs></svg>
 <a class="skip" href="#main">Skip to content</a>
+<div class="beta-bar" role="note"><div class="wrap"><p><b>QoreWitness is in beta.</b> It runs on the QoreChain test network, which can be reset, and you can use it free of charge while we build out the service. <a href="trust.html#beta">Learn more</a></p></div></div>
 <header class="site-header"><div class="wrap bar">
 <a class="brand" href="index.html" aria-label="QoreWitness home"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
-<span class="badge-pilot" title="QoreWitness runs on a test network. No payment is collected."><i></i>Testnet pilot</span>
-<nav class="nav" aria-label="Main"><a href="how-it-works.html">How it works</a><a href="get-started.html">Get started</a><a href="prove.html">Prove a video</a><a href="plans.html">Plans</a><a href="faq.html">FAQ</a></nav>
-<a class="btn primary sm cta" href="prove.html#demo">Try the demo</a>
+<nav class="nav" aria-label="Main"><a href="how-it-works.html">How it works</a><a href="get-started.html">Get started</a><a href="cameras.html">Cameras</a><a href="prove.html">Prove a video</a><a href="plans.html">Plans</a><a href="faq.html">FAQ</a></nav>
+<a class="btn primary sm cta" href="get-started.html">Set up your camera</a>
 </div></header>
 <main id="main">
 
-<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Trust and limits</p><h1>What it proves, and what it cannot.</h1><p class="lead">A proof is only as good as what goes into it. Here is the plain list. We publish what we catch and what we miss.</p></div></div>
+<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Trust and limits</p><h1>What it proves, and what it cannot.</h1><p class="lead">A proof is only as good as what goes into it, so here is the plain list. We publish what our own tests catch and what they miss.</p></div></div>
 <section><div class="wrap split">
 <div><h2>What it proves</h2>
 <ul class="checks" style="margin-top:16px">
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>This file existed at the time of the network record. It was sealed within minutes of recording.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The file existed at the time of the ledger record. It is sealed within one 10-minute window of recording.</span></li>
 <li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>It has not changed since it was sealed.</span></li>
 <li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The seal was made with the key of one known camera.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The clip sits in an unbroken recording. A removed, inserted or re-ordered clip shows. A gap in recording shows with its start and length.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The time is bounded on both sides. The seal was made after a recent block and recorded before a later block.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The clip sits in an unbroken recording. A removed, inserted or reordered clip shows, and a gap in recording shows with its start and length.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The time is bounded on both sides: the seal was made after a recent block and recorded before a later block.</span></li>
 </ul></div>
 <div><h2>What it cannot prove</h2>
 <ul class="checks no" style="margin-top:16px">
-<li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That the scene was real. A staged scene or a fake stream is sealed the same way.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That the scene was real. A staged scene or a fake stream is sealed in the same way.</span></li>
 <li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>Who recorded it. It shows which camera key signed.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That nobody fed the box fake footage before sealing. The box is the trust boundary.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That a court accepts it. We are not an EU qualified time stamp provider. A court weighs it as ordinary evidence.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That nobody fed the QoreWitness computer fake footage before sealing. That computer is the trust boundary.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That a court accepts it. We are not an EU qualified time stamp provider, and a court weighs a seal like other evidence.</span></li>
 </ul></div>
+</div></section>
+
+<section class="alt" id="beta"><div class="wrap narrow">
+<p class="eyebrow">The beta</p>
+<h2>What the beta on the test network means for you</h2>
+<p style="margin-top:16px">QoreWitness runs on qorechain-diana, the QoreChain test network. The post-quantum checks it relies on are live there today and not yet on the QoreChain main network.</p>
+<ul class="limits">
+<li><b>The test network can be reset.</b> The QoreChain team says it will not reset before 15 Dec 2026. After that, a reset can remove every seal made during the beta.</li>
+<li><b>Seals from the beta show how the method works.</b> They are not meant as evidence yet, because the test network can be reset. Keep the original files.</li>
+<li><b>Fees included depends on us.</b> The service operator (fnoufnou) pays the network fees with test tokens that have no value. The service can stop, and you can then switch to Self-managed.</li>
+<li><b>No payment is collected during the beta.</b> When the main network opens, seals would need to be made again there. We plan to tell you before that happens and to guide you through it.</li>
+</ul>
 </div></section>
 
 <section id="facts"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Facts you can check</p><h2>Only what we can show today.</h2>
-<p>Each item links to its proof. We show no logos, no customer counts and no reviews, because we have none.</p></div>
+<p>Each item links to its proof. You will find no logos, customer counts or reviews here, because we have none to show yet.</p></div>
 <ul class="grid c2" style="list-style:none;padding:0;margin:0">
 <li class="tile"><h3>Open source</h3><p>All code is open under Apache-2.0. <a href="https://github.com/fnoufnou/qorewitness">Read it on GitHub</a>.</p></li>
-<li class="tile"><h3>Reviewed with the QCAI Contract Auditor</h3><p>Four review rounds on QoreChain. The reports are published. <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/AUDIT.md">Read the audit notes</a>.</p></li>
+<li class="tile"><h3>Reviewed with the QCAI Contract Auditor</h3><p>Four automated review rounds on QoreChain, with the reports published. <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/AUDIT.md">Read the audit notes</a>.</p></li>
 <li class="tile"><h3>Checked on chain</h3><p>The smart contract checks the ML-DSA-87 signature on QoreChain before it accepts a record. <a href="developers.html#pqc">See how</a>.</p></li>
-<li class="tile"><h3>A live pilot camera</h3><p>A real home camera has sealed its footage every 10 minutes on the testnet since 9 Nov 2026.</p></li>
-<li class="tile"><h3>A verifier in one file</h3><p>The verifier runs in your browser. It is one HTML file with a published fingerprint (SHA-256). <a href="../verifier.html">Open the verifier</a>.</p></li>
+<li class="tile"><h3>A live camera since 9 Nov 2026</h3><p>A real home camera has sealed its footage every 10 minutes on the test network since 9 Nov 2026.</p></li>
+<li class="tile"><h3>QoreWitness Verify in one file</h3><p>The verification service runs in your browser. It is one HTML file with a published SHA-256 fingerprint. <a href="../verifier.html">Open QoreWitness Verify</a>.</p></li>
 <li class="tile"><h3>We publish what we miss</h3><p>Our own attack drills list what the system catches and what it does not. <a href="#threats">Read the results</a>.</p></li>
 </ul>
 </div></section>
 
 <section class="alt" id="threats"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Threat model, summary</p><h2>Who could attack it, and what happens.</h2>
-<p>We ran drills on the live system. Results are from our own tests. No outside firm ran them. Read the full texts: <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/THREAT_MODEL.md">threat model</a> and <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CUSTODY_DRILL.md">custody drill</a>.</p></div>
-<div class="tablewrap"><table><thead><tr><th>Attack</th><th>Result</th><th>Why</th></tr></thead><tbody>
-<tr><td>Change one byte of a sealed clip</td><td><b>Detected</b></td><td>The file fingerprint is no longer in the receipt.</td></tr>
-<tr><td>Remove or re-order a clip in the receipt</td><td><b>Detected</b></td><td>The chain of clips breaks.</td></tr>
+<p>We ran these drills on the live system ourselves. No outside firm ran them. The full texts are in the <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/THREAT_MODEL.md">threat model</a> and the <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CUSTODY_DRILL.md">custody drill</a>.</p></div>
+<div class="tablewrap"><table><thead><tr><th scope="col">Attack</th><th scope="col">Result</th><th scope="col">Why</th></tr></thead><tbody>
+<tr><td>Change one byte of a sealed clip</td><td><b>Detected</b></td><td>The file fingerprint is no longer in the seal file.</td></tr>
+<tr><td>Remove or reorder a clip in the seal file</td><td><b>Detected</b></td><td>The chain of clips breaks.</td></tr>
 <tr><td>Seal a second version of an old window</td><td><b>Refused</b></td><td>The contract refuses overlapping windows.</td></tr>
 <tr><td>Swap in footage from another camera, re-encode, delete or add a clip before sealing</td><td><b>Flagged</b></td><td>The record shows a stream change, a gap or an overlap. In our drill, 4 of 5 such attacks were flagged.</td></tr>
-<tr><td>Swap in footage that uses the camera's own settings, before sealing</td><td><b>Missed</b></td><td>The box cannot tell. This is the trust boundary.</td></tr>
-<tr><td>Steal the box</td><td>Risk</td><td>The box holds your camera key and, today, the keys of your test account. Keep the box safe. A mode that keeps the main key offline is planned.</td></tr>
+<tr><td>Swap in footage that uses the camera's own settings, before sealing</td><td><b>Missed</b></td><td>The QoreWitness computer cannot tell. This is the trust boundary.</td></tr>
+<tr><td>Steal the QoreWitness computer</td><td>Risk</td><td>It holds your camera key and, today, the keys of your account on the test network. Keep it safe. A mode that keeps the main key offline is planned.</td></tr>
 <tr><td>An attacker with only the classic (ECDSA) key of the account</td><td><b>Failed</b></td><td>In a dry run of the Q-Day Drill, 13 attacks failed and 0 succeeded. Every change needs a fresh post-quantum signature.</td></tr>
 </tbody></table></div>
 </div></section>
 
 <section><div class="wrap split">
 <div><h2>How it was reviewed</h2>
-<p style="margin-top:16px">We reviewed the smart contract in four rounds with the QCAI Contract Auditor on the QoreChain dashboard, from 12 to 17 Nov 2026. Each finding is mapped to a fix, a test or a reason. The reports are published.</p>
+<p style="margin-top:16px">We reviewed the smart contract in four rounds with the QCAI Contract Auditor on the QoreChain dashboard, from 12 to 17 Nov 2026. Each finding is mapped to a fix, a test or a reason, and the reports are published.</p>
 <p>These are automated reviews. No accredited security firm has audited QoreWitness.</p>
 <p><a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/AUDIT.md">Read the audit notes</a></p></div>
 <div><h2>Open source</h2>
-<p style="margin-top:16px">All code is open under Apache-2.0. You can read it, run it and rebuild the verifier. The verifier is one HTML file. Its fingerprint (SHA-256) is published.</p>
+<p style="margin-top:16px">All code is open under Apache-2.0. You can read it, run it and rebuild QoreWitness Verify yourself. It is one HTML file, and its SHA-256 fingerprint is published.</p>
 <p><a href="https://github.com/fnoufnou/qorewitness">GitHub</a> · <a href="developers.html">For developers</a></p></div>
 </div></section>
 
-<section class="alt"><div class="wrap narrow">
-<h2>Testnet pilot: what can go wrong</h2>
-<ul class="limits" style="margin-top:16px">
-<li><b>The test network can reset.</b> The QoreChain team says it will not reset before 15 Dec 2026. After that, a reset can remove every pilot record.</li>
-<li><b>Pilot records are not evidence yet.</b> They show how the method works.</li>
-<li><b>Fees included depends on us.</b> The pilot operator (fnoufnou) pays the fees with test tokens. The service can stop. You can then switch to Self-managed.</li>
-<li><b>The main network is not live for this yet.</b> The post-quantum checks run on the testnet today. When the main network opens, you would need to seal again.</li>
-</ul>
-</div></section>
-
-<section id="privacy"><div class="wrap">
+<section class="alt" id="privacy"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Privacy</p><h2>What leaves your home.</h2>
 <p>This is a summary and not legal advice. It reflects the GDPR (AVG) as we understand it.</p></div>
-<div class="tablewrap"><table><thead><tr><th>Part</th><th>Data</th><th>Our rule</th></tr></thead><tbody>
-<tr><td>Your box</td><td>Video of people at and near your home. Camera address and camera password.</td><td>Video stays on the box. We never receive it. The box sends no usage data to us.</td></tr>
-<tr><td>Public network</td><td>Account address, camera id, times and fingerprints.</td><td>Fixed rhythm. Fingerprints show no content. We use no names or addresses as labels.</td></tr>
-<tr><td>Public network node</td><td>The IP address of your box can be seen by the node it talks to.</td><td>Known limit.</td></tr>
-<tr><td>This website</td><td>Your IP address in server logs.</td><td>No trackers. No email is collected in the pilot.</td></tr>
+<div class="tablewrap"><table><thead><tr><th scope="col">Part</th><th scope="col">Data</th><th scope="col">Our rule</th></tr></thead><tbody>
+<tr><td>Your QoreWitness computer</td><td>Video of people at and near your home. The camera address and camera password.</td><td>Video stays on your computer, and we never receive it. QoreWitness sends no usage data to us.</td></tr>
+<tr><td>Public ledger</td><td>Account address, camera id, times and fingerprints.</td><td>A fixed rhythm. Fingerprints show no content. We use no names or addresses as labels.</td></tr>
+<tr><td>Public ledger node</td><td>The node that QoreWitness talks to can see your IP address.</td><td>A known limit.</td></tr>
+<tr><td>This website</td><td>Your IP address in server logs.</td><td>No trackers, and no email addresses collected.</td></tr>
 </tbody></table></div>
 <ul class="plain">
-<li>Records on a public network cannot be deleted. Keep names and addresses out of camera labels.</li>
-<li>A fingerprint of a video with people in it may count as personal data in some cases. We keep everything else off the chain.</li>
+<li>Records on a public ledger cannot be deleted. Keep names and addresses out of camera labels.</li>
+<li>A fingerprint of a video with people in it may count as personal data in some cases. Everything else stays off the chain.</li>
 </ul>
-<div class="callout warn"><b class="t">If your camera films the street or a neighbour</b>The household exemption likely does not apply then (CJEU, case C-212/13, Rynes). You are the controller of that video. Aim the camera at your own property. Put up a sign. Read the guidance on home cameras from your data protection authority. In the Netherlands this is the <a href="https://www.autoriteitpersoonsgegevens.nl">Autoriteit Persoonsgegevens</a>.</div>
+<div class="callout warn"><b class="t">If your camera films the street or a neighbour</b>The household exemption likely does not apply then (CJEU, case C-212/13, Rynes). You are the controller of that video. Aim the camera at your own property, put up a sign, and read the guidance on home cameras from your data protection authority. In the Netherlands this is the <a href="https://www.autoriteitpersoonsgegevens.nl">Autoriteit Persoonsgegevens</a>.</div>
 <p><b>QoreWitness will never ask for your passwords or files.</b></p>
 </div></section>
 </main>
 <footer class="site-footer"><div class="wrap">
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
-<p>Seal your camera footage. Prove later that nobody changed it.</p>
+<p>Your camera footage, sealed as it is recorded and ready to prove whenever you need it.</p>
 <p><b>QoreWitness will never ask for your passwords or files.</b></p></div>
-<div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
+<div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="cameras.html">Cameras</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
 <div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
-<div><h2>Code</h2><ul><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="../verifier.html">Verifier</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>
+<div><h2>Open</h2><ul><li><a href="../verifier.html">QoreWitness Verify</a></li><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></div>
 </div>
-<div class="legal"><span>Testnet pilot. Both plans are free and no payment is collected. Records on the test network may be removed when it resets.</span><span>Open source under Apache-2.0. Built by fnoufnou. QoreWitness is not a TP-Link product and has no link with TP-Link. Tapo is a trademark of its owner.</span></div>
+<div class="legal"><span>Open source under Apache-2.0. Built by fnoufnou.</span><span>QoreWitness has no link with the camera makers named on this site. Their names and brands belong to their owners.</span></div>
 </div></footer>
 <script src="../assets/site.js" defer></script>
 </body>
