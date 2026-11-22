@@ -28,9 +28,11 @@
   --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --r:8px;
+  --lg-r:#17483A;--lg-l:#2F7D64;--lg-c:#D9EAE3;--lg-d:#E8663D;
 }
 @media (prefers-color-scheme:dark){:root{
   --bg:#0F211C; --surface:#152B25; --line:#284039; --fg:#E9EFEC; --muted:#A3B3AD;
+  --lg-r:#246A54;--lg-l:#4FA586;--lg-c:#CFE5DC;--lg-d:#EE7046;
   --brand:#2F7A63; --link:#8FD1B8; --pine-50:#152B25; --pine-100:#1C352E;
   --ok:#6FCF9D; --ok-bg:#173A2C; --bad:#FF8F84; --bad-bg:#3A1F1C; --signal-ink:#FF936B;
 }}
@@ -147,6 +149,7 @@ ul.limits li::marker{color:var(--signal)}
 footer{background:var(--pine-900);color:#CFE0D9;padding:48px 0;font-size:14px}
 footer .wrap{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;align-items:center}
 footer a{color:#fff}
+footer{--lg-r:#246A54;--lg-l:#4FA586;--lg-c:#CFE5DC;--lg-d:#EE7046;}
 footer .brand{color:#fff}
 
 @media (max-width:960px){
@@ -175,7 +178,7 @@ footer .brand{color:#fff}
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <symbol id="logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#17483A"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="16" cy="16" r="3" fill="#fff"/><circle cx="25.5" cy="6.5" r="3" fill="#E8663D"/></symbol>
+    <symbol id="logo" viewBox="0 0 64 64"><path d="M32 4.5H12Q7.5 4.5 7.5 9V29C7.5 44.5 17.5 55 32 60.5Z" fill="var(--lg-r,#17483A)" transform="matrix(-1 0 0 1 64 0)"/><path d="M32 4.5H12Q7.5 4.5 7.5 9V29C7.5 44.5 17.5 55 32 60.5Z" fill="var(--lg-l,#2F7D64)"/><path d="M15.5 23V16.5H22" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 35V41.5H22" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 41.5H48.5V35" fill="none" stroke="var(--lg-c,#D9EAE3)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="46" cy="19" r="3.6" fill="var(--lg-d,#E8663D)"/><path d="M24.8 29.4L29.8 34.4L39.4 24.4" fill="none" stroke="#FFFFFF" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-finger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 18.5c1.2-1.8 1.8-4 1.8-6.5a3.7 3.7 0 0 1 7.4 0c0 1.2-.1 2.4-.4 3.5"/><path d="M12 12c0 3.5-.9 6.6-2.6 9"/><path d="M4.3 15.5c.5-1.1.7-2.3.7-3.5a7 7 0 0 1 12.6-4.2"/><path d="M19 11c.1.4.1.7.1 1 0 2.4-.4 4.6-1.2 6.6"/><path d="M15.2 18.8c-.3.9-.7 1.7-1.2 2.5"/></symbol>

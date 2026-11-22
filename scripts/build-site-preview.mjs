@@ -28,7 +28,7 @@ const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 
 /* ---------- icons and art ---------- */
 const defs = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
-<symbol id="logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#17483A"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.6"/><circle cx="16" cy="16" r="3" fill="#fff"/><circle cx="25.5" cy="6.5" r="3" fill="#E8663D"/></symbol>
+<symbol id="logo" viewBox="0 0 64 64"><path d="M32 4.5H12Q7.5 4.5 7.5 9V29C7.5 44.5 17.5 55 32 60.5Z" fill="var(--lg-r,#17483A)" transform="matrix(-1 0 0 1 64 0)"/><path d="M32 4.5H12Q7.5 4.5 7.5 9V29C7.5 44.5 17.5 55 32 60.5Z" fill="var(--lg-l,#2F7D64)"/><path d="M15.5 23V16.5H22" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 35V41.5H22" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 41.5H48.5V35" fill="none" stroke="var(--lg-c,#D9EAE3)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="46" cy="19" r="3.6" fill="var(--lg-d,#E8663D)"/><path d="M24.8 29.4L29.8 34.4L39.4 24.4" fill="none" stroke="#FFFFFF" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
 <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -80,14 +80,14 @@ const artTamper = `<svg viewBox="0 0 240 130" aria-hidden="true" focusable="fals
 
 /* ---------- hero composition ----------
  * Photo slots: web/site/assets/hero-frames.jpg (large frame), hero-frame-2.jpg and
- * hero-frame-3.jpg (small frames). They are CSS background images in site.css. Until
- * the files exist, a dark gradient placeholder shows. Drop the files in and rebuild nothing.
+ * hero-frame-3.jpg (small frames). They are img elements (width and height set). Until
+ * the files load, the CSS gradient placeholder shows.
  */
 const shield = `<svg aria-hidden="true" focusable="false"><use href="#i-shield"/></svg>`;
 const heroVisual = `<div class="hv" role="img" aria-label="Three frames from a home security camera, each with a seal badge. The main frame links to a verification report: Original. Recorded 22 Nov 2026, 02:14:07. Sealed on the public ledger. Not modified since sealing.">
-<div class="hv-frame f1"><span class="osd">CAM 1<span class="d"> · 22-11-2026</span> · 02:14:07</span><span class="rec"><i></i>REC</span></div>
-<div class="hv-frame f2"><span class="osd">CAM 2 · 02:14:12</span><span class="hv-badge sm">${shield}</span></div>
-<div class="hv-frame f3"><span class="osd">CAM 3 · 02:14:18</span><span class="hv-badge sm">${shield}</span></div>
+<div class="hv-frame f1"><img src="${UP}assets/hero-frames.jpg" width="1920" height="1072" alt="" fetchpriority="high" decoding="async"><span class="osd">CAM 1<span class="d"> · 22-11-2026</span> · 02:14:07</span><span class="rec"><i></i>REC</span></div>
+<div class="hv-frame f2"><img src="${UP}assets/hero-frame-2.jpg" width="1280" height="714" alt="" loading="lazy" decoding="async"><span class="osd">CAM 2<span class="d"> · 02:14:12</span></span><span class="hv-badge sm">${shield}</span></div>
+<div class="hv-frame f3"><img src="${UP}assets/hero-frame-3.jpg" width="1280" height="714" alt="" loading="lazy" decoding="async"><span class="osd">CAM 3<span class="d"> · 02:14:18</span></span><span class="hv-badge sm">${shield}</span></div>
 <div class="hv-report">
 <span class="hv-badge lg">${shield}</span>
 <div class="hv-head"><b>Original</b><span>Checked with QoreWitness Verify</span></div>
