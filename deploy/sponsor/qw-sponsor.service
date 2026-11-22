@@ -11,7 +11,7 @@ WorkingDirectory=/opt/qorewitness
 # Non-secret settings only. The recovery phrase stays in SPONSOR_SECRET_FILE (mode 600),
 # which the service reads itself, so it never enters the process environment.
 EnvironmentFile=/etc/qw-sponsor/sponsor.env
-ExecStart=/usr/local/bin/pnpm -s tsx services/sponsor/main.ts
+ExecStart=/usr/local/bin/node /opt/qorewitness/node_modules/tsx/dist/cli.mjs services/sponsor/main.ts
 Restart=on-failure
 RestartSec=60
 # State, payout log and the PAUSED kill-switch file live here (mode 700).

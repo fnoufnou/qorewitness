@@ -124,11 +124,11 @@ Abuse limits of the start grant:
 On the web host, as root. Read each step before you run it.
 
 1. `useradd --system --home /var/lib/qw-sponsor --shell /usr/sbin/nologin qw-sponsor` and `install -d -m 750 -o root -g qw-sponsor /etc/qw-sponsor`.
-2. Repo in `/opt/qorewitness` at this commit, `pnpm install --frozen-lockfile --ignore-scripts`.
+2. Node 22 from the official tarball in `/opt/node` (check it against `SHASUMS256.txt`), then the repo in `/opt/qorewitness` at this commit and `pnpm install --frozen-lockfile --ignore-scripts`. The service starts `tsx` with `node` directly, so the service user needs no pnpm or corepack cache.
 3. Settings: `install -m 640 -o root -g qw-sponsor deploy/sponsor/sponsor.env.example /etc/qw-sponsor/sponsor.env`.
 4. Hot wallet, as `qw-sponsor` in a private folder:
    - `install -d -m 700 -o qw-sponsor /var/lib/qw-sponsor/setup`, then in that folder `sudo -u qw-sponsor /opt/qorewitness/node_modules/.bin/tsx /opt/qorewitness/scripts/new-account.ts`. It writes `.env` (mode 600) and prints the addresses only.
-   - Claim test QOR from the faucet for the printed `qor1` address.
+   - Fund the printed `qor1` address with test QOR: from another test account of ours (`scripts/qday-drill.ts fund <qor1> <qor>`) or the faucet.
    - Register the ML-DSA-87 key: in `/opt/qorewitness`, `sudo -u qw-sponsor node_modules/.bin/tsx --env-file=/var/lib/qw-sponsor/setup/.env scripts/window.ts register`.
    - Move the phrase: `sed -n 's/^QORE_MNEMONIC=/SPONSOR_MNEMONIC=/p' /var/lib/qw-sponsor/setup/.env > /etc/qw-sponsor/secret.env`, then `chown qw-sponsor /etc/qw-sponsor/secret.env && chmod 600 /etc/qw-sponsor/secret.env` and `shred -u /var/lib/qw-sponsor/setup/.env`.
 5. Logs: `cp deploy/sponsor/journald@qw-sponsor.conf /etc/systemd/`.
