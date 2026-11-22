@@ -4,6 +4,10 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+### 2026-11-22: new logo (Sealed frame) and hero polish
+- Brand: the new mark "Sealed frame" (pine shield, viewfinder corners, check, orange recording dot) replaces the lens-in-a-square mark on the site, the preview pages, the verifier, the app header, the certificate, the favicon and the featured image. The favicon is a simplified shield with a check and the dot. `docs/BRAND.md` describes the mark, its minimum size, clear space and the two-tone rule.
+- Site: the hero photos are now `img` elements with width, height and loading attributes. A dark top gradient keeps the camera captions readable, the small frames keep their own seal badges and the report card no longer hides the third frame.
+
 ### 2026-11-22: site in the product voice, any camera, cameras page
 - Site (preview): every page rewritten in a confident, warm product voice after the owner's feedback. One slim beta banner on every page is the only beta wording outside Trust, Developers, the plan price and one FAQ line. No "demo", "pilot" or "box" in the body copy. No sealing interval in marketing copy ("as it is recorded", "pinned to the time it was recorded").
 - Site: "Set up your camera" for any RTSP or ONVIF camera: check compatibility, prepare the camera (hints for Tapo, Reolink, Hikvision/Annke, Dahua/Amcrest, UniFi Protect, Axis, generic ONVIF), install, open the setup, done. "What you need" with minimum and recommended hardware, storage guide, platforms, and a short Docker Compose guide (only the Linux installer is tested end to end).

@@ -3,7 +3,7 @@
  * no web fonts, one print link. The browser's "Print" makes the PDF.
  * Brand: docs/BRAND.md (pine, signal dot).
  */
-import { esc, LOGO } from "./html.js";
+import { esc, LOGO_LIGHT } from "./html.js";
 
 export const VERIFIER_URL = "https://qorewitness.fnoufnou.com/verifier.html";
 
@@ -71,7 +71,7 @@ a{color:#1F5C4B}.btn{display:inline-block;margin-top:14px;padding:9px 14px;backg
 @media (max-width:560px){.two{grid-template-columns:1fr}dl{grid-template-columns:1fr}}
 @media print{.noprint{display:none}.page{padding:0;max-width:none}@page{size:A4;margin:14mm}.fine tr.h td{font-size:7.5px}}
 </style></head><body><div class="page">
-<header>${LOGO}<strong>QoreWitness</strong><span>Beta · QoreChain test network</span></header>
+<header>${LOGO_LIGHT}<strong>QoreWitness</strong><span>Beta · QoreChain test network</span></header>
 <h1>Evidence certificate</h1>
 <p>This page belongs to a ZIP file with the original video clips and their receipts.</p>
 <div class="ok">${c.clips.length} clip${c.clips.length === 1 ? "" : "s"} checked against their receipts on the camera box before this ZIP was made. All ${c.clips.length} match.</div>

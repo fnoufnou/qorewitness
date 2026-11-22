@@ -4,10 +4,16 @@ Solid, calm and trustworthy. QoreWitness protects ordinary people against threat
 
 ## Logo
 
-A rounded pine square with a white lens ring and a persimmon "recording" dot in the top right corner. Wordmark: "QoreWitness" in IBM Plex Sans 600.
+The mark is the "Sealed frame": a shield that holds a camera viewfinder. Three white corners and the persimmon recording dot form the frame. A check sits inside it. The idea in one line: this recording is sealed. The camera is the footage, the check is the proof and the shield is the protection.
 
-- Source: `<symbol id="logo">` in `web/site/index.html`. Favicon: `web/site/favicon.svg`.
-- Minimum size 20 px. Keep clear space of half the mark width around it.
+- Wordmark: "QoreWitness" in IBM Plex Sans 600, shipped as outlines inside the lockup files. Use the lockup when there is room and the icon alone when there is not.
+- Two-tone rule: the left half of the shield is always lighter than the right half. The dot is always Signal. Never recolour the halves to the same tone, never add gradients or outlines, and never rotate or stretch the mark.
+- Light backgrounds: shield `#2F7D64` (left) and `#17483A` (right), corners white, bottom right corner `#D9EAE3`, dot `#E8663D`.
+- Dark backgrounds (deep pine `#0F211C` and the footer): shield `#4FA586` and `#246A54`, bottom right corner `#CFE5DC`, dot `#EE7046`. On the site the symbol reads the `--lg-*` custom properties, so it switches with the theme.
+- Minimum size: icon 20 px high, lockup 24 px high. Below 20 px use the favicon version.
+- Clear space: half the icon width on every side.
+- Favicon: `web/site/favicon.svg` is a simplified mark with only the shield, a bold check and the orange dot, because the viewfinder corners get too thin at 16 px.
+- Sources: `<symbol id="logo">` in `web/site/index.html` and `scripts/build-site-preview.mjs`, `LOGO` and `LOGO_LIGHT` in `src/web/html.ts`, and the full SVG set in the logo proposal folder (icon and lockup, light and dark). The trademark search is still open.
 
 ## Colours
 
@@ -41,7 +47,7 @@ Dark mode uses deep pine (`#0F211C`, surfaces `#152B25`), never black.
 - Cards and tiles: radius 8 px, 1 px border, no shadow. Only the product card (receipt) has a shadow.
 - Buttons: radius 8 px. Primary in Pine 800 with white text. Secondary white with a border.
 - Icons: 24 px line icons, 1.8 px stroke, in a Pine 100 tile.
-- Show the product. The hero uses a real verification result of the demo clip.
+- Show the product. The hero shows three camera frames with seal badges and the verification report that belongs to the main frame.
 
 ## Voice
 
