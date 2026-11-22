@@ -1,5 +1,5 @@
 /**
- * Camera helpers for the browser setup: Tapo C210 stream URL, a test that grabs
+ * Camera helpers for the browser setup: stream links per brand (src/web/cameras.ts), a test that grabs
  * one picture with ffmpeg, plain-language errors and a retention proposal.
  *
  * Tapo C210 (TP-Link FAQ 2680 and 4465): camera account from the Tapo app
@@ -26,7 +26,7 @@ export interface TapoInput {
 /** IPv4 address or a plain host name. No user info, path or spaces. */
 export function cameraHostProblem(host: string): string | undefined {
   const h = host.trim();
-  if (!h) return "Type the IP address of the camera. The Tapo app shows it under Device Info.";
+  if (!h) return "Pick your camera in the list, or type its address (for example 192.168.1.20).";
   if (/^\d+\.\d+\.\d+\.\d+$/.test(h)) {
     return h.split(".").every((n) => Number(n) <= 255) ? undefined : "This IP address is not valid.";
   }
@@ -65,19 +65,54 @@ export function parseStreamUrl(url: string): (TapoInput & { scheme: string }) | 
   }
 }
 
-export type CameraErrorKind = "auth" | "unreachable" | "busy" | "not_found" | "no_video" | "timeout" | "no_ffmpeg" | "unknown";
+export type CameraErrorKind = "auth" | "unreachable" | "busy" | "not_found" | "no_video" | "unsupported" | "timeout" | "no_ffmpeg" | "unknown";
 
-/** Plain words for the owner. No error codes and no URLs. */
+/** Plain words for the owner, for any camera brand. No error codes and no URLs. Each ends with what to do. */
 export const CAMERA_ERRORS: Record<CameraErrorKind, string> = {
-  auth: "The camera refused the password. Check Camera Account in the Tapo app (camera > gear > Advanced Settings > Camera Account).",
-  unreachable: "No camera answers at this address. Check the IP address in the Tapo app (Device Info) and that the camera has power and Wi-Fi.",
-  busy: "The camera is busy. It sends at most two video streams at a time. Close the live view in the Tapo app and try again.",
-  not_found: "The camera answers but has no video stream at this address. Check that it is a Tapo C210, or try standard quality.",
-  no_video: "The camera sends no picture. If Tapo Care, a microSD card and another recorder are all on, turn one off: only two of the three work at a time.",
-  timeout: "The camera did not send a picture within 15 seconds. Check Wi-Fi strength near the camera and try again.",
-  no_ffmpeg: "The test tool is missing on this box. Install QoreWitness with the official image.",
-  unknown: "The camera test did not work. Check the IP address, user name and password, then try again.",
+  auth: "The camera refused the name or password. Check the camera account in your camera's app, then try again.",
+  unreachable: "No camera answered at this address. Check the address, and check that the camera is on and connected to your network.",
+  busy: "The camera is busy. Many cameras send only a few streams at a time. Close the live view in the camera's app and try again.",
+  not_found: "The camera answered, but it has no video at this link. Check the brand you picked, or paste the link from your camera's manual (Other camera).",
+  no_video: "The camera sends no picture. Check that the video stream (RTSP) is switched on in your camera's app.",
+  unsupported: "Your camera sends a video format that QoreWitness cannot record yet. In the camera's settings, choose H.264 or H.265 and try again.",
+  timeout: "The camera did not send a picture within 15 seconds. Check the Wi-Fi near the camera and try again.",
+  no_ffmpeg: "The test tool is missing on this computer. Install QoreWitness with the official image.",
+  unknown: "The camera test did not work. Check the address, the name and the password, then try again.",
 };
+
+/** Video codecs the recorder copies into MP4 segments and the verifier hashes. Tested: H.264 and H.265. */
+export const SUPPORTED_CODECS = ["h264", "hevc"] as const;
+export const codecSupported = (codec: string | undefined) => !codec || (SUPPORTED_CODECS as readonly string[]).includes(codec.toLowerCase());
+
+/**
+ * Stream link for a brand: rtsp://NAME:PASSWORD@HOST:PORT/PATH, name and password
+ * URL-encoded. For "full link" brands the user's link is used. When that link has
+ * no name and password and the user typed them, they are put in.
+ */
+export function brandStreamUrl(
+  b: { port: number; mainPath?: string; subPath?: string; fullLink: boolean },
+  v: { host?: string; user?: string; password?: string; link?: string; quality?: "main" | "sub" },
+): string {
+  if (b.fullLink || !b.mainPath) {
+    const link = (v.link ?? "").trim();
+    if (!/^rtsps?:\/\/[^\s]+$/i.test(link)) throw new Error("Paste the full camera link. It starts with rtsp://.");
+    const u = new URL(link);
+    if (!u.hostname) throw new Error("Paste the full camera link. It starts with rtsp://.");
+    if (!u.username && v.user) {
+      u.username = encodeURIComponent(v.user);
+      u.password = encodeURIComponent(v.password ?? "");
+    }
+    return u.toString();
+  }
+  const host = (v.host ?? "").trim();
+  const problem = cameraHostProblem(host);
+  if (problem) throw new Error(problem);
+  if (!v.user || v.user.length > 64 || !v.password || v.password.length > 64 || /[\r\n\0]/.test(v.user + v.password)) {
+    throw new Error("Type the name and the password of the camera account.");
+  }
+  const path = v.quality === "sub" && b.subPath ? b.subPath : b.mainPath;
+  return `rtsp://${encodeURIComponent(v.user)}:${encodeURIComponent(v.password)}@${host}:${b.port}/${path}`;
+}
 
 export function classifyFfmpegError(stderr: string, timedOut: boolean): CameraErrorKind {
   const s = stderr.toLowerCase();
@@ -161,7 +196,12 @@ export function snapshot(url: string, opts: SnapshotOptions = {}): Promise<Snaps
       const detail = redactSecrets(err).split("\n").filter((l) => l.trim()).slice(-6).join("\n");
       const jpeg = Buffer.concat(out);
       const isJpeg = jpeg.length > 100 && jpeg[0] === 0xff && jpeg[1] === 0xd8;
-      if (code === 0 && isJpeg && !timedOut) return resolve({ ok: true, jpeg, info: parseStreamInfo(err) });
+      if (code === 0 && isJpeg && !timedOut) {
+        const info = parseStreamInfo(err);
+        // A picture is not enough: the recorder copies the stream as it is, so the codec must fit.
+        if (!codecSupported(info.codec)) return resolve({ ok: false, kind: "unsupported", message: CAMERA_ERRORS.unsupported, detail: `video codec ${info.codec}` });
+        return resolve({ ok: true, jpeg, info });
+      }
       const kind = classifyFfmpegError(err, timedOut);
       resolve({ ok: false, kind, message: CAMERA_ERRORS[kind], detail });
     });

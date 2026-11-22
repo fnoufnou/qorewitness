@@ -29,6 +29,7 @@ import {
   passwordProblem, privateAddress, readPairing, safeEqual, sessionSecret, sessionValid, setPassword, SESSION_SECONDS,
 } from "./auth.js";
 import { snapshot } from "./camera.js";
+import { discoverCameras, lanPrefix } from "./discover.js";
 import { evidenceForm, evidencePage, parseRange, planEvidence, writeZip } from "./evidence.js";
 import { CSP, esc, layout } from "./html.js";
 import { SponsorClient } from "./sponsor.js";
@@ -206,7 +207,7 @@ export function createHandler(o: ServerOptions) {
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     // 1. Network checks on every request.
     if (!hostAllowed(req.headers.host, o.hostnames)) {
-      return send(res, 421, "text/plain; charset=utf-8", "Unknown host name. Open the box by its IP address, as the installer showed. To allow a name, set QW_UI_HOSTNAME.");
+      return send(res, 421, "text/plain; charset=utf-8", "Unknown host name. Open QoreWitness by its IP address, as the installer showed. To allow a name, set QW_UI_HOSTNAME.");
     }
     if (!o.trustProxy && (req.headers["x-forwarded-for"] || req.headers.forwarded)) {
       return send(res, 400, "text/plain; charset=utf-8", "Requests through a proxy are refused. Set QW_UI_TRUST_PROXY=1 if you use one on purpose.");
@@ -240,7 +241,7 @@ export function createHandler(o: ServerOptions) {
     // 3. First run: pairing, then a password.
     if (!claimed) {
       const pairing = readPairing(ui);
-      if (!pairing) return html(res, 503, "Setup", renderClaimCode("This box has no pairing code. Run the installer again to get one.", true));
+      if (!pairing) return html(res, 503, "Setup", renderClaimCode("There is no pairing code yet. Run the installer again to get one.", true));
       const claimCsrf = csrfToken(pairing.token, "claim");
       const claimOk = safeEqual(cookie(req, "qw_claim"), pairing.token);
       const claimCookie = setCookie("qw_claim", pairing.token, 24 * 3600);
@@ -254,7 +255,7 @@ export function createHandler(o: ServerOptions) {
         return send(res, 200, "text/html; charset=utf-8", `<!doctype html><meta http-equiv="refresh" content="0;url=/setup"><title>QoreWitness</title><a href="/setup">Continue</a>`, { "set-cookie": claimCookie });
       }
       if (req.method === "POST" && path === "/setup/pair") {
-        if (pairFails.blocked("pair")) return html(res, 429, "Setup", renderClaimCode("Too many wrong codes. On the box, run the installer again to get a new code.", true));
+        if (pairFails.blocked("pair")) return html(res, 429, "Setup", renderClaimCode("Too many wrong codes. Run the installer again to get a new code.", true));
         if (!safeEqual((form.code ?? "").replace(/\s/g, ""), pairing.code)) {
           pairFails.fail("pair");
           return html(res, 403, "Setup", renderClaimCode("This code is not right. Check the code on the installer screen."));
@@ -272,7 +273,7 @@ export function createHandler(o: ServerOptions) {
         return redirect(res, "/setup", { "set-cookie": [setCookie("qw_session", session, SESSION_SECONDS), setCookie("qw_claim", "", 0)] });
       }
       if (req.method === "GET" && path === "/setup") {
-        return claimOk ? html(res, 200, "Setup", renderClaimPassword(claimCsrf)) : html(res, 200, "Setup", renderClaimCode(pairFails.blocked("pair") ? "Too many wrong codes. On the box, run the installer again to get a new code." : undefined, pairFails.blocked("pair")));
+        return claimOk ? html(res, 200, "Setup", renderClaimPassword(claimCsrf)) : html(res, 200, "Setup", renderClaimCode(pairFails.blocked("pair") ? "Too many wrong codes. Run the installer again to get a new code." : undefined, pairFails.blocked("pair")));
       }
       return req.method === "GET" ? redirect(res, "/setup") : send(res, 404, "text/plain", "not found");
     }
@@ -306,7 +307,7 @@ export function createHandler(o: ServerOptions) {
     if (!done) {
       const w = o.wizard;
       if (req.method === "POST" && path.startsWith("/setup/")) {
-        const r = await w.post(path, { ...form, _csrf: csrf });
+        const r = await w.post(path, { ...form, _csrf: csrf, _base: `http://${req.headers.host ?? ""}` });
         if (r.redirect) return redirect(res, r.redirect);
         return html(res, 200, "Setup", r.html ?? "");
       }
@@ -314,7 +315,7 @@ export function createHandler(o: ServerOptions) {
         w.resumeIfInterrupted();
         const screen = await w.screen();
         if (screen === "done") return redirect(res, "/setup/done");
-        return html(res, 200, "Setup", await w.render(screen, csrf), { refresh: w.refreshFor(screen) });
+        return html(res, 200, "Setup", await w.render(screen, csrf, `http://${req.headers.host ?? ""}`), { refresh: w.refreshFor(screen) });
       }
       return req.method === "GET" ? redirect(res, "/setup") : send(res, 404, "text/plain", "not found");
     }
@@ -325,7 +326,7 @@ export function createHandler(o: ServerOptions) {
     if (req.method === "GET" && path === "/setup/done") return html(res, 200, "Sealing started", renderDone(`http://${req.headers.host ?? ""}`));
     if (req.method === "GET" && path === "/setup") return redirect(res, "/setup/done");
     if (path === "/setup" || path.startsWith("/setup/")) {
-      return html(res, 404, "Setup finished", `<div class="card"><h1>Setup is finished</h1><p>This box is set up. Changes to the camera come in a later version.</p><a class="btn" href="/">Open my dashboard</a></div>`);
+      return html(res, 404, "Setup finished", `<div class="card"><h1>Setup is finished</h1><p>QoreWitness is set up. Changes to the camera come in a later version.</p><a class="btn" href="/">Open my dashboard</a></div>`);
     }
     if (req.method === "GET" && path === "/") return dashboard(res, csrf, false);
     if (req.method === "GET" && path === "/api/status") return dashboard(res, csrf, true);
@@ -396,7 +397,13 @@ if (process.argv[1] && /server\.(ts|js)$/.test(process.argv[1])) {
   const paths = dataPaths();
   ensureDirs(paths);
   if (isSetupDone(paths)) lockSecrets();
-  const wizard = new Wizard({ paths, chain: liveChain(), sponsor: () => new SponsorClient(), snapshot: (u) => snapshot(u) });
+  const wizard = new Wizard({
+    paths, chain: liveChain(), sponsor: () => new SponsorClient(), snapshot: (u) => snapshot(u),
+    discover: async (hints) => {
+      const prefix = lanPrefix(hints);
+      return prefix ? discoverCameras({ prefix }) : [];
+    },
+  });
   const host = process.env.QW_UI_HOST?.trim() || "127.0.0.1";
   const port = Number(process.env.QW_UI_PORT ?? 8080);
   const handler = createHandler({

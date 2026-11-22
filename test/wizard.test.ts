@@ -180,7 +180,7 @@ describe("wizard: browser setup over HTTP (mocked chain, camera and sponsor)", (
     assert.match(page.body, /Step 1 of 2/);
     assert.doesNotMatch(page.body, /pilot code|Video quality|Name for this camera|stream URL|Who pays/i);
     const csrf = csrfOf(page.body);
-    const fields = { action: "test", host: "192.168.1.20", user: "qwcam", password: CAM_PASS, consent: "yes", _csrf: csrf };
+    const fields = { action: "test", host: "192.168.1.20", brand: "tapo", user: "qwcam", password: CAM_PASS, consent: "yes", _csrf: csrf };
     assert.equal((await b.post("/setup/camera", { ...fields, _csrf: "nope" })).status, 403);
     assert.match((await b.post("/setup/camera", { ...fields, consent: "" })).body, /my own property/);
 
@@ -369,9 +369,83 @@ describe("e2e-1 regressions", () => {
       paths, chain: mockChain().chain, sponsor: () => { throw new Error("no sponsor"); },
       snapshot: async () => ({ ok: true, jpeg: JPEG, info: {} }),
     });
-    await w.post("/setup/camera", { action: "test", host: "10.0.0.2", user: "qwcam", password: CAM_PASS, consent: "yes" });
+    await w.post("/setup/camera", { action: "test", host: "10.0.0.2", brand: "tapo", user: "qwcam", password: CAM_PASS, consent: "yes" });
     const free = freeBytes(paths.data);
     assert.ok(free && free > 0);
     assert.equal(readEnvFile(paths.cameraEnv).QW_RETENTION_DAYS, String(proposeRetentionDays(free, "stream1")));
+  });
+});
+
+describe("wizard: any camera (find, brand, link)", () => {
+  const found = [
+    { ip: "192.168.1.20", ports: [554, 2020], onvif: true, name: "TP-IPC", hardware: "C210", brand: "tapo" as const },
+    { ip: "192.168.1.31", ports: [554], onvif: false },
+  ];
+  function wiz(snap: SnapshotResult = { ok: true, jpeg: JPEG, info: { codec: "h264" } }) {
+    const paths = dataPaths(mkdtempSync(join(tmpdir(), "qw-any-")));
+    ensureDirs(paths);
+    const urls: string[] = [];
+    const hints: (string | undefined)[][] = [];
+    const w = new Wizard({
+      paths, chain: mockChain().chain, sponsor: () => { throw new Error("no sponsor"); }, diskFree: () => 500e9,
+      snapshot: async (u) => {
+        urls.push(u);
+        return snap;
+      },
+      discover: async (h) => {
+        hints.push(h);
+        return found;
+      },
+    });
+    return { w, paths, urls, hints };
+  }
+
+  it("searches the network when the screen opens and lists what it found, brand preselected", async () => {
+    const t = wiz();
+    const html = await t.w.render("camera", "x", "http://192.168.1.228:8080");
+    assert.match(html, /Camera at 192\.168\.1\.20 · TP-IPC C210/);
+    assert.match(html, /Camera at 192\.168\.1\.31/);
+    assert.match(html, /value="192\.168\.1\.20" data-brand="tapo" checked/);
+    assert.match(html, /<option value="tapo" selected>/);
+    assert.ok(t.hints[0].includes("http://192.168.1.228:8080"));
+    await t.w.render("camera", "x", "http://192.168.1.228:8080");
+    assert.equal(t.hints.length, 1, "the search result is cached");
+    assert.doesNotMatch(html.replace(/<details>[\s\S]*?<\/details>/g, ""), /Tapo app|Tapo C210/, "no Tapo wording outside the brand hints");
+  });
+
+  it("a picked camera and a brand give the vendor link, name and password typed only", async () => {
+    const t = wiz();
+    const r = await t.w.post("/setup/camera", { action: "test", found: "192.168.1.31", brand: "dahua", user: "admin", password: "p&ss 1", consent: "yes" });
+    assert.match(r.html!, /Is this your camera/);
+    assert.equal(t.urls[0], "rtsp://admin:p%26ss%201@192.168.1.31:554/cam/realmonitor?channel=1&subtype=0");
+    const std = await t.w.post("/setup/camera", { action: "standard" });
+    assert.match(std.html!, /Is this your camera/);
+    assert.equal(t.urls[1], "rtsp://admin:p%26ss%201@192.168.1.31:554/cam/realmonitor?channel=1&subtype=1");
+    assert.equal(readEnvFile(t.paths.cameraEnv).QW_STREAM_URL, t.urls[1]);
+  });
+
+  it("Other camera: one field for the full link, a typed address wins over the list", async () => {
+    const t = wiz();
+    const r1 = await t.w.post("/setup/camera", { action: "test", brand: "other", link: "http://x", consent: "yes" });
+    assert.match(r1.html!, /starts with rtsp:\/\//);
+    await t.w.post("/setup/camera", { action: "test", brand: "other", link: "rtsp://10.0.0.9:8554/live", user: "u", password: "secret12", consent: "yes" });
+    assert.equal(t.urls[0], "rtsp://u:secret12@10.0.0.9:8554/live");
+    await t.w.post("/setup/camera", { action: "test", found: "192.168.1.20", host: "192.168.1.77", brand: "hikvision", user: "admin", password: "secret12", consent: "yes" });
+    assert.equal(t.urls[1], "rtsp://admin:secret12@192.168.1.77:554/Streaming/Channels/101");
+  });
+
+  it("asks for a brand, and adds the Tapo recording note only for Tapo", async () => {
+    const t = wiz({ ok: false, kind: "no_video", message: "The camera sends no picture.", detail: "" });
+    assert.match((await t.w.post("/setup/camera", { action: "test", found: "192.168.1.20", user: "u", password: "secret12", consent: "yes" })).html!, /Pick the brand/);
+    const alert = (h: string) => /role="alert">([^<]*)</.exec(h)![1];
+    assert.match(alert((await t.w.post("/setup/camera", { action: "test", found: "192.168.1.20", brand: "tapo", user: "u", password: "secret12", consent: "yes" })).html!), /only two of the three work/);
+    assert.doesNotMatch(alert((await t.w.post("/setup/camera", { action: "test", found: "192.168.1.31", brand: "reolink", user: "u", password: "secret12", consent: "yes" })).html!), /only two of the three work/);
+  });
+
+  it("an unsupported video format is a plain error", async () => {
+    const t = wiz({ ok: false, kind: "unsupported", message: "Your camera sends a video format that QoreWitness cannot record yet. In the camera's settings, choose H.264 or H.265 and try again.", detail: "video codec mjpeg" });
+    const r = await t.w.post("/setup/camera", { action: "test", found: "192.168.1.31", brand: "axis", user: "u", password: "secret12", consent: "yes" });
+    assert.match(r.html!, /choose H\.264 or H\.265/);
+    assert.equal(existsSync(t.paths.cameraEnv), false);
   });
 });

@@ -11,6 +11,12 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 - Site: new hero composition with replaceable photo slots (`web/site/assets/hero-frames.jpg`, `hero-frame-2.jpg`, `hero-frame-3.jpg`), seal badges and a verification report card. A dark gradient placeholder shows until the photos exist.
 - Site: Plans shows "EUR 4 per camera per month" with "Free while we're in beta", and Self-managed as a free second card. The verifier is named "QoreWitness Verify" everywhere.
 - Site: tables stack as cards on phones. Trust has a new `#beta` section. Developers: test count and built features updated.
+### 2026-11-22: any camera with a stream
+- Setup: "Find my camera" runs when the camera screen opens. It checks ports 554, 8554 and 2020 on the home /24 and asks each camera for its ONVIF name (WS-Discovery Probe, multicast and directed). Docker's bridge network passes no multicast, so the directed Probes do the work: on the test computer both cameras on the network were found from the bridge network in about 4 seconds. The user picks a camera or types an address.
+- Setup: brand picker (TP-Link Tapo, Reolink, Hikvision or Annke, Dahua or Amcrest, Ubiquiti UniFi Protect, Axis, Other camera). It fills the vendor's RTSP link, so the user types only the camera account. Other and UniFi: one field for the full rtsp:// link. Data in `src/web/cameras.ts`, shared with docs and site.
+- Setup: errors in plain words for any brand (no answer, wrong name or password, no video at this link, busy, unsupported video format). H.264 and H.265 are recorded (segment copy tested for both). Other formats get "choose H.264 or H.265". The Tapo recording rule shows only for Tapo.
+- Wizard and dashboard say "your camera" and "QoreWitness" in place of Tapo-only wording and "box".
+- Docs: `docs/CAMERAS.md` compatibility table (Tested by us, Works with RTSP, Not supported), "check your camera with VLC", how the search works. `docs/INSTALL.md` step 1 for any camera, Tapo as the example.
 
 ## 0.6.0-alpha.1 (22 Nov 2026, Customer Edition preview)
 

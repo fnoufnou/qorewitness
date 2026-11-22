@@ -181,7 +181,7 @@ export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
   const addFees = "Add test tokens to your own account. The address is under Details.";
   const lastSealMin = s.lastAnchorAgeSeconds === undefined ? undefined : Math.max(0, Math.round(s.lastAnchorAgeSeconds / 60));
   if (s.unanchored.length) {
-    return { level: "bad", title: "Some video could not be sealed.", action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days };
+    return { level: "bad", title: "Some video could not be sealed.", action: "Check the internet connection of the computer that runs QoreWitness. If this stays, restart it.", feeDaysLeft: days };
   }
   const camOffline = s.newestSegmentAgeSeconds === undefined ? age > 600 : s.newestSegmentAgeSeconds > 300;
   if (camOffline) {
@@ -189,25 +189,25 @@ export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
   }
   if (days !== undefined && f.balanceUqor! < 3 * FEE_PER_SEAL_UQOR) {
     return f.plan === "sponsored"
-      ? { level: "bad", title: "Sealing paused: the fees ran out.", action: "The pilot tops up your box by itself. If this stays for a day, the pilot may be paused or full.", feeDaysLeft: days }
+      ? { level: "bad", title: "Sealing paused: the fees ran out.", action: "The pilot tops up the fees by itself. If this stays for a day, the pilot may be paused or full.", feeDaysLeft: days }
       : { level: "bad", title: "Sealing paused: the fees ran out.", action: addFees, feeDaysLeft: days };
   }
   if (days !== undefined && f.plan !== "sponsored" && days < 3) {
     return { level: "warn", title: "Sealing pauses soon: fees are running out.", action: addFees, feeDaysLeft: days };
   }
   if (days !== undefined && f.plan === "sponsored" && days < 0.25) {
-    return { level: "warn", title: "Sealing pauses soon: fees are running out.", action: "The pilot tops up your box by itself. Nothing to do now.", feeDaysLeft: days };
+    return { level: "warn", title: "Sealing pauses soon: fees are running out.", action: "The pilot tops up the fees by itself. Nothing to do now.", feeDaysLeft: days };
   }
   if (s.lastAnchorAgeSeconds === undefined) {
     return age > 1800
-      ? { level: "bad", title: "No seal yet.", action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days }
+      ? { level: "bad", title: "No seal yet.", action: "Check the internet connection of the computer that runs QoreWitness. If this stays, restart it.", feeDaysLeft: days }
       : { level: "warn", title: "Waiting for the first seal.", action: "The first seal comes about 10 to 15 minutes after setup. Nothing to do.", feeDaysLeft: days };
   }
   if (s.lastAnchorAgeSeconds > 3 * f.windowSeconds) {
-    return { level: "bad", title: `Sealing stopped ${minutesText(lastSealMin!)} ago.`, action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days };
+    return { level: "bad", title: `Sealing stopped ${minutesText(lastSealMin!)} ago.`, action: "Check the internet connection of the computer that runs QoreWitness. If this stays, restart it.", feeDaysLeft: days };
   }
   if (s.diskFreeBytes !== undefined && s.diskTotalBytes && s.diskFreeBytes / s.diskTotalBytes < 0.15) {
-    return { level: "warn", title: "The disk is almost full.", action: "The box deletes the oldest video first. Connect a bigger disk to keep more.", feeDaysLeft: days };
+    return { level: "warn", title: "The disk is almost full.", action: "QoreWitness deletes the oldest video first. Connect a bigger disk to keep more.", feeDaysLeft: days };
   }
   return { level: "ok", title: `Sealing OK. Last seal ${lastSealMin! < 1 ? "less than a minute" : minutesText(lastSealMin!)} ago.`, feeDaysLeft: days };
 }
