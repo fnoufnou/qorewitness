@@ -207,7 +207,7 @@ export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
     return { level: "bad", title: `Sealing stopped ${minutesText(lastSealMin!)} ago.`, action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days };
   }
   if (s.diskFreeBytes !== undefined && s.diskTotalBytes && s.diskFreeBytes / s.diskTotalBytes < 0.15) {
-    return { level: "warn", title: "The disk is almost full.", action: "Keep video for fewer days, or connect a bigger disk.", feeDaysLeft: days };
+    return { level: "warn", title: "The disk is almost full.", action: "The box deletes the oldest video first. Connect a bigger disk to keep more.", feeDaysLeft: days };
   }
   return { level: "ok", title: `Sealing OK. Last seal ${lastSealMin! < 1 ? "less than a minute" : minutesText(lastSealMin!)} ago.`, feeDaysLeft: days };
 }
