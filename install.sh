@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # QoreWitness installer for Linux (Raspberry Pi OS 64-bit, Debian, Ubuntu).
-#   curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.1/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash
 #
 # It installs into ~/qorewitness, pulls the published image, starts the box and
-# prints the dashboard address and the pairing code. Testnet pilot only.
+# prints the dashboard address and the pairing code. Beta on the QoreChain test network.
 # Run it again at any time: it keeps your camera, keys and account.
 #
 # From your own laptop, in one paste (the box is a Raspberry Pi named qorewitness):
-#   ssh -t <user>@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.1/install.sh | bash -s -- --yes"
+#   ssh -t <user>@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash -s -- --yes"
 #
 # Options:
 #   --yes            accept the defaults without questions (installs Docker when it is missing)
@@ -18,7 +18,7 @@
 # Env: QW_VERSION (image tag), QW_DIR (install folder), QW_UI_PORT (default 8080).
 set -euo pipefail
 
-QW_VERSION="${QW_VERSION:-0.6.0-alpha.1}"
+QW_VERSION="${QW_VERSION:-0.6.0-alpha.2}"
 REF="${QW_REF:-v$QW_VERSION}"
 REPO="${QW_REPO:-https://github.com/fnoufnou/qorewitness.git}"
 RAW="${QW_RAW:-https://raw.githubusercontent.com/fnoufnou/qorewitness/$REF}"
@@ -47,7 +47,7 @@ ask() { # ask "question" -> 0 for yes. The default is yes (Enter). Reads the ter
   [[ ! "$ans" =~ ^[Nn] ]]
 }
 
-say "QoreWitness installer (pilot on the QoreChain test network, no money involved)"
+say "QoreWitness installer (beta on the QoreChain test network, free while we build out the service)"
 
 # ---------------------------------------------------------------- system checks
 [ "$(uname -s)" = "Linux" ] || die "This installer is for Linux. See docs/INSTALL.md for other systems."

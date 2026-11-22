@@ -2,7 +2,9 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
-## Unreleased
+## 0.6.0-alpha.2 (22 Nov 2026, launch-ready preview)
+
+Beta wording everywhere, any camera (search, brand picker), Hands-off plan on the site, evidence wording from the first real run, quieter sponsor alerts. Install line pinned to this tag.
 
 ### 2026-11-22: calmer words after the first real run
 - Setup: one text on the progress bar ("Connecting your camera…"), only the bar moves. "This takes a few minutes".
