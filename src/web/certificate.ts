@@ -88,7 +88,7 @@ ${c.leftOut || c.uncoveredMinutes >= 1 ? `<p class="fine" style="border:0;margin
 <p>They existed at the time of the seal. The seal is a signed fingerprint in a public record that nobody can edit later.</p></div>
 <div><h2>What it cannot prove</h2>
 <p>It does not prove who is in the video or that the scene was real.</p>
-<p>It does not prove who owns the camera. The recording time comes from the box clock. This is a pilot on a test network and not a legal timestamp.</p></div>
+<p>It does not prove who owns the camera. The recording time comes from the box clock. QoreWitness is in beta on the QoreChain test network, and a seal is not a legal timestamp.</p></div>
 </div>
 <h2>How to check it</h2>
 <p>Open <a href="${VERIFIER_URL}">${VERIFIER_URL}</a> and drop the ZIP file on the page. The check runs in your browser. The video does not leave your device. See HOW-TO-CHECK.txt in the ZIP.</p>

@@ -173,7 +173,7 @@ CODE="$(printf '%s\n' "$PAIR" | sed -n 's/^code=//p')"
 echo
 if [ -n "$TOKEN" ] && [ -n "$CODE" ]; then
   ( umask 077; printf 'Setup link: %s\nPairing code: %s\n' "$BASE/setup?token=$TOKEN" "$CODE" > SETUP-LINK.txt )
-  bold "Your QoreWitness box is ready. On your phone or laptop, open:"
+  bold "QoreWitness is ready. On your phone or laptop, open:"
   echo
   bold "      $BASE"
   echo

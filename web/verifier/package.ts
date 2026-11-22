@@ -142,7 +142,7 @@ export function verdictOf(clips: ClipOutcome[], locale?: string): Verdict {
   }
   let sealed = "";
   const delays = clips.map((c) => (c.anchoredAt && c.startMs ? c.anchoredAt.getTime() - (c.startMs + (c.durationMs ?? 0)) : undefined)).filter((x): x is number => x !== undefined);
-  if (delays.length) sealed = ` Sealed within ${Math.max(1, Math.ceil(Math.max(...delays) / 60000))} minutes.`;
+  if (delays.length) { const m = Math.max(1, Math.ceil(Math.max(...delays) / 60000)); sealed = ` Sealed within ${m} minute${m === 1 ? "" : "s"}.`; }
   const subject = clips.length === 1 ? "This video is" : `These ${clips.length} clips are`;
   const base = `${subject} unchanged since ${clips.length === 1 ? "it was" : "they were"} recorded${recorded}.${sealed}`;
   if (clips.some((c) => c.kind === "warn")) {

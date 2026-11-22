@@ -1,5 +1,5 @@
 /**
- * QoreWitness pilot sponsor ("Fees included"), testnet only.
+ * QoreWitness fee sponsor for the free beta ("Free beta: we cover the network fees"), testnet only.
  *
  *   pnpm -s tsx services/sponsor/main.ts           run the API and the top-up loop
  *   pnpm -s tsx services/sponsor/main.ts --once    one top-up pass, then exit

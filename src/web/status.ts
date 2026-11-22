@@ -189,14 +189,14 @@ export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
   }
   if (days !== undefined && f.balanceUqor! < 3 * FEE_PER_SEAL_UQOR) {
     return f.plan === "sponsored"
-      ? { level: "bad", title: "Sealing paused: the fees ran out.", action: "The pilot tops up the fees by itself. If this stays for a day, the pilot may be paused or full.", feeDaysLeft: days }
+      ? { level: "bad", title: "Sealing paused: the fees ran out.", action: "Free beta: we cover the network fees and top them up for you. If this stays for a day, the beta service may be paused or full.", feeDaysLeft: days }
       : { level: "bad", title: "Sealing paused: the fees ran out.", action: addFees, feeDaysLeft: days };
   }
   if (days !== undefined && f.plan !== "sponsored" && days < 3) {
     return { level: "warn", title: "Sealing pauses soon: fees are running out.", action: addFees, feeDaysLeft: days };
   }
   if (days !== undefined && f.plan === "sponsored" && days < 0.25) {
-    return { level: "warn", title: "Sealing pauses soon: fees are running out.", action: "The pilot tops up the fees by itself. Nothing to do now.", feeDaysLeft: days };
+    return { level: "warn", title: "Sealing pauses soon: fees are running out.", action: "Free beta: we cover the network fees and top them up for you. Nothing to do now.", feeDaysLeft: days };
   }
   if (s.lastAnchorAgeSeconds === undefined) {
     return age > 1800

@@ -95,7 +95,7 @@
   <h1>Check a recording</h1>
   <p class="lead">Prove that a camera recording existed before a known time and that nobody changed it. Your video stays in this browser.</p>
   <div class="card inputs">
-    <label for="zip">Evidence ZIP from the QoreWitness box</label>
+    <label for="zip">Evidence file (ZIP) from your QoreWitness dashboard</label>
     <input id="zip" type="file" accept=".zip,application/zip">
     <details>
       <summary>Or check one clip with its receipt</summary>
@@ -122,9 +122,9 @@
       <ul id="notes" class="notes" hidden></ul>
       <div id="explain" hidden>
         <h2>What this proves</h2>
-        <p>The video file is exactly the file the camera box recorded. Not one byte was changed. It existed at the time shown, because its fingerprint was written to a public record (QoreChain test network) and signed by the camera.</p>
+        <p>The video file is exactly the file the camera's QoreWitness recorded. Not one byte was changed. It existed at the time shown, because its fingerprint was written to a public record (QoreChain test network) and signed by the camera.</p>
         <h2>What it cannot prove</h2>
-        <p>It does not prove who is in the video or that the scene was real. It does not prove who owns the camera. The camera clock sets the recording time, and the seal time comes from the public record. This is a pilot on a test network. It is not a legal timestamp.</p>
+        <p>It does not prove who is in the video or that the scene was real. It does not prove who owns the camera. The camera clock sets the recording time, and the seal time comes from the public record. QoreWitness is in beta on the QoreChain test network, which can be reset, and a seal is not a legal timestamp.</p>
       </div>
       <div id="actions2" class="actions" hidden><button id="print" class="secondary">Print this result</button></div>
       <details id="tech" hidden><summary>Technical details</summary><div id="steps"></div></details>

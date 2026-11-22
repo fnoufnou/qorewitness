@@ -113,11 +113,11 @@ Open your dashboard once in a while. It shows one line in a colour and one thing
 |---|---|---|
 | Green | Sealing OK. Last seal 4 minutes ago. | Nothing |
 | Orange | Waiting for the first seal. | Nothing. It comes 10 to 15 minutes after setup. |
-| Orange | Sealing pauses soon: fees are running out. | Fees included: nothing, the pilot tops up. Self-managed: add test tokens (the address is under Details). |
+| Orange | Sealing pauses soon: fees are running out. | Free beta: nothing, we top up the fees. Self-managed: add test tokens (the address is under Details). |
 | Orange | The disk is almost full. | Nothing urgent: the box deletes the oldest video first. Connect a bigger disk to keep more. |
 | Red | No video from the camera. | Check the power and Wi-Fi of the camera. |
 | Red | Sealing stopped 40 minutes ago. | Check the internet connection of the box. Restart the box if this stays. |
-| Red | Sealing paused: the fees ran out. | Fees included: the pilot tops up. If this stays for a day, the pilot may be paused. Self-managed: add test tokens. |
+| Red | Sealing paused: the fees ran out. | Free beta: we top up the fees. If this stays for a day, the beta service may be paused. Self-managed: add test tokens. |
 
 Video older than about 2 weeks (the box proposes the days from its free disk) is deleted. Download what you need before then.
 

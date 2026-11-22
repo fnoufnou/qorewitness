@@ -23,8 +23,9 @@ const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
 // TODO lead: pin a release tag instead of main before launch.
 const INSTALL = 'ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.1/install.sh | bash -s -- --yes"';
-const VERIFIER_SHA = "a995b6e408847daa288aa41ec4e7d03e2ce85bd0088b77c297c9634c5b5eb623";
+const VERIFIER_SHA = "d894ee8cad7d6b68b5a6fc41ec93693a2f6111c2971108ed72571f2a33fa2100";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
+const TESTS = 233; // automated tests (pnpm test), counted on 22 Nov 2026
 
 /* ---------- icons and art ---------- */
 const defs = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -81,7 +82,7 @@ const artTamper = `<svg viewBox="0 0 240 130" aria-hidden="true" focusable="fals
 /* ---------- hero composition ----------
  * Photo slots: web/site/assets/hero-frames.jpg (large frame), hero-frame-2.jpg and
  * hero-frame-3.jpg (small frames). They are img elements (width and height set). Until
- * the files load, the CSS gradient placeholder shows.
+ * the files load, a CSS gradient paints a night scene behind them.
  */
 const shield = `<svg aria-hidden="true" focusable="false"><use href="#i-shield"/></svg>`;
 const heroVisual = `<div class="hv" role="img" aria-label="Three frames from a home security camera, each with a seal badge. The main frame links to a verification report: Original. Recorded 22 Nov 2026, 02:14:07. Sealed on the public ledger. Not modified since sealing.">
@@ -109,30 +110,114 @@ const NAV = [
   ["plans.html", "Plans"],
   ["faq.html", "FAQ"],
 ];
+// After a thin divider, in a muted colour: pages for builders and the contest jury.
+const NAV2 = [
+  ["developers.html", "Developers"],
+  ["jury.html", "For the jury"],
+];
 
-// The only beta wording outside Trust, Developers, the plan price and one FAQ line.
-const betaBar = `<div class="beta-bar" role="note"><div class="wrap"><p><b>QoreWitness is in beta.</b> It runs on the QoreChain test network, which can be reset, and you can use it free of charge while we build out the service. <a href="trust.html#beta">Learn more</a></p></div></div>`;
+// The only beta wording outside Trust, Developers, the jury page, Plans and one FAQ line.
+const betaBar = `<aside class="beta-bar" aria-label="Beta notice"><div class="wrap"><p><b>QoreWitness is in beta.</b> It runs on the QoreChain test network, which can be reset, and you can use it free of charge while we build out the service. <a href="trust.html#beta">Learn more</a></p></div></aside>`;
 
 function header(current) {
+  const link = ([h, t], cls = "") => `<li${cls ? ` class="${cls}"` : ""}><a href="${h}"${h === current ? ' aria-current="page"' : ""}>${t}</a></li>`;
   return `<a class="skip" href="#main">Skip to content</a>
 ${betaBar}
 <header class="site-header"><div class="wrap bar">
-<a class="brand" href="index.html" aria-label="QoreWitness home"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
-<nav class="nav" aria-label="Main">${NAV.map(([h, t]) => `<a href="${h}"${h === current ? ' aria-current="page"' : ""}>${t}</a>`).join("")}</nav>
+<a class="brand" href="index.html"><svg aria-hidden="true" focusable="false"><use href="#logo"/></svg>QoreWitness<span class="sr"> home</span></a>
+<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" hidden><span class="burger" aria-hidden="true"><i></i><i></i><i></i></span>Menu</button>
+<nav class="nav" id="site-nav" aria-label="Main"><ul>${NAV.map((n) => link(n)).join("")}${NAV2.map((n, i) => link(n, i === 0 ? "sec first" : "sec")).join("")}<li class="nav-cta"><a class="btn primary" href="get-started.html">Set up your camera</a></li></ul></nav>
 <a class="btn primary sm cta" href="get-started.html">Set up your camera</a>
 </div></header>`;
 }
 
-const footer = `<footer class="site-footer"><div class="wrap">
+/* ---------- section edges ----------
+ * Decorative strips between sections: a tiny street skyline (some houses carry a small
+ * camera with a recording dot), a soft wave, and a row of chain links (the chain of
+ * fingerprints). They are SVG symbols, drawn in the colour of the next section through
+ * currentColor, so they follow light and dark mode. All are aria-hidden.
+ */
+function rng(seed) {
+  let s = seed >>> 0;
+  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+}
+function skyline(id, seed, W = 1440, H = 56) {
+  const r = rng(seed);
+  const parts = [];
+  const holes = [];
+  const dots = [];
+  let x = -10;
+  let n = 0;
+  while (x < W + 10) {
+    n++;
+    const w = Math.round(34 + r() * 40);
+    const h = Math.round(14 + r() * 18);
+    const top = H - h;
+    const roof = r();
+    const base = `M${x} ${H}V${top}`;
+    if (r() < 0.12) {
+      // a tree
+      const cx = x + 10, cr = 8 + r() * 5;
+      parts.push(`M${cx - 1.2} ${H}V${H - 12}h2.4V${H}Z`, `M${cx} ${H - 12 - cr * 2}a${cr.toFixed(1)} ${cr.toFixed(1)} 0 1 0 0.01 0Z`);
+      x += 22 + Math.round(r() * 8);
+      continue;
+    }
+    if (roof < 0.62) {
+      const peak = Math.round(w * (0.32 + r() * 0.12));
+      parts.push(`${base}L${x + w / 2} ${top - peak}L${x + w} ${top}V${H}Z`);
+      if (r() < 0.4) parts.push(`M${x + w * 0.68} ${top - peak * 0.62}V${top - peak - 3}h5V${top - peak * 0.36}Z`);
+    } else if (roof < 0.85) {
+      const peak = Math.round(w * 0.22);
+      parts.push(`${base}L${x + w * 0.22} ${top - peak}H${x + w * 0.78}L${x + w} ${top}V${H}Z`);
+    } else {
+      parts.push(`${base}H${x + w}V${H}Z`, `M${x - 2} ${top}h${w + 4}v-3h-${w + 4}Z`);
+    }
+    // windows and a door: holes (drawn the other way round, so the nonzero rule cuts them out)
+    const wy = top + 5;
+    if (h > 20) holes.push(`M${x + 7} ${wy}v6h6v-6Z`, `M${x + w - 13} ${wy}v6h6v-6Z`);
+    holes.push(`M${x + w / 2 - 3} ${H - 9}v9h6v-9Z`);
+    // every third or fourth house: a small camera under the roof, with its recording dot
+    if (n % 4 === 2 || (n % 7 === 0)) {
+      const left = r() < 0.5;
+      const cx = left ? x : x + w;
+      const dir = left ? -1 : 1;
+      parts.push(`M${cx} ${top + 3}h${dir * 3}v2h${-dir * 3}Z`, `M${cx + dir * 2} ${top + 1.5}h${dir * 8}v5h${-dir * 8}Z`);
+      dots.push(`<circle cx="${cx + dir * 11.5}" cy="${top + 4}" r="1.8"/>`);
+    }
+    x += w + Math.round(3 + r() * 12);
+  }
+  parts.push(`M-20 ${H - 2}H${W + 20}V${H + 2}H-20Z`);
+  return `<symbol id="${id}" viewBox="0 0 ${W} ${H}"><path fill="currentColor" d="${parts.join("")}${holes.join("")}"/><g fill="var(--signal)">${dots.join("")}</g></symbol>`;
+}
+const wave = `<symbol id="edge-wave" viewBox="0 0 1440 48"><path fill="currentColor" opacity=".45" d="M0 30C180 6 360 6 560 22S920 44 1120 26 1360 8 1440 14V48H0Z"/><path fill="currentColor" d="M0 38C220 18 420 18 640 32S1000 48 1200 34 1380 22 1440 26V48H0Z"/></symbol>`;
+function chain(W = 1440, H = 24) {
+  const out = [];
+  let i = 0;
+  for (let x = 6; x < W; x += 30, i++) {
+    if (i % 2 === 0) out.push(`<rect x="${x}" y="${H / 2 - 7}" width="40" height="14" rx="7"/>`);
+    else out.push(`<rect x="${x}" y="${H / 2 - 2}" width="40" height="4" rx="2"/>`);
+  }
+  const dots = Array.from({ length: 6 }, (_, k) => `<circle cx="${126 + k * 240}" cy="${H / 2}" r="3"/>`).join("");
+  return `<symbol id="edge-chain" viewBox="0 0 ${W} ${H}"><g fill="none" stroke="currentColor" stroke-width="2">${out.join("")}</g><g fill="var(--signal)">${dots}</g></symbol>`;
+}
+const edgeDefs = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>${skyline("edge-sky", 7)}${skyline("edge-sky2", 31)}${wave}${chain()}</defs></svg>`;
+/** An edge at the bottom of a section. kind: sky, sky2, wave, chain. to: the next section (bg, alt, band, foot). */
+const edge = (kind, to, from = "bg") => {
+  const vb = kind === "chain" ? "0 0 1440 24" : kind === "wave" ? "0 0 1440 48" : "0 0 1440 56";
+  return `<div class="edge e-${kind} t-${to} f-${from}" aria-hidden="true"><svg viewBox="${vb}" preserveAspectRatio="xMidYMax slice" focusable="false"><use href="#edge-${kind}"/></svg></div>`;
+};
+
+const LICENSE = `${GH}/blob/main/LICENSE`;
+const footer = `<footer class="site-footer">${edge("sky2", "foot", "prev")}<div class="wrap">
 <div class="cols">
-<div><a class="brand" href="index.html"><svg aria-hidden="true"><use href="#logo"/></svg>QoreWitness</a>
+<div><a class="brand" href="index.html"><svg aria-hidden="true" focusable="false"><use href="#logo"/></svg>QoreWitness</a>
 <p>Your camera footage, sealed as it is recorded and ready to prove whenever you need it.</p>
 <p><b>QoreWitness will never ask for your passwords or files.</b></p></div>
-<div><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="cameras.html">Cameras</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></div>
-<div><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">For developers</a></li></ul></div>
-<div><h2>Open</h2><ul><li><a href="${UP}verifier.html">QoreWitness Verify</a></li><li><a href="${GH}">GitHub</a></li><li><a href="${X}">@fnoufnou on X</a></li><li><a href="${DISCORD}">QoreChain Discord</a></li></ul></div>
+<nav aria-label="Product"><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="cameras.html">Cameras</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></nav>
+<nav aria-label="Trust"><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">Developers</a></li><li><a href="jury.html">For the jury</a></li></ul></nav>
+<nav aria-label="Open"><h2>Open</h2><ul><li><a href="${UP}verifier.html">QoreWitness Verify</a></li><li><a href="${GH}">GitHub</a></li><li><a href="${X}">@fnoufnou on X</a></li><li><a href="${DISCORD}">QoreChain Discord</a></li></ul></nav>
 </div>
-<div class="legal"><span>Open source under Apache-2.0. Built by fnoufnou.</span><span>QoreWitness has no link with the camera makers named on this site. Their names and brands belong to their owners.</span></div>
+<div class="legal"><p>© 2026 fnoufnou. QoreWitness is open source under the <a href="${LICENSE}">Apache License 2.0</a>.</p><p>QoreChain, TP-Link, Tapo and other names are trademarks of their respective owners. <a href="trust.html">Trust and limits</a></p></div>
 </div></footer>`;
 
 function page({ file, title, desc, body, current }) {
@@ -153,9 +238,11 @@ ${robots}<meta name="theme-color" content="#17483A">
 <link rel="icon" href="${UP}favicon.svg" type="image/svg+xml">
 <link rel="preload" href="${UP}fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${UP}assets/site.css">
+<script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
 ${defs}
+${edgeDefs}
 ${header(current)}
 <main id="main">
 ${body}
@@ -165,14 +252,57 @@ ${footer}
 </body>
 </html>
 `;
-  writeFileSync(join(outDir, file), html);
+  // Wide tables scroll sideways on small screens: give each one a name and a keyboard stop (site.js drops the stop when it fits).
+  const named = html.replace(/<div class="tablewrap">(<table[\s\S]*?<\/table>)/g, (_, t) => {
+    const cap = /<caption[^>]*>([^<]+)<\/caption>/.exec(t)?.[1];
+    const cols = [...t.matchAll(/<th scope="col">([^<]*)<\/th>/g)].map((m) => m[1]).filter(Boolean).join(", ");
+    return `<div class="tablewrap" role="region" aria-label="${cap ?? `Table: ${cols}`}" tabindex="0">${t}`;
+  });
+  writeFileSync(join(outDir, file), named);
   console.log("wrote", join(live ? "web/site" : "web/site/preview", file));
 }
 
-const shot = (what) => `<figure class="shot"><div class="box" role="img" aria-label="Screenshot placeholder: ${what}">${ico("image")}<span>Screenshot: ${what}</span></div></figure>`;
+/* ---------- real app screens in device frames ----------
+ * The images in assets/screens/ are screenshots of the real QoreWitness app
+ * (src/web), rendered from a local ui server with the chain, the camera and the fee
+ * sponsor mocked. Phone shots are 390 x 844 at 2x, desktop shots 1280 x 800 at 2x.
+ */
+const SCR = `${UP}assets/screens/`;
+const ALT = {
+  pair: "QoreWitness setup on a phone: Set up QoreWitness, with a field for the 6-digit pairing code and a Continue button.",
+  password: "QoreWitness setup on a phone: Choose a password for QoreWitness, with a Show password option and a Save password button.",
+  camera: "QoreWitness setup on a phone: Connect your camera. Two cameras found on the network, the brand TP-Link Tapo picked, the camera account filled in and a Test camera button.",
+  picture: "QoreWitness setup on a phone: Is this your camera?, with a picture of a back garden from the camera and the buttons Yes, this is my camera and Try again.",
+  progress: "QoreWitness setup on a phone: Connecting your camera, with a progress bar and the note that you can close the page.",
+  done: "QoreWitness setup on a phone: Sealing started, with the dashboard address and an Open my dashboard button.",
+  dashPhone: "QoreWitness dashboard on a phone: Sealing OK in green, four short facts and the latest seals, each with a Download button.",
+  evidence: "QoreWitness dashboard on a phone: Save evidence, with a date, a start and an end time, and the buttons Check this time and Last hour.",
+  dashDesk: "QoreWitness dashboard in a browser: Sealing OK in green, camera online, network fees covered in the free beta, and the latest seals with a Download button each.",
+  verifyPhone: "QoreWitness Verify on a phone, after checking a sealed clip with its seal file: the green result Original, with what it proves and what it cannot prove.",
+  verifyDesk: "QoreWitness Verify in a browser with a sealed clip and its seal file chosen, and the green result Original.",
+  states: "Three status lines from the QoreWitness dashboard: green Sealing OK, orange Waiting for the first seal, and red No video from the camera, with what to do.",
+};
+const phone = (file, alt, cap = "", o = {}) => `<figure class="shot${o.cls ? ` ${o.cls}` : ""}"><div class="device phone"><img src="${SCR}${file}.webp" width="780" height="1688" alt="${alt}" loading="lazy" decoding="async"></div>${cap ? `<figcaption>${cap}</figcaption>` : ""}</figure>`;
+const browser = (file, alt, address, cap = "", o = {}) => `<figure class="shot${o.cls ? ` ${o.cls}` : ""}"><div class="device browser"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>${address}</span></div><img src="${SCR}${file}.webp" width="${o.w ?? 2560}" height="${o.h ?? 1600}" alt="${alt}" loading="lazy" decoding="async"></div>${cap ? `<figcaption>${cap}</figcaption>` : ""}</figure>`;
+/** A row of phone screens. On a phone it scrolls sideways, on a wide screen it is a grid. */
+const screens = (label, items, lg = false) => `<div class="screens${lg ? " lg" : ""}" role="region" aria-label="${label}" tabindex="0"><ol>${items.map(([f, alt, cap]) => `<li>${phone(f, alt, cap)}</li>`).join("")}</ol></div>`;
+/** A neutral illustrated phone that shows the menu path in a camera maker's app as text. Never a copy of a vendor's app. */
+const pathPhone = (app, steps, cap) => `<figure class="shot path"><div class="device phone neutral"><div class="ill" role="img" aria-label="Illustration: in the ${app}, go to ${steps.join(", then ")}."><p class="app">${app}</p><ol>${steps.map((s, i) => `<li${i === steps.length - 1 ? ' class="here"' : ""}><span>${s}</span>${i < steps.length - 1 ? ico("arrow") : ico("check")}</li>`).join("")}</ol><p class="note">Illustration. The real app looks different.</p></div></div>${cap ? `<figcaption>${cap}</figcaption>` : ""}</figure>`;
+/** The last lines the installer prints, as text in a terminal frame (from install.sh). */
+const terminal = `<figure class="shot"><div class="device term"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Terminal</span></div><pre tabindex="0" aria-label="The end of the installer output"><span class="dim">Starting QoreWitness</span>
+<span class="dim"> ✔ Container qorewitness-agent  Started</span>
+<span class="dim"> ✔ Container qorewitness-ui     Started</span>
+
+<b>QoreWitness is ready. On your phone or laptop, open:</b>
+
+<b class="hl">      http://192.168.1.42:8080</b>
+
+<b class="hl">      Pairing code:  482 913</b>
+
+Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div><figcaption>The end of the install. Your address and code will differ.</figcaption></figure>`;
 const help = (title, inner, id = "") => `<details class="help"${id ? ` id="${id}"` : ""}><summary>${title}</summary><div class="in">${inner}</div></details>`;
-const copybox = (id, text, label = "Copy") => `<div class="copybox"><code id="${id}">${text}</code><button class="btn" type="button" data-copy="${id}" aria-label="${label} the text above">${ico("copy")}<span>${label}</span></button></div>`;
-const head = (eyebrow, h1, lead, meta = []) => `<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">${eyebrow}</p><h1>${h1}</h1><p class="lead">${lead}</p>${meta.length ? `<ul class="meta">${meta.map((m) => `<li>${m}</li>`).join("")}</ul>` : ""}</div></div>`;
+const copybox = (id, text, label = "Copy") => `<div class="copybox"><code id="${id}" tabindex="0">${text}</code><button class="btn" type="button" data-copy="${id}" aria-label="${label}: ${id === "install-cmd" ? "the install line" : "the text"}">${ico("copy")}<span>${label}</span></button></div>`;
+const head = (eyebrow, h1, lead, meta = []) => `<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">${eyebrow}</p><h1>${h1}</h1><p class="lead">${lead}</p>${meta.length ? `<ul class="meta">${meta.map((m) => `<li>${m}</li>`).join("")}</ul>` : ""}</div>${edge("wave", "bg", "head")}</div>`;
 const closing = (h, p, href, label) => `<div class="band"><div class="wrap"><div><h2>${h}</h2><p>${p}</p></div><a class="btn primary" href="${href}">${label} ${ico("arrow")}</a></div></div>`;
 const VERIFY = `<a href="${UP}verifier.html">QoreWitness Verify</a>`;
 const cert = (tag) => `<div class="cert" role="group" aria-label="Example result from QoreWitness Verify"><span class="tag">${tag}</span>
@@ -182,10 +312,11 @@ const cert = (tag) => `<div class="cert" role="group" aria-label="Example result
 <li><span>${ico("check")}The seal is valid</span></li>
 <li><span>${ico("check")}Pinned to the time it was recorded</span></li>
 </ul><div class="foot">Existed before 12 Nov 2026, 08:00</div></div>`;
+const techNames = (inner) => `<details class="tech"><summary><span>Technical names<small>The full technical detail is on the <span class="u">Developers</span> page.</small></span></summary><div class="in">${inner}<p class="small" style="margin:0"><a href="developers.html">Read the full technical detail for developers</a></p></div></details>`;
 const pill = (kind, text) => `<span class="pill ${kind}"><i></i>${text}</span>`;
 
 /* ---------- hardware facts (lead, 22 Nov) ---------- */
-const hwTable = `<div class="tablewrap"><table class="stack"><caption class="sr">Minimum and recommended hardware</caption><thead><tr><th scope="col"></th><th scope="col">Minimum</th><th scope="col">Recommended</th></tr></thead><tbody>
+const hwTable = `<div class="tablewrap"><table class="stack"><caption class="sr">Minimum and recommended hardware</caption><thead><tr><th scope="col"><span class="sr">Part</span></th><th scope="col">Minimum</th><th scope="col">Recommended</th></tr></thead><tbody>
 <tr><th scope="row">Processor</th><td data-label="Minimum">2 cores, 64-bit (x86-64 or ARM64)</td><td data-label="Recommended">4 cores</td></tr>
 <tr><th scope="row">Memory</th><td data-label="Minimum">2 GB</td><td data-label="Recommended">4 GB</td></tr>
 <tr><th scope="row">Storage</th><td data-label="Minimum">Enough for the days of video you want to keep</td><td data-label="Recommended">A 500 GB SSD for one or two cameras</td></tr>
@@ -200,8 +331,8 @@ const platformTable = `<div class="tablewrap"><table class="stack"><caption clas
 
 /* ---------- camera brand hints ---------- */
 const BRANDS = [
-  ["TP-Link Tapo (wired models, such as the C210)", `<ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Advanced Settings</b>, then <b>Camera Account</b>, and agree to the notice.</li><li>Choose a name and a password of 6 to 32 characters each. Letters and digits work best.</li></ol><p>Stream address: <code>rtsp://NAME:PASSWORD@ADDRESS:554/stream1</code>. Tapo Care, a microSD card and a recorder such as QoreWitness can only run two at a time, so switch one off if all three are on.</p>`],
-  ["Reolink (wired and PoE models)", `<p>In the Reolink app or desktop client, open the camera settings, then <b>Network</b>, <b>Advanced</b> and <b>Server Settings</b> (on some models <b>Port Settings</b>), and switch on <b>RTSP</b>. Use the camera's own login.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/h264Preview_01_main</code>.</p>`],
+  ["TP-Link Tapo (wired models, such as the C210)", `<div class="hint-grid"><div><ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Advanced Settings</b>, then <b>Camera Account</b>, and agree to the notice.</li><li>Choose a name and a password of 6 to 32 characters each. Letters and digits work best.</li></ol><p>Stream address: <code>rtsp://NAME:PASSWORD@ADDRESS:554/stream1</code>. Tapo Care, a microSD card and a recorder such as QoreWitness can only run two at a time, so switch one off if all three are on.</p></div>${pathPhone("Tapo app", ["Your camera", "Settings (gear icon)", "Advanced Settings", "Camera Account"], "Where to find the Camera Account in the Tapo app.")}</div>`],
+  ["Reolink (wired and PoE models)", `<div class="hint-grid"><div><p>In the Reolink app or desktop client, open the camera settings, then <b>Network</b>, <b>Advanced</b> and <b>Server Settings</b> (on some models <b>Port Settings</b>), and switch on <b>RTSP</b>. Use the camera's own login.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/h264Preview_01_main</code>.</p></div>${pathPhone("Reolink app", ["Camera settings", "Network", "Advanced", "Server Settings", "RTSP on"], "Where to switch on RTSP in the Reolink app.")}</div>`],
   ["Hikvision and Annke", `<p>RTSP is usually on already. Open the camera in your browser and check <b>Configuration</b>, <b>Network</b>, <b>Advanced Settings</b>. To use ONVIF, switch it on under <b>Integration Protocol</b> and add an ONVIF user.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/Streaming/Channels/101</code>.</p>`],
   ["Dahua and Amcrest", `<p>RTSP is usually on already. You can check it in the camera's web page under the network settings, where you can also switch on ONVIF.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/cam/realmonitor?channel=1&amp;subtype=0</code>.</p>`],
   ["Ubiquiti UniFi Protect", `<p>In UniFi Protect, open the camera, go to its settings and switch on an <b>RTSP</b> stream under the advanced options. Protect then shows a ready-made stream link. Copy it and keep it for the setup.</p>`],
@@ -215,8 +346,8 @@ const FAQ = [
   ["Does my video leave my home?", `<p>No. Your recordings stay on your own computer at home. QoreWitness creates a digital fingerprint of your video stream and keeps that, and only that, on a public record. A fingerprint reveals nothing about what is in the picture or the sound.</p>`],
   ["Which cameras work?", `<p>Any camera that can share its video stream on your home network over RTSP or ONVIF, which many wired home cameras can. Battery cameras and cameras that only stream to their maker's cloud cannot, because they never offer that stream. See the <a href="cameras.html">camera list</a>, and learn how to check your own camera in two minutes.</p><p>We have no partnership with any camera maker.</p>`],
   ["What does QoreWitness run on?", `<p>On an always-on computer at home: a Raspberry Pi 4 or 5, a mini PC, a home server or a NAS. It runs anywhere Docker runs. See <a href="get-started.html#need">What you need</a> for the minimum and recommended hardware.</p>`],
-  ["Do I need to know anything about crypto?", `<p>Not at all. QoreWitness uses a public ledger as an independent notary, and that is the only part it plays. You never buy, hold or trade anything, because the Fees included plan takes care of the network fees for you.</p>`],
-  ["What does it cost?", `<p>Fees included is EUR 4 per camera per month, and it is free while we're in beta. Self-managed is free if you bring your own wallet. See <a href="plans.html">Plans</a>.</p><p>Pricing can change after the beta, and we will never charge you without asking first.</p>`],
+  ["Do I need to know anything about crypto?", `<p>Not at all. QoreWitness uses a public ledger as an independent notary, and that is the only part it plays. You never buy, hold or trade anything: during the beta we cover the network fees for you, and after launch the Hands-off plan does the same.</p>`],
+  ["What does it cost?", `<p>Nothing during the beta. QoreWitness is free, and we cover the network fees on the test network, so you need no wallet at all.</p><p>When QoreWitness launches on the QoreChain main network, the Free plan stays free and pays the small network fees from your own wallet. If you would rather not think about fees, you can choose Hands-off for USD 10 or EUR 9 per camera per month. See <a href="plans.html">Plans</a>, and rest assured that we will never charge you without asking first.</p>`],
   ["What if my internet goes down?", `<p>Your camera and QoreWitness keep recording. Footage from while the connection was down may have no seal, and the public record shows that gap openly, with its start and its length.</p><p>Nobody can fill the gap later with a backdated seal.</p>`],
   ["Will the police or a court accept it?", `<p>A seal gives your footage strong, independent support that anyone can check. A court decides for itself how much weight to give it, just as with other evidence, and QoreWitness is not an EU qualified time stamp service. For a specific case, ask a lawyer.</p>`],
   ["What if my QoreWitness computer breaks?", `<p>Every seal on the public record stays where it is. To prove a clip you also need the clip itself, so press <b>Save evidence</b> in the dashboard for anything that matters to you and keep that file somewhere safe.</p>`],
@@ -243,9 +374,9 @@ page({
 <p class="fine">Works with cameras that offer an RTSP or ONVIF stream. <a href="cameras.html">Check yours</a>.</p>
 </div>
 ${heroVisual}
-</div></div>
+</div>${edge("sky", "bg", "hero")}</div>
 
-<section><div class="wrap">
+<section class="edged"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Why it matters</p><h2>When any video can be faked, yours deserves proof.</h2>
 <p>Until recently, video evidence was enough to prove what really happened. With AI video manipulation, that trust is eroding fast. QoreWitness restores it by pinning every video to the time it was recorded and proving that not a single pixel has changed since.</p></div>
 <ul class="grid c3">
@@ -253,9 +384,9 @@ ${heroVisual}
 <li class="tile top"><div class="ic">${ico("lock")}</div><h3>Keep your privacy</h3><p>Your video stays at home. QoreWitness creates a digital fingerprint of your video stream and keeps that, and only that, on a public record.</p></li>
 <li class="tile top"><div class="ic">${ico("eye")}</div><h3>Let anyone check</h3><p>Whoever receives your video can confirm the seal online with ${VERIFY}, in seconds, without an account and without having to take our word for it.</p></li>
 </ul>
-</div></section>
+</div>${edge("wave", "alt")}</section>
 
-<section class="alt" id="how"><div class="wrap">
+<section class="alt edged-chain" id="how"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">How it works</p><h2>Seal, keep, prove.</h2></div>
 <ol class="grid c3" style="list-style:none;padding:0;margin:0">
 <li class="tile"><div class="art">${artSeal}</div><h3>1. Seal</h3><p>As your camera records, QoreWitness builds a chain of digital fingerprints and stores them on a public ledger. Change a single pixel of the original video later and the seal breaks.</p></li>
@@ -263,9 +394,20 @@ ${heroVisual}
 <li class="tile"><div class="art">${artProve}</div><h3>3. Prove</h3><p>If you ever need to provide video evidence, just share the clip with its QoreWitness seal. Anyone can verify it online and see a clear green result.</p></li>
 </ol>
 <p class="small" style="margin-top:20px"><a href="how-it-works.html">Read how it works</a></p>
-</div></section>
+</div>${edge("chain", "bg", "alt")}</section>
 
-<section><div class="wrap">
+<section class="edged" id="app"><div class="wrap">
+<div class="sec-head"><p class="eyebrow">The app</p><h2>Simple from the very first screen.</h2>
+<p>QoreWitness finds the cameras on your network, shows you a picture so you know you picked the right one, and then gets to work. After that, one glance at your dashboard tells you that all is well, and every recording is one tap away from a sealed copy.</p></div>
+${screens("The QoreWitness app on a phone, three screens", [
+  ["setup-camera", ALT.camera, "Pick your camera"],
+  ["setup-picture", ALT.picture, "Confirm its picture"],
+  ["dashboard-phone", ALT.dashPhone, "Check your dashboard"],
+], true)}
+<p class="small" style="margin-top:20px"><a href="get-started.html#s4">See every step of the setup</a></p>
+</div>${edge("wave", "alt")}</section>
+
+<section class="alt"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">What you need</p><h2>Your camera, a computer that stays on, and a browser.</h2>
 <p>QoreWitness runs quietly on a small computer at home, and setting it up takes about an hour. You paste one line, and everything after that happens in your browser.</p></div>
 <ul class="grid c3">
@@ -276,7 +418,7 @@ ${heroVisual}
 <div class="btns" style="margin-top:28px"><a class="btn primary" href="get-started.html">Set up your camera ${ico("arrow")}</a><a class="btn" href="get-started.html#need">Full hardware list</a></div>
 </div></section>
 
-<section class="alt" id="open"><div class="wrap split">
+<section id="open"><div class="wrap split">
 <div class="sec-head"><p class="eyebrow">Built in the open</p><h2>Proof you can check, from people who show their work.</h2>
 <p>QoreWitness is open source, and every seal can be checked without trusting us. Our own home camera has been sealing its footage around the clock since 9 November 2026. <a href="trust.html">See the facts and the limits</a>.</p></div>
 <div class="panel"><h3>What a seal proves, and what it cannot</h3>
@@ -296,13 +438,13 @@ page({
   desc: "How QoreWitness seals your camera footage as it is recorded: fingerprint, bundle, seal and record, while your video stays at home.",
   body: `
 ${head("How it works", "Your camera, now a witness.", "As your camera records, QoreWitness quietly builds a chain of digital fingerprints and pins them to a public ledger. Here is what happens, in plain words.")}
-<section><div class="wrap narrow">
+<section class="edged"><div class="wrap narrow">
 <h2>Your video stays at home.</h2>
 <p style="margin-top:16px">Your recordings never leave your own computer. QoreWitness creates a digital fingerprint of your video stream and keeps that, and only that, on a public record, together with the time and a seal. A fingerprint cannot be turned back into a picture or a sound.</p>
 <div class="callout"><b class="t">Think of a sealed letter</b>You press a wax seal on a letter, keep the letter somewhere safe, and the postmark shows when it was sent. Anyone can inspect the seal and the postmark. QoreWitness does the same for video, with a digital seal and a public ledger as the postmark.</div>
-</div></section>
+</div>${edge("wave", "alt")}</section>
 
-<section class="alt"><div class="wrap">
+<section class="alt edged-chain"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Four steps</p><h2>Fingerprint, bundle, seal, record.</h2>
 <p>All of this runs by itself in the background, for as long as your camera records.</p></div>
 <ol class="grid c4" style="list-style:none;padding:0;margin:0">
@@ -311,7 +453,7 @@ ${head("How it works", "Your camera, now a witness.", "As your camera records, Q
 <li class="tile"><div class="ic">${ico("sign")}</div><div class="num">03</div><h3>Seal</h3><p>Each camera gets its own digital seal, built to withstand the quantum computers of the future, and signs every summary with it.</p></li>
 <li class="tile"><div class="ic">${ico("chain")}</div><div class="num">04</div><h3>Record</h3><p>The public ledger checks the seal before it accepts the summary and its time. A small seal file stays with your recordings at home.</p></li>
 </ol>
-</div></section>
+</div>${edge("chain", "bg", "alt")}</section>
 
 <section><div class="wrap">
 <div class="sec-head"><p class="eyebrow">The picture</p><h2>What goes where.</h2></div>
@@ -331,14 +473,12 @@ ${head("How it works", "Your camera, now a witness.", "As your camera records, Q
 <li>It is not an EU qualified time stamp, and a court decides for itself how much weight to give it.</li>
 </ul><p class="small"><a href="trust.html">Read Trust and limits</a></p></div>
 <div>
-<details><summary>Technical names</summary><div class="in">
-<ul class="plain">
+${techNames(`<ul class="plain">
 <li>Fingerprints: SHA-256 and SHA3-256, two independent hash functions.</li>
 <li>The summary: a Merkle root of the fingerprints in one time window.</li>
 <li>The seal: an ML-DSA-87 signature (NIST FIPS 204) made with the camera key. Common signatures such as ECDSA and RSA may break once large quantum computers exist.</li>
 <li>The public ledger: the AnchorRegistry smart contract on QoreChain. It checks the signature on chain before it stores the summary.</li>
-</ul>
-<p class="small" style="margin:0"><a href="developers.html">For developers</a></p></div></details>
+</ul>`)}
 </div>
 </div></section>
 ${closing("Ready to seal your footage?", "Setup takes about an hour, and you only do it once.", "get-started.html", "Set up your camera")}`,
@@ -406,7 +546,7 @@ ${brandHints}
 <p>Paste this line, replace <code>USER</code> with the user name of your QoreWitness computer, and press Enter.</p>
 ${copybox("install-cmd", INSTALL, "Copy line")}
 <p>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter that computer's password. The installer takes care of the rest, and at the end it shows a <b>link</b> and a <b>setup code</b> in large text.</p>
-${shot("the terminal at the end of the install, with the link and the setup code")}
+${terminal}
 ${help("Starting with a new Raspberry Pi", `<ol class="plain"><li>Install Raspberry Pi Imager on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>.</li><li>In its settings, set the host name to <code>qorewitness</code>, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>.</li><li>Write the card or SSD, connect it to the Pi and start it. Give it a moment to boot, then paste the line above.</li></ol>`)}
 ${help("Something not working?", `<ul class="plain"><li><b>qorewitness.local not found.</b> Use the computer's IP address from your router app instead of <code>qorewitness.local</code>.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the setup code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="${GH}/blob/main/install.sh">GitHub</a>, and you can run the line again at any time.</li></ul>`)}
 </div></li>
@@ -418,14 +558,20 @@ ${help("Something not working?", `<ul class="plain"><li><b>qorewitness.local not
 <li><b>Enter the camera account</b> name and password from step 2, tick that the camera films your own property, and press <b>Test camera</b>.</li>
 <li><b>Is this your camera?</b> QoreWitness tests the picture and shows it. Press <b>Yes, this is my camera</b>.</li>
 </ol>
-<p>A progress bar then connects your camera to the public ledger. You can close the page while it works. The network fees are included, so there is nothing to pay or top up.</p>
-${shot("the screen Is this your camera? with a picture from the camera")}
-${help("Something not working?", `<ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>No more places free.</b> The setup tells you and offers Self-managed. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the line from step 3 again with <code>--new-password</code> added after <code>--yes</code>.</li></ul>`)}
+<p>A progress bar then connects your camera to the public ledger. You can close the page while it works. During the beta we cover the network fees, so there is no wallet to set up and nothing to pay or top up.</p>
+${screens("The setup in your browser, five screens", [
+  ["setup-pair", ALT.pair, "1. Type the setup code"],
+  ["setup-password", ALT.password, "2. Choose a password"],
+  ["setup-camera", ALT.camera, "3. Pick your camera"],
+  ["setup-picture", ALT.picture, "4. Confirm its picture"],
+  ["setup-progress", ALT.progress, "5. Let it connect"],
+])}
+${help("Something not working?", `<ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the line from step 3 again with <code>--new-password</code> added after <code>--yes</code>.</li></ul>`)}
 </div></li>
 
 <li class="step" id="s5"><h3>Done</h3><p class="time">Dashboard</p><div class="body">
 <p>You see <b>Sealing started</b>, and your first seals arrive shortly after. Open your dashboard and bookmark it on your phone and laptop. Its status line turns green as soon as sealing runs.</p>
-${shot("the dashboard with the green line Sealing OK")}
+<div class="duo">${phone("setup-done", ALT.done, "Sealing started")}${browser("dashboard-desktop", ALT.dashDesk, "qorewitness.local:8080", "Your dashboard, here on a laptop")}</div>
 <div class="callout ok"><b class="t">That's it.</b>Keep using your camera app for live view and alerts, just as before. <a href="daily-use.html">Daily use</a> explains the dashboard, and <a href="prove.html">Prove a video</a> shows how to share a sealed clip.</div>
 </div></li>
 </ol>
@@ -510,7 +656,7 @@ page({
   desc: "Living with QoreWitness: what the dashboard colours mean, how long recordings are kept, and what happens after a power cut.",
   body: `
 ${head("Daily use", "Set it up once, and it simply keeps going.", "Keep using your camera app for live view and alerts, just as you do today. QoreWitness works quietly in the background, and your dashboard tells you at a glance that all is well.")}
-<section><div class="wrap narrow">
+<section class="edged"><div class="wrap narrow">
 <h2>Your dashboard</h2>
 <p style="margin-top:16px">It shows one status line in a colour, and when something needs you, exactly one thing to do. Bookmark it on your phone and laptop. On a Raspberry Pi named <code>qorewitness</code>, the address is usually <code>http://qorewitness.local:8080</code>.</p>
 <div class="tablewrap"><table class="stack"><thead><tr><th scope="col">Colour</th><th scope="col">It says</th><th scope="col">What to do</th></tr></thead><tbody>
@@ -520,10 +666,11 @@ ${head("Daily use", "Set it up once, and it simply keeps going.", "Keep using yo
 <tr><td><b style="color:var(--bad)">Red</b></td><td data-label="It says">No video from the camera.</td><td data-label="What to do">Check the camera's power and Wi-Fi.</td></tr>
 <tr><td><b style="color:var(--bad)">Red</b></td><td data-label="It says">Sealing stopped.</td><td data-label="What to do">Check that your QoreWitness computer is online, and restart it if the message stays.</td></tr>
 </tbody></table></div>
-${shot("the dashboard in green, orange and red state")}
-${help("Self-managed plan: fee messages", `<p>With Self-managed you pay the network fees from your own wallet. If the dashboard says the fees are running out, add tokens to the address it shows. See <a href="plans.html">Plans</a>.</p>`)}
+<figure class="shot"><div class="device panel"><img src="${SCR}dashboard-states.webp" width="1856" height="494" alt="${ALT.states}" loading="lazy" decoding="async"></div><figcaption>The status line in its three colours, as the dashboard shows it.</figcaption></figure>
+${help("Using your own wallet: fee messages", `<p>If you chose <b>Use my own wallet</b> in the setup, you pay the network fees yourself. When the dashboard says the fees are running out, add tokens to the address it shows. See <a href="plans.html">Plans</a>.</p>`)}
 <p class="muted">Phone alerts are on our roadmap. For now, you see the status whenever you open the dashboard.</p>
-</div></section>
+<div class="duo narrow-duo">${phone("dashboard-phone", ALT.dashPhone, "Your dashboard on a phone")}<div class="stack"><h3>Bookmark it</h3><p>Add the dashboard to your phone's home screen and it opens like an app. Every row is a sealed part of your recording, with its own <b>Download</b> button for the day you need it.</p></div></div>
+</div>${edge("wave", "alt")}</section>
 
 <section class="alt"><div class="wrap narrow">
 <h2>About two weeks of video, and seals for good</h2>
@@ -543,7 +690,7 @@ ${help("Self-managed plan: fee messages", `<p>With Self-managed you pay the netw
 <h2>Pause or remove</h2>
 <ul class="plain" style="margin-top:16px">
 <li>To pause, switch off your QoreWitness computer. Your camera and its app keep working as usual.</li>
-<li>To remove QoreWitness, see <a href="developers.html#run">For developers</a>.</li>
+<li>To remove QoreWitness, see <a href="developers.html#run">Developers</a>.</li>
 <li>Seals on the public record cannot be deleted. They hold only fingerprints and times.</li>
 </ul>
 ${help("Advanced: back up your QoreWitness computer", `<p>If the computer breaks, you set QoreWitness up again with a new camera seal, and every earlier seal stays checkable. To keep the same camera identity, copy the folder <code>~/qorewitness/data</code> to a USB stick and keep it safe. Anyone with these files can use your account, which is why QoreWitness never asks for them.</p>`)}
@@ -575,7 +722,7 @@ page({
   desc: "Share a clip with its QoreWitness seal, and anyone can confirm online, in seconds, that the video is the untouched original.",
   body: `
 ${head("Prove a video", "Share a video, and let anyone confirm it's the original.", "If you ever need to provide video evidence, just share the clip with its QoreWitness seal. Anyone can verify the seal and confirm the video is untouched, online, in seconds.")}
-<section id="owner"><div class="wrap">
+<section id="owner" class="edged"><div class="wrap">
 <div class="split">
 <div>
 <p class="eyebrow">If you share a video</p><h2>Save your evidence.</h2>
@@ -584,7 +731,7 @@ ${head("Prove a video", "Share a video, and let anyone confirm it's the original
 <li>Press <b>Download</b> next to the time you need, or press <b>Save evidence</b> and pick a time range.</li>
 <li>You get one file with the video and its seal. Send it to whoever needs it, such as an insurer or a lawyer.</li>
 </ol>
-${shot("the dashboard with the Download button next to a time, and the Save evidence button")}
+<div class="pair">${phone("dashboard-phone", ALT.dashPhone, "Download next to a time")}${phone("evidence-phone", ALT.evidence, "Or pick a time range")}</div>
 <p>Do this in good time, because QoreWitness keeps about two weeks of video.</p>
 <div class="callout warn"><b class="t">Your video shows people</b>Share it only with those who need it, and keep it off public channels.</div>
 ${help("A message you can send with the file", `<div class="copybox light"><code id="mail-tpl">${emailTpl}</code><button class="btn" type="button" data-copy="mail-tpl">${ico("copy")}<span>Copy text</span></button></div>`)}
@@ -597,9 +744,10 @@ ${help("A message you can send with the file", `<div class="copybox light"><code
 <li>Read the result. A green <b>Original</b> means the video has not been modified since it was sealed.</li>
 </ol>
 <div class="btns"><a class="btn primary" href="${UP}verifier.html">Open QoreWitness Verify ${ico("arrow")}</a></div>
+${phone("verify-phone", ALT.verifyPhone, "A green Original in QoreWitness Verify", { cls: "solo" })}
 </div>
 </div>
-</div></section>
+</div>${edge("wave", "alt")}</section>
 
 <section class="alt" id="sample"><div class="wrap">
 <div class="split">
@@ -626,28 +774,29 @@ page({
   file: "plans.html",
   current: "plans.html",
   title: "Plans | QoreWitness",
-  desc: "Fees included: EUR 4 per camera per month, free while we're in beta. Self-managed: free, bring your own wallet.",
+  desc: "Free: runs on your own hardware, and during the beta we cover the network fees. Hands-off: USD 10 or EUR 9 per camera per month, available when QoreWitness launches on the QoreChain main network.",
   body: `
-${head("Plans", "Network fees included. Nothing to manage.", "Choose a plan for each camera. With Fees included, we take care of the public ledger and its network fees, so you never need a wallet, tokens or a second thought.")}
+${head("Plans", "Free while we build. Hands-off when we launch.", "QoreWitness runs on your own hardware, and during the beta it is free for everyone, network fees included. You never need a wallet, tokens or a second thought to start sealing your footage today.")}
 <section style="padding-top:40px"><div class="wrap">
 <div class="plans">
-<article class="plan feature" aria-labelledby="p-fees" id="fees">
+<article class="plan feature" aria-labelledby="p-free" id="free">
 <p class="plan-tag">Recommended</p>
-<h2 id="p-fees">Fees included</h2><p class="for">For everyone who wants it to just work.</p>
-<p class="price"><span class="amt">EUR 4</span> per camera per month</p>
-<p class="free">${pill("ok", "Free while we're in beta")}</p>
-<ul class="checks" style="margin-top:8px"><li>${ico("check")}<span>Works straight after setup, with no wallet and no tokens to buy.</span></li><li>${ico("check")}<span>Every seal and its network fee included.</span></li><li>${ico("check")}<span>QoreWitness Verify for everyone you share a video with.</span></li><li>${ico("check")}<span>Places are limited during the beta, and the setup tells you if they are full.</span></li></ul>
-<div class="push"><a class="btn primary" href="get-started.html">Set up your camera ${ico("arrow")}</a></div>
-</article>
-<article class="plan" aria-labelledby="p-self" id="self">
-<p class="plan-tag muted">For wallet owners</p>
-<h2 id="p-self">Self-managed</h2><p class="for">For people who already have a QoreChain wallet.</p>
+<h2 id="p-free">Free</h2><p class="for">Runs on your own hardware, for every camera you own.</p>
 <p class="price"><span class="amt">Free</span></p>
-<p class="free muted">Bring your own wallet</p>
-<ul class="checks" style="margin-top:16px"><li>${ico("check")}<span>The same seals and the same proof.</span></li><li>${ico("check")}<span>You pay the network fees from your own wallet.</span></li><li>${ico("check")}<span>You hold your own keys, so keep a backup: nobody can recover them for you.</span></li></ul>
-<div class="push"><p class="small muted" style="margin:0">Choose it in the setup under <b>Advanced</b>.</p></div>
+<p class="free">${pill("ok", "Beta: we cover the network fees")}</p>
+<ul class="checks" style="margin-top:8px"><li>${ico("check")}<span>Works straight after setup, with no wallet and no tokens to buy.</span></li><li>${ico("check")}<span>During the beta we pay the test-network fees for every seal.</span></li><li>${ico("check")}<span>QoreWitness Verify for everyone you share a video with.</span></li><li>${ico("check")}<span>On the main network, the Free plan pays the small network fees from your own wallet, or you switch to Hands-off.</span></li></ul>
+<div class="push"><a class="btn primary" href="get-started.html">Set up your camera ${ico("arrow")}</a><p class="small muted" style="margin:12px 0 0">Already have a QoreChain wallet? Choose <b>Use my own wallet</b> under <b>Advanced</b> in the setup.</p></div>
+</article>
+<article class="plan soon" aria-labelledby="p-hands" aria-describedby="hands-note" id="hands-off">
+<p class="soon-bar" id="hands-note">${ico("lock")}<span>Available when QoreWitness launches on the QoreChain main network</span></p>
+<p class="plan-tag muted">Coming at launch</p>
+<h2 id="p-hands">Hands-off</h2><p class="for">For everyone who wants the network fees taken care of for good.</p>
+<p class="price"><span class="amt">USD 10</span> or <span class="amt alt">EUR 9</span> <span class="per">per camera per month</span></p>
+<ul class="checks" style="margin-top:16px"><li>${ico("check")}<span>The same seals and the same proof as the Free plan.</span></li><li>${ico("check")}<span>Every network fee on the main network taken care of by us.</span></li><li>${ico("check")}<span>No wallet, no tokens and nothing to top up, ever.</span></li></ul>
+<div class="push"><a class="btn notify" href="${X}" aria-describedby="hands-note">${ico("arrow")}<span>Get notified on X, @fnoufnou</span></a><p class="small muted" style="margin:12px 0 0">Until the launch, everyone uses the Free plan. We will announce Hands-off on X first.</p></div>
 </article>
 </div>
+<div class="callout" style="margin-top:32px"><b class="t">Why is it free right now?</b>QoreWitness runs on the QoreChain test network during the beta, where the network fees are paid in test tokens that have no value. We cover them for you, so you can enjoy the full service while we build it out. <a href="trust.html#beta">What the beta means for you</a></div>
 <p class="small muted" style="margin-top:24px">Questions about pricing? See the <a href="faq.html">FAQ</a>.</p>
 </div></section>`,
 });
@@ -699,8 +848,8 @@ ${head("Trust and limits", "What it proves, and what it cannot.", "A proof is on
 <ul class="limits">
 <li><b>The test network can be reset.</b> The QoreChain team says it will not reset before 15 Dec 2026. After that, a reset can remove every seal made during the beta.</li>
 <li><b>Seals from the beta show how the method works.</b> They are not meant as evidence yet, because the test network can be reset. Keep the original files.</li>
-<li><b>Fees included depends on us.</b> The service operator (fnoufnou) pays the network fees with test tokens that have no value. The service can stop, and you can then switch to Self-managed.</li>
-<li><b>No payment is collected during the beta.</b> When the main network opens, seals would need to be made again there. We plan to tell you before that happens and to guide you through it.</li>
+<li><b>The free beta fees depend on us.</b> The service operator (fnoufnou) pays the network fees with test tokens that have no value. The service can stop, and you can then pay the fees from your own wallet.</li>
+<li><b>No payment is collected during the beta.</b> The paid Hands-off plan only starts when QoreWitness launches on the main network. When the main network opens, seals would need to be made again there. We plan to tell you before that happens and to guide you through it.</li>
 </ul>
 </div></section>
 
@@ -738,7 +887,7 @@ ${head("Trust and limits", "What it proves, and what it cannot.", "A proof is on
 <p><a href="${GHDOC("AUDIT.md")}">Read the audit notes</a></p></div>
 <div><h2>Open source</h2>
 <p style="margin-top:16px">All code is open under Apache-2.0. You can read it, run it and rebuild QoreWitness Verify yourself. It is one HTML file, and its SHA-256 fingerprint is published.</p>
-<p><a href="${GH}">GitHub</a> · <a href="developers.html">For developers</a></p></div>
+<p><a href="${GH}">GitHub</a> · <a href="developers.html">Developers</a></p></div>
 </div></section>
 
 <section class="alt" id="privacy"><div class="wrap">
@@ -759,14 +908,76 @@ ${head("Trust and limits", "What it proves, and what it cannot.", "A proof is on
 </div></section>`,
 });
 
+/* ================= JURY ================= */
+page({
+  file: "jury.html",
+  current: "jury.html",
+  title: "For the jury | QoreWitness",
+  desc: "QoreWitness for the QoreChain Developer Fest judges: what it is, how ML-DSA-87 is checked on chain, the live contracts, audits, drills, tests and where to find each proof.",
+  body: `
+${head("For the jury", "QoreWitness, in ten minutes.", "Thank you for judging the QoreChain Developer Fest. QoreWitness is our entry in the Post-Quantum dApp category, under the alias fnoufnou. This page shows what it does, where QoreChain checks the post-quantum signature on chain, and how you can verify every claim yourself.", ["Post-Quantum dApp category", "Testnet: qorechain-diana, EVM chain ID 9800", "Open source, Apache-2.0"])}
+<section class="edged"><div class="wrap split">
+<div><p class="eyebrow">What it is</p><h2>Sealed video for home security cameras.</h2>
+<p style="margin-top:16px">A small recorder at home cuts the camera stream into short clips and fingerprints each one with SHA-256 and SHA3-256. Every 10 minutes it builds a Merkle root, signs it with the camera's own ML-DSA-87 key and anchors it in the AnchorRegistry contract on QoreChain. The contract checks that signature with the <code>pqcVerify</code> precompile before it stores anything.</p>
+<p>The owner keeps the video at home and gets a receipt per window. Anyone can check a clip with its receipt in QoreWitness Verify, a single HTML file that runs in the browser and reads the chain directly.</p>
+<div class="btns" style="margin-top:20px"><a class="btn primary" href="${UP}verifier.html">Open QoreWitness Verify ${ico("arrow")}</a><a class="btn" href="${GH}">Source on GitHub</a></div></div>
+<div>${browser("verify-desktop", ALT.verifyDesk, "qorewitness.fnoufnou.com/verifier.html", "The published sample record, checked against the live contract: Original.")}</div>
+</div>${edge("wave", "alt")}</section>
+
+<section class="alt edged-chain" id="try"><div class="wrap narrow">
+<p class="eyebrow">Try it yourself</p><h2>Four checks you can run in a few minutes.</h2>
+<ol class="steps compact" style="margin-top:24px">
+<li class="step"><h3>Check the sample record</h3><div class="body"><p>Download the <a href="${UP}demo-clip.mp4" download>sample clip</a> and its <a href="${UP}demo-receipt.json" download>receipt</a>, open ${VERIFY} and choose both files under <b>Or check one clip with its receipt</b>. The result is a green <b>Original</b>, read from the chain in your own browser.</p><p class="small">QoreWitness Verify is one offline HTML file. Its SHA-256 is <code class="break">${VERIFIER_SHA}</code>. Rebuild it with <code>pnpm build:verifier</code> and compare.</p></div></li>
+<li class="step"><h3>Break it on purpose</h3><div class="body"><p>Press <b>Change one byte and check again</b>. The verifier flips one bit of the clip in memory and the result turns red.</p></div></li>
+<li class="step"><h3>Find the anchor on chain</h3><div class="body"><p>Open the registry on the <a href="${"https://explore.qore.network"}/address/${REGISTRY}">testnet explorer</a> and look up the sample record in block 10,120,133.</p></div></li>
+<li class="step"><h3>Run the tests</h3><div class="body"><p>Clone the repository and run <code>pnpm install --ignore-scripts</code> and <code>pnpm test</code>. The contract tests run against a mock of the precompiles, and the app tests use a mocked chain.</p></div></li>
+</ol>
+</div>${edge("chain", "bg", "alt")}</section>
+
+<section><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Your criteria</p><h2>Where to find the proof for each one.</h2></div>
+<div class="tablewrap"><table class="stack"><caption class="sr">Judging criteria and where to find the evidence</caption><thead><tr><th scope="col">Criterion</th><th scope="col">Where to see it</th></tr></thead><tbody>
+<tr><th scope="row">Works as described</th><td data-label="Where to see it">One real home camera has anchored a window every 10 minutes on qorechain-diana since 9 Nov 2026. The <a href="${UP}verifier.html">verifier</a> checks any clip against the live contract. The <a href="get-started.html">setup guide</a> shows every screen of the app.</td></tr>
+<tr><th scope="row">Real use of QoreChain</th><td data-label="Where to see it">AnchorRegistry v4 at <code>${REGISTRY}</code>, the hybrid (ECDSA plus ML-DSA-87) account flow with an EVM authorisation window, and the <code>pqcVerify</code> and <code>pqcKeyStatus</code> precompiles. See <a href="developers.html#contracts">contracts</a>.</td></tr>
+<tr><th scope="row">PQC checked on chain</th><td data-label="Where to see it">Every state change in the registry needs a fresh ML-DSA-87 signature that the contract checks itself. The Q-Day Drill tried 13 attacks with only the ECDSA key, and none succeeded. See <a href="#pqc">below</a>.</td></tr>
+<tr><th scope="row">Quality</th><td data-label="Where to see it">Four review rounds with the QCAI Contract Auditor, a threat model, a custody drill and a recovery drill, all published. See <a href="${GHDOC("AUDIT.md")}">AUDIT.md</a> and <a href="${GHDOC("THREAT_MODEL.md")}">THREAT_MODEL.md</a>.</td></tr>
+<tr><th scope="row">User experience</th><td data-label="Where to see it">One line to install, then three screens in the browser and a progress bar. No wallet, no keys and no jargon for the owner. See <a href="get-started.html#s4">the setup</a> and <a href="daily-use.html">daily use</a>.</td></tr>
+</tbody></table></div>
+</div></section>
+
+<section class="alt" id="pqc"><div class="wrap split">
+<div><p class="eyebrow">Post-quantum on chain</p><h2>The contract checks the signature itself.</h2>
+<ul class="plain" style="margin-top:16px"><li><code>pqcVerify</code> at <code>0x…0A01</code> checks the ML-DSA-87 signature over every window root and every device change: register, rotate and revoke.</li><li><code>pqcKeyStatus</code> at <code>0x…0A02</code> tells the contract that the owner key is registered and that possession is proven.</li><li>Each window commits to the previous root of its camera, and the signed block hash bounds the time on both sides.</li><li>Anchors are immutable. There is no contract owner and no upgrade path.</li></ul></div>
+<div class="panel"><h3>Chain-level protection</h3><p style="margin:0">Every EVM transaction on QoreChain needs a registered ML-DSA-87 key and an EVM authorisation window. The recorder opens a window that is scoped to the registry only. A stolen ECDSA key cannot anchor, register, revoke or rotate anything, even inside an open window.</p></div>
+</div></section>
+
+<section><div class="wrap">
+<div class="sec-head"><p class="eyebrow">Evidence</p><h2>Contracts, audits, drills and tests.</h2></div>
+<ul class="grid c2" style="list-style:none;padding:0;margin:0">
+<li class="tile"><h3>Live contract</h3><p>Registry v4, deployed 14 Nov 2026: <code class="break">${REGISTRY}</code>. Earlier versions are listed on the <a href="developers.html#contracts">Developers</a> page.</p></li>
+<li class="tile"><h3>Audit rounds</h3><p>Four rounds with the QCAI Contract Auditor from 12 to 17 Nov 2026, scores 82, 72, 78 and 85. These are automated reviews, and no accredited firm has audited QoreWitness. <a href="developers.html#audit">Details</a>.</p></li>
+<li class="tile"><h3>Drills</h3><p>Q-Day Drill dry run: 13 attacks with only the ECDSA key, 0 succeeded. Custody drill: all 5 attacks after sealing rejected, 4 of 5 swaps before hashing flagged, 1 missed. Recovery drill: the receipt is rebuilt from public data.</p></li>
+<li class="tile"><h3>Tests</h3><p>${TESTS} automated tests on 22 Nov 2026, for the contract, the recorder, the setup, the dashboard, the fee sponsor and the verifier. Run them with <code>pnpm test</code>.</p></li>
+</ul>
+<h3 style="margin:40px 0 10px">Known limits, stated openly</h3>
+<ul class="limits">
+<li>Testnet only. The PQC precompiles are not active on the QoreChain main network yet, so the public site presents QoreWitness as a beta.</li>
+<li>The keys of the owner account sit on the recorder today. An agent-key mode is designed and a spike passed on the testnet, but relayed calls emit no EVM logs, so it waits until after the submission (<a href="${GHDOC("AGENT_KEY.md")}">notes</a>).</li>
+<li>The Linux installer is tested end to end. Docker Compose on a NAS, Windows and macOS is documented and still has to be tested on each platform.</li>
+<li>A seal proves that a file has not changed since it was sealed. It cannot prove that the scene was real.</li>
+</ul>
+<div class="btns" style="margin-top:28px"><a class="btn primary" href="developers.html">Full technical detail ${ico("arrow")}</a><a class="btn" href="${GHDOC("SPEC.md")}">Spec</a><a class="btn" href="${GHDOC("TESTNET_FINDINGS.md")}">Testnet findings</a><a class="btn" href="${GHDOC("CUSTODY_DRILL.md")}">Custody drill</a></div>
+</div></section>`,
+});
+
 /* ================= DEVELOPERS ================= */
 page({
   file: "developers.html",
   current: "developers.html",
-  title: "For developers | QoreWitness",
+  title: "Developers | QoreWitness",
   desc: "Architecture, contract addresses, post-quantum checks on chain, audit rounds and drills for QoreWitness on the QoreChain testnet qorechain-diana.",
   body: `
-${head("For developers and the jury", "QoreWitness on QoreChain.", "Post-quantum evidence anchoring for home cameras, entered in the QoreChain Developer Fest (Post-Quantum dApp category) under the alias fnoufnou. It runs on the testnet only.", ["Open source, Apache-2.0", "Network: qorechain-diana (EVM chain ID 9800)"])}
+${head("Developers", "QoreWitness on QoreChain.", "Post-quantum evidence anchoring for home cameras, entered in the QoreChain Developer Fest (Post-Quantum dApp category) under the alias fnoufnou. It runs on the testnet only. Judges: start at <a href=\"jury.html\">For the jury</a>.", ["Open source, Apache-2.0", "Network: qorechain-diana (EVM chain ID 9800)"])}
 <section><div class="wrap">
 <div class="btns"><a class="btn primary" href="${GH}">GitHub ${ico("arrow")}</a><a class="btn" href="${GHDOC("SPEC.md")}">Spec</a><a class="btn" href="${GHDOC("AUDIT.md")}">Audit</a><a class="btn" href="${GHDOC("CUSTODY_DRILL.md")}">Custody drill</a><a class="btn" href="${GHDOC("THREAT_MODEL.md")}">Threat model</a><a class="btn" href="${UP}verifier.html">QoreWitness Verify</a></div>
 </div></section>
@@ -820,7 +1031,7 @@ verifier (static page or CLI): clip + receipt
 <dt>QoreWitness Verify SHA-256</dt><dd><code>${VERIFIER_SHA}</code><br><span class="small muted">Build it with <code>pnpm build:verifier</code> and compare.</span></dd>
 <dt>Check a receipt in a terminal</dt><dd><code>pnpm tsx scripts/verify-receipt.ts demo-receipt.json demo-clip.mp4</code></dd>
 <dt>Without our code</dt><dd><code>python3 tools/verify_receipt.py &lt;receipt&gt; &lt;file&gt;</code> (standard library only)</dd>
-<dt>Run the tests</dt><dd><code>pnpm test</code> (233 automated tests on 22 Nov 2026)</dd>
+<dt>Run the tests</dt><dd><code>pnpm test</code> (${TESTS} automated tests on 22 Nov 2026)</dd>
 </dl>
 </div></section>
 
@@ -832,7 +1043,7 @@ verifier (static page or CLI): clip + receipt
 <div class="panel"><h3>Chain-level protection</h3><p style="margin:0">Every EVM transaction needs a registered ML-DSA-87 key and an EVM authorisation window. The agent opens a window that is scoped to the registry only. A stolen ECDSA key cannot anchor, register, revoke or rotate anything, even inside an open window.</p></div>
 </div></section>
 
-<section><div class="wrap">
+<section id="audit"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Audit</p><h2>Four rounds with the QCAI Contract Auditor.</h2><p>Reviewed with an automated auditor. No firm has certified it. Each finding is mapped to a change, a test or a reason in the audit notes. The reports are copied to <code>docs/audit/</code>.</p></div>
 <div class="tablewrap"><table><thead><tr><th scope="col">Stage</th><th scope="col">Date</th><th scope="col">Code</th><th scope="col">Setting</th><th scope="col">Score</th></tr></thead><tbody>
 <tr><td>1</td><td>12 Nov 2026</td><td>registry v2</td><td>Ethereum (EVM/Solidity)</td><td>82</td></tr>
@@ -854,7 +1065,7 @@ verifier (static page or CLI): clip + receipt
 <ul class="limits">
 <li>Testnet only. The PQC precompiles are not active on mainnet yet. The public site presents this as a beta with one banner on every page.</li>
 <li>The keys of the owner account sit on the recorder today. An agent-key mode is designed (<a href="${GHDOC("AGENT_KEY.md")}">notes</a>). A spike passed on the testnet. Relayed calls emit no EVM logs, so the mode waits.</li>
-<li>Built: the installer, the setup in the browser, the dashboard with evidence export, QoreWitness Verify for the evidence ZIP, and the sponsor service behind Fees included. Planned: phone alerts, a ready-made Pi image and a Windows installer.</li>
+<li>Built: the installer, the setup in the browser, the dashboard with evidence export, QoreWitness Verify for the evidence ZIP, and the sponsor service that pays the fees during the free beta. Planned: phone alerts, a ready-made Pi image and a Windows installer.</li>
 <li>Tested end to end: the Linux installer. The Docker Compose route on NAS, Windows and macOS is documented, and we still have to test it on each platform.</li>
 </ul>
 </div></section>`,

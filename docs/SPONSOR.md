@@ -1,4 +1,4 @@
-# Fees included: the pilot sponsor
+# Free beta: the fee sponsor
 
 Status: testnet pilot. Free. The sponsor sends test QOR, which has no value. No payment is collected.
 

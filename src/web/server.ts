@@ -135,7 +135,7 @@ export function dashboardPage(v: DashboardView): string {
     <td style="text-align:right">${download(a)}</td></tr>`).join("");
   const fees = v.info?.plan === "self"
     ? (h.feeDaysLeft === undefined ? "unknown" : `${daysText(h.feeDaysLeft)} left`)
-    : "Covered by the pilot";
+    : "Free beta: we cover them";
   const camera = s.newestSegmentAgeSeconds === undefined ? "no video yet" : s.newestSegmentAgeSeconds <= 300 ? "online" : `no video for ${Math.round(s.newestSegmentAgeSeconds / 60)} min`;
   const tech = s.latest.filter((a) => a.txHash).map((a) => `${esc(utcTime(a.windowStart))}: <a href="${EXPLORER}/tx/${esc(a.txHash)}" rel="noreferrer" target="_blank">block ${esc(a.blockNumber ?? "")}</a>, ${esc(a.segments)} clips, <a href="/receipts/${encodeURIComponent(a.file)}" download>receipt</a>`).join("<br>");
   return `<div class="status ${h.level}" role="status"><span class="dot"></span><div><strong>${esc(h.title)}</strong>${h.action ? `<p>${esc(h.action)}</p>` : ""}</div></div>

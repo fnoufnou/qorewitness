@@ -2,7 +2,7 @@
  * QoreWitness browser verifier. Runs fully in the browser: the video never leaves
  * the device. It needs only the clips, their receipts and the public QoreChain RPC.
  *
- * Two ways in: drop the evidence ZIP from the box (it unpacks here), or choose one
+ * Two ways in: drop the evidence ZIP from the QoreWitness dashboard (it unpacks here), or choose one
  * clip and its receipt. Tamper demo: "Change one byte and check again" flips one
  * byte in an in-memory copy of the first clip (the files are not touched) and
  * runs the same checks. The result turns red at once.

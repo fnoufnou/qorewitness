@@ -1,5 +1,5 @@
 /**
- * Client for the pilot fee sponsor ("Fees included" plan). The sponsor service
+ * Client for the fee sponsor of the free beta ("Free beta: we cover the network fees"). The sponsor service
  * sends test QOR to the owner account of a box with a valid pilot code.
  *
  * Contract (implemented by the sponsor service):
@@ -48,16 +48,16 @@ export interface SponsorAnswer {
 
 /** Plain words for each status. */
 export const SPONSOR_TEXT: Record<SponsorStatus, string> = {
-  enrolled: "Your pilot code is accepted. The pilot is adding the network fees to your account.",
-  pending: "The pilot is adding the network fees to your account.",
-  funded: "The pilot added the network fees.",
-  active: "Network fees are covered by the pilot.",
-  full: "The pilot is full at the moment. You can pay the network fees with your own wallet, or try again later.",
-  invalid_code: "The pilot did not accept this camera. You can pay the network fees with your own wallet.",
-  used_code: "The pilot did not accept this camera. You can pay the network fees with your own wallet.",
-  paused: "The pilot is paused at the moment. Your camera keeps recording. Try again later.",
-  rejected: "The pilot service did not accept this box.",
-  unknown: "The pilot service gave an answer we do not know. Try again later.",
+  enrolled: "Free beta: we cover the network fees. They are on their way to your account.",
+  pending: "Free beta: we cover the network fees. They are on their way to your account.",
+  funded: "Free beta: we added the network fees for you.",
+  active: "Free beta: we cover the network fees.",
+  full: "The free beta is full at the moment. You can pay the network fees with your own wallet, or try again later.",
+  invalid_code: "The free beta did not accept this camera. You can pay the network fees with your own wallet.",
+  used_code: "The free beta did not accept this camera. You can pay the network fees with your own wallet.",
+  paused: "The free beta is paused at the moment. Your camera keeps recording. Try again later.",
+  rejected: "The free beta service did not accept this computer.",
+  unknown: "The free beta service gave an answer we do not know. Try again later.",
 };
 
 type FetchFn = typeof fetch;

@@ -116,7 +116,7 @@ describe("dashboard: box health in plain words", () => {
     assert.equal(Math.round(feeDaysLeft(6_912_000, 600)! * 10) / 10, 1);
   });
 
-  it("Fees included: a normal top-up level is not a warning", () => {
+  it("Free beta: a normal top-up level is not a warning", () => {
     assert.equal(boxHealth(base, { ...facts, plan: "sponsored", balanceUqor: 15_000_000 }).level, "ok");
     assert.equal(boxHealth(base, { ...facts, plan: "sponsored", balanceUqor: 100_000 }).level, "bad");
   });

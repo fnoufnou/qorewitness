@@ -4,6 +4,17 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+### 2026-11-22: verifier wording
+- QoreWitness Verify: no "pilot" or "box" in its text. The result says the file is exactly what "the camera's QoreWitness" recorded and that QoreWitness is in beta on the QoreChain test network. "Sealed within 1 minute" is now singular. Rebuilt as one offline HTML file, SHA-256 `d894ee8cad7d6b68b5a6fc41ec93693a2f6111c2971108ed72571f2a33fa2100`, shown on the Developers and jury pages and in `web/site/index.html`. The Verify screenshots are taken again.
+
+### 2026-11-22: site round 2 (real screens, plans, jury page, accessibility)
+- Site: every screenshot placeholder is replaced by a real screen of the app, captured from the local ui server with the chain, camera, network search and fee sponsor mocked (phone 390 x 844 and desktop 1280 x 800 at 2x, WebP in `web/site/assets/screens/`), in CSS phone, browser and terminal frames. Camera app steps (Tapo, Reolink) use a neutral illustrated phone with the menu path as text. QoreWitness Verify is shown with a green Original for the published sample record, checked against the live testnet contract.
+- Site: Plans are now Free (recommended: runs on your own hardware, and during the beta we cover the network fees) and Hands-off (USD 10 or EUR 9 per camera per month), with the banner "Available when QoreWitness launches on the QoreChain main network" and a "Get notified on X" link to @fnoufnou (no form, no email). EUR 4 is gone from the site and the FAQ.
+- Site: new page `jury.html` for the Developer Fest judges (what it is, how ML-DSA-87 is checked on chain, live contract, audits, drills, tests, criteria map). Navigation: customer items, a thin divider, then "Developers" and "For the jury" in a muted colour. On phones a Menu button (keyboard and Escape support) replaces the scrolling strip. The "Technical names" fold-out points to the Developers page.
+- Site: footer with "© 2026 fnoufnou", the Apache License 2.0 link, the trademark line and a link to Trust. The hero has its own background (soft gradient, light dot pattern) and a skyline edge. Section edges: skyline, soft wave and chain links, in light and dark mode. Motion respects `prefers-reduced-motion`.
+- Site: WCAG 2.2 AA pass with axe-core at 320, 390, 768 and 1280 px in light and dark: 0 violations (before: region, scrollable-region-focusable, empty-table-header in every run). No horizontal scroll at 320 px.
+- App: "Fees included" and pilot wording become "Free beta: we cover the network fees" (dashboard fee fact, status actions, sponsor messages, footer, evidence certificate). The "Sealing started" address no longer breaks mid-word on a phone. Installer: "QoreWitness is ready" in place of "Your QoreWitness box is ready". README, INSTALL, THREAT_MODEL and SPONSOR follow the beta wording.
+
 ### 2026-11-22: new logo (Sealed frame) and hero polish
 - Brand: the new mark "Sealed frame" (pine shield, viewfinder corners, check, orange recording dot) replaces the lens-in-a-square mark on the site, the preview pages, the verifier, the app header, the certificate, the favicon and the featured image. The favicon is a simplified shield with a check and the dot. `docs/BRAND.md` describes the mark, its minimum size, clear space and the two-tone rule.
 - Site: the hero photos are now `img` elements with width, height and loading attributes. A dark top gradient keeps the camera captions readable, the small frames keep their own seal badges and the report card no longer hides the third frame.
