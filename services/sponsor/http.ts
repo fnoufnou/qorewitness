@@ -15,7 +15,7 @@
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { ApiError, type Sponsor } from "./service.js";
-import { truncateIp, type Logger } from "./log.js";
+import { AlertThrottle, truncateIp, type Logger } from "./log.js";
 
 const MAX_BODY = 16 * 1024;
 
@@ -81,7 +81,9 @@ function send(res: ServerResponse, status: number, body: unknown): void {
   res.end(text);
 }
 
-export function createSponsorServer(sponsor: Sponsor, log: Logger, trusted: readonly string[], limiter = new RateLimiter()): Server {
+export function createSponsorServer(
+  sponsor: Sponsor, log: Logger, trusted: readonly string[], limiter = new RateLimiter(), alerts = new AlertThrottle(log),
+): Server {
   return createServer(async (req, res) => {
     const ip = clientIp(req, trusted);
     const url = new URL(req.url ?? "/", "http://localhost");
@@ -117,7 +119,7 @@ export function createSponsorServer(sponsor: Sponsor, log: Logger, trusted: read
         if (e.status !== 404 && e.status !== 429) log.warn("http_refused", { ip: truncateIp(ip), route, code: e.code });
         return send(res, e.status, { ...(e.word ? { status: e.word, capPerDayUqor: sponsor.cfg.capCameraDayUqor.toString() } : {}), error: e.code, message: e.message });
       }
-      log.alert("http_error", { ip: truncateIp(ip), route, error: e instanceof Error ? e.message.split("\n")[0] : "error" });
+      alerts.fire("http_error", { ip: truncateIp(ip), route, error: e instanceof Error ? e.message.split("\n")[0] : "error" });
       return send(res, 502, { error: "upstream", message: "chain or server error, try again later" });
     }
   });

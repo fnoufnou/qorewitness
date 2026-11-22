@@ -49,6 +49,8 @@ export interface SponsorConfig {
   floatSlackUqor: bigint;
   /** Keep at least this in the hot wallet for fees. */
   reserveUqor: bigint;
+  /** float_low fires below the larger of 2 days of worst-case payouts and this floor. */
+  floatLowFloorUqor: bigint;
   /** Warn when the hot wallet holds more than this (keep only a small float). */
   maxFloatUqor: bigint;
   /** One start grant per camera (owner and device id) that is not on chain yet. */
@@ -105,6 +107,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): SponsorConfig 
     floatSlackUqor: qor(env.SPONSOR_FLOAT_SLACK_QOR, "1"),
     reserveUqor: qor(env.SPONSOR_RESERVE_QOR, "1"),
     maxFloatUqor: qor(env.SPONSOR_MAX_FLOAT_QOR, "200"),
+    floatLowFloorUqor: qor(env.SPONSOR_FLOAT_LOW_FLOOR_QOR, "15"),
     grantUqor: qor(env.SPONSOR_GRANT_QOR, "3"),
     maxGrantsPerDay: int(env.SPONSOR_MAX_GRANTS_DAY, 6, 0),
     maxEnrolPerIpDay: int(env.SPONSOR_MAX_ENROL_PER_IP_DAY, 1, 0),

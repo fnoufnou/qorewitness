@@ -4,6 +4,12 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+### 2026-11-22: sponsor alerts and beta wording
+- Sponsor: `float_low` fires below 2 days of worst-case payouts for the live cameras (floor 15 test QOR). Before, it fired below one day of the global cap (90), so every 15-minute pass alerted at a healthy 58.8 test QOR (49 alerts in 10 hours).
+- Sponsor: alerts for a lasting condition (`float_low`, `float_empty`, `float_high`, `hourly_wait`, `pass_failed`, `http_error`) go out at most once per 6 hours, then one `<kind>_recovered` line.
+- Sponsor: the public note says "Beta on the QoreChain test network. Test tokens without value. No payment is collected." Plain messages say "Fees included". Field names unchanged.
+- Tests: float threshold, alert rate limit and recovered line, no alerts at a healthy float, beta note (237 tests). Docs: `docs/SPONSOR.md`, `sponsor.env.example` (`SPONSOR_FLOAT_LOW_FLOOR_QOR`).
+
 ### 2026-11-22: verifier wording
 - QoreWitness Verify: no "pilot" or "box" in its text. The result says the file is exactly what "the camera's QoreWitness" recorded and that QoreWitness is in beta on the QoreChain test network. "Sealed within 1 minute" is now singular. Rebuilt as one offline HTML file, SHA-256 `d894ee8cad7d6b68b5a6fc41ec93693a2f6111c2971108ed72571f2a33fa2100`, shown on the Developers and jury pages and in `web/site/index.html`. The Verify screenshots are taken again.
 
