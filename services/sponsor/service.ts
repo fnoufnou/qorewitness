@@ -21,7 +21,7 @@ import { getAddress, isAddress, keccak256, type Address, type Hex } from "viem";
 import { FEE_HYBRID_SEND } from "../../src/agent/bank.js";
 import { assertPilotChain, type ChainReader, type Payer } from "./chain.js";
 import type { SponsorConfig } from "./config.js";
-import { silentLogger, type Logger } from "./log.js";
+import { AlertThrottle, silentLogger, type Logger } from "./log.js";
 import { ML_DSA_87_PUBKEY_BYTES, ML_DSA_87_SIG_BYTES, verifySponsorSignature } from "./message.js";
 import {
   appendPayoutLog, enrollmentKey, loadState, saveState, utcDay, type DayUsage, type Enrollment, type Payout, type SponsorState,
@@ -31,7 +31,8 @@ export const NONCE_TTL_SECONDS = 300;
 const MAX_NONCES = 2000;
 const MAX_GRANT_ATTEMPTS = 3;
 const FEE_UQOR = BigInt(FEE_HYBRID_SEND.amount[0].amount);
-export const PILOT_NOTE = "Free pilot. Test tokens without value. No payment is collected.";
+/** Public note on every answer (field name `note` kept for the box client). */
+export const BETA_NOTE = "Beta on the QoreChain test network. Test tokens without value. No payment is collected.";
 
 /** The words the setup wizard reads (src/web/sponsor.ts). */
 export type StatusWord = "enrolled" | "pending" | "funded" | "active" | "full" | "invalid_code" | "used_code" | "paused" | "rejected";
@@ -69,6 +70,7 @@ export class Sponsor {
   private ipDay = "";
   private readonly ipCount = new Map<string, number>();
   private queue: Promise<unknown> = Promise.resolve();
+  private readonly alerts: AlertThrottle;
 
   constructor(
     readonly cfg: SponsorConfig,
@@ -78,6 +80,7 @@ export class Sponsor {
     private readonly log: Logger = silentLogger,
   ) {
     this.state = loadState(cfg.stateFile);
+    this.alerts = new AlertThrottle(log, () => this.clock.now());
   }
 
   /** Refuses to start unless the chain is the qorechain-diana testnet (9800). */
@@ -139,7 +142,7 @@ export class Sponsor {
   // ------------------------------------------------------------ enrol
 
   private answer(status: StatusWord, message?: string): EnrollAnswer {
-    return { status, capPerDayUqor: this.cfg.capCameraDayUqor.toString(), note: PILOT_NOTE, ...(message ? { message } : {}) };
+    return { status, capPerDayUqor: this.cfg.capCameraDayUqor.toString(), note: BETA_NOTE, ...(message ? { message } : {}) };
   }
 
   /**
@@ -171,15 +174,15 @@ export class Sponsor {
 
   /** Admission for a new camera. Throws "full" with a plain message. */
   private admit(owner: string, ip: string): void {
-    if (this.liveCount() >= this.cfg.maxCameras) throw refuse("full", "The pilot is full at the moment. Try again later, or choose Self-managed.");
+    if (this.liveCount() >= this.cfg.maxCameras) throw refuse("full", "Fees included is full at the moment. Try again later, or use your own wallet.");
     if (this.liveCount(owner) >= this.cfg.maxCamerasPerOwner) {
-      throw refuse("full", `The pilot covers at most ${this.cfg.maxCamerasPerOwner} cameras per account.`);
+      throw refuse("full", `Fees included covers at most ${this.cfg.maxCamerasPerOwner} cameras per account.`);
     }
     if (this.ipUsed(ip) >= this.cfg.maxEnrolPerIpDay) throw refuse("full", "One new camera per internet connection per day. Try again tomorrow.");
   }
 
   async enroll(body: unknown, ip = "unknown"): Promise<EnrollAnswer> {
-    if (this.paused()) throw refuse("paused", "The pilot is paused at the moment. Try again later.");
+    if (this.paused()) throw refuse("paused", "Fees included is paused at the moment. Try again later.");
     const b = (body ?? {}) as Record<string, unknown>;
     const { deviceId, owner, nonce, signature, devicePubkey } = b;
     if (typeof deviceId !== "string" || !HEX32.test(deviceId)) throw new ApiError(400, "bad_device", "deviceId must be 0x + 64 hex");
@@ -244,7 +247,7 @@ export class Sponsor {
     const now = this.clock.now();
     const day = this.dayUsage(utcDay(now));
     if ((day.grants ?? 0) >= this.cfg.maxGrantsPerDay || this.cfg.capGlobalDayUqor - BigInt(day.globalUqor) < this.cfg.grantUqor) {
-      throw refuse("full", "The pilot has started enough new cameras today. Try again tomorrow.");
+      throw refuse("full", "Fees included has started enough new cameras today. Try again tomorrow.");
     }
     day.grants = (day.grants ?? 0) + 1;
     this.ipCount.set(ip, this.ipUsed(ip) + 1);
@@ -294,12 +297,12 @@ export class Sponsor {
       usedTodayUqor: day?.devices[enrollmentKey(e.owner, e.deviceId)] ?? "0",
       capPerDayUqor: this.cfg.capCameraDayUqor.toString(),
       paused: this.paused(),
-      note: PILOT_NOTE,
+      note: BETA_NOTE,
     };
   }
 
   health() {
-    return { ok: true, paused: this.paused(), enrolled: this.liveCount(), maxCameras: this.cfg.maxCameras, chainId: 9800, note: PILOT_NOTE };
+    return { ok: true, paused: this.paused(), enrolled: this.liveCount(), maxCameras: this.cfg.maxCameras, chainId: 9800, note: BETA_NOTE };
   }
 
   // ------------------------------------------------------------ shared accounting
@@ -368,8 +371,8 @@ export class Sponsor {
       const day = this.dayUsage(utcDay(now));
       if (this.cfg.capGlobalDayUqor - BigInt(day.globalUqor) < amount) { this.log.warn("grant_waits_budget", { owner: e.owner }); continue; }
       const float = await this.payer.floatUqor();
-      if (float - this.cfg.reserveUqor < amount) { this.log.alert("float_empty", { floatUqor: float.toString() }); break; }
-      if (this.hourlyOutflow(now) + amount > this.cfg.maxHourlyUqor) { this.log.warn("hourly_wait", { owner: e.owner }); break; }
+      if (float - this.cfg.reserveUqor < amount) { this.alerts.fire("float_empty", { floatUqor: float.toString() }); break; }
+      if (this.hourlyOutflow(now) + amount > this.cfg.maxHourlyUqor) { this.alerts.fire("hourly_wait", {}, "warn"); break; }
 
       const key = enrollmentKey(e.owner, e.deviceId);
       const parts = [{ key, amount }];
@@ -469,6 +472,27 @@ export class Sponsor {
   // ------------------------------------------------------------ float check
 
   /**
+   * Float alerts with a threshold that fits the beta: low below 2 days of worst-case
+   * payouts for the live cameras (each up to its camera day cap, at most the global
+   * day cap), with a floor of SPONSOR_FLOAT_LOW_FLOOR_QOR. Each kind at most once per
+   * 6 hours while it lasts, then one "recovered" line.
+   */
+  floatLowUqor(): bigint {
+    const perDay = BigInt(this.liveCount()) * this.cfg.capCameraDayUqor;
+    const worst = 2n * (perDay < this.cfg.capGlobalDayUqor ? perDay : this.cfg.capGlobalDayUqor);
+    return worst > this.cfg.floatLowFloorUqor ? worst : this.cfg.floatLowFloorUqor;
+  }
+
+  private checkFloatLevel(float: bigint): void {
+    const low = this.floatLowUqor();
+    if (float < low) this.alerts.fire("float_low", { floatUqor: float.toString(), lowUqor: low.toString() });
+    else this.alerts.clear("float_low", { floatUqor: float.toString() });
+    if (float - this.cfg.reserveUqor >= this.cfg.grantUqor) this.alerts.clear("float_empty", { floatUqor: float.toString() });
+    if (float > this.cfg.maxFloatUqor) this.alerts.fire("float_high", { floatUqor: float.toString(), maxUqor: this.cfg.maxFloatUqor.toString() }, "warn");
+    else this.alerts.clear("float_high", { floatUqor: float.toString() });
+  }
+
+  /**
    * The real anomaly that pauses the service: the hot wallet lost more than the
    * payouts since the last pass and their fees explain (plus SPONSOR_FLOAT_SLACK_QOR).
    * For example a stolen key or a bug that sends twice. Money added by hand is fine.
@@ -522,8 +546,7 @@ export class Sponsor {
 
     let float = await this.payer.floatUqor();
     if (this.floatAnomaly(now, float)) return { ...result, skipped: ["paused"] };
-    if (float > this.cfg.maxFloatUqor) this.log.warn("float_high", { floatUqor: float.toString(), maxUqor: this.cfg.maxFloatUqor.toString() });
-    if (float < this.cfg.capGlobalDayUqor) this.log.alert("float_low", { floatUqor: float.toString() });
+    this.checkFloatLevel(float);
 
     for (const [owner, devices] of owners) {
       if (this.paused()) { result.skipped.push("paused"); break; }
@@ -566,13 +589,13 @@ export class Sponsor {
       for (const [name, v] of limits) if (v < amount) { amount = v; limitedBy = name; }
       if (amount <= 0n || amount < this.cfg.minPayoutUqor) {
         skip(`below_min:${limitedBy}`);
-        if (limitedBy === "float") this.log.alert("float_empty", { floatUqor: float.toString() });
+        if (limitedBy === "float") this.alerts.fire("float_empty", { floatUqor: float.toString() });
         continue;
       }
       // The hourly limit never pauses the service: the payout waits for a later pass.
       if (this.hourlyOutflow(now) + amount > this.cfg.maxHourlyUqor) {
         skip("hourly_wait");
-        this.log.warn("hourly_wait", { owner, amountUqor: amount.toString() });
+        this.alerts.fire("hourly_wait", { amountUqor: amount.toString() }, "warn");
         continue;
       }
 

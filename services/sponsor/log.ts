@@ -43,3 +43,37 @@ function emit(level: string, event: string, f: LogFields = {}): void {
 }
 
 export const silentLogger: Logger = { info() {}, warn() {}, alert() {} };
+
+export const ALERT_REPEAT_SECONDS = 6 * 3600;
+
+/**
+ * Alerts for a condition that lasts (float low, pass failing, RPC errors): the
+ * first one goes out at once, then at most one per 6 hours while the condition
+ * lasts. When it ends, one "<kind>_recovered" info line. Memory only: a restart
+ * may send one alert again.
+ */
+export class AlertThrottle {
+  private readonly active = new Map<string, number>(); // kind -> last sent (unix seconds)
+
+  constructor(
+    private readonly log: Logger,
+    private readonly now: () => number = () => Math.floor(Date.now() / 1000),
+    private readonly repeatSeconds = ALERT_REPEAT_SECONDS,
+  ) {}
+
+  /** The condition holds. Returns true when a line was written. */
+  fire(kind: string, f: LogFields = {}, level: "alert" | "warn" = "alert"): boolean {
+    const t = this.now();
+    const last = this.active.get(kind);
+    if (last !== undefined && t - last < this.repeatSeconds) return false;
+    this.active.set(kind, t);
+    this.log[level](kind, f);
+    return true;
+  }
+
+  /** The condition is over. Writes one recovered line if an alert was out. */
+  clear(kind: string, f: LogFields = {}): void {
+    if (!this.active.delete(kind)) return;
+    this.log.info(`${kind}_recovered`, f);
+  }
+}

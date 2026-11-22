@@ -10,7 +10,7 @@
 import { HybridPayer, RpcChainReader } from "./chain.js";
 import { loadConfig, loadMnemonic } from "./config.js";
 import { createSponsorServer } from "./http.js";
-import { consoleLogger as log } from "./log.js";
+import { AlertThrottle, consoleLogger as log } from "./log.js";
 import { Sponsor } from "./service.js";
 
 async function main(): Promise<void> {
@@ -24,12 +24,14 @@ async function main(): Promise<void> {
     capGlobalDayUqor: cfg.capGlobalDayUqor.toString(), maxCameras: cfg.maxCameras, paused: sponsor.paused(),
   });
 
+  const alerts = new AlertThrottle(log);
   const pass = async () => {
     try {
       const r = await sponsor.runOnce();
+      alerts.clear("pass_failed");
       log.info("pass", { paid: r.paid, totalUqor: r.totalUqor.toString(), skipped: r.skipped.length });
     } catch (e) {
-      log.alert("pass_failed", { error: e instanceof Error ? e.message.split("\n")[0] : "error" });
+      alerts.fire("pass_failed", { error: e instanceof Error ? e.message.split("\n")[0] : "error" });
     }
   };
 
@@ -38,7 +40,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const server = createSponsorServer(sponsor, log, cfg.trustedProxies);
+  const server = createSponsorServer(sponsor, log, cfg.trustedProxies, undefined, alerts);
   server.listen(cfg.port, cfg.host, () => log.info("listening", { host: cfg.host, port: cfg.port }));
   await pass();
   const timer = setInterval(pass, cfg.loopMinutes * 60_000);

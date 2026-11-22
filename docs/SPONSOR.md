@@ -1,8 +1,10 @@
 # Free beta: the fee sponsor
 
-Status: testnet pilot. Free. The sponsor sends test QOR, which has no value. No payment is collected.
+Status: beta on the QoreChain test network. Free. The sponsor sends test QOR, which has no value. No payment is collected.
 
-The sponsor service pays the network fees of pilot cameras. It sends test QOR to the customer's own owner account, so the customer stays the owner of the camera and of its chain of anchors. The customer can stop the pilot at any time and pay fees from their own wallet. Nothing else changes: same owner, same device, same chain.
+Every answer carries the note "Beta on the QoreChain test network. Test tokens without value. No payment is collected." in the `note` field. Plain messages say "Fees included". Field names (`note`, `pilotCode`) stay as they are for compatibility.
+
+The sponsor service pays the network fees of Fees included cameras. It sends test QOR to the customer's own owner account, so the customer stays the owner of the camera and of its chain of anchors. The customer can stop Fees included at any time and pay fees from their own wallet. Nothing else changes: same owner, same device, same chain.
 
 Code: `services/sponsor/`. Deploy files: `deploy/sponsor/`. Tests: `test/sponsor.test.ts` (chain and wallet mocked).
 
@@ -23,7 +25,7 @@ The setup wizard of the box (`src/web/sponsor.ts`, `src/web/wizard.ts`) is the c
    - **Camera not on chain yet (bootstrap).** The signature must verify against `devicePubkey`. The camera must pass admission (below), and today's start grants must not be used up. The service binds owner, device id and `keccak256(devicePubkey)` together, marks the camera `pending` and sends one start grant to `owner` in the background (default 3 test QOR). Answer: `pending`. After the send: `funded`.
    - **Camera revoked.** Answer: `rejected`.
    - The signature check uses `@qorechain/pqc`, the same ML-DSA-87 code as the agent.
-   - **Admission of a new camera.** At most 12 live cameras in the pilot, at most 2 per owner, and one new camera per client IP per UTC day. Otherwise the answer is `full` with a plain message. A retry of a camera that is enrolled already always gets its current answer.
+   - **Admission of a new camera.** At most 12 live cameras in the beta, at most 2 per owner, and one new camera per client IP per UTC day. Otherwise the answer is `full` with a plain message. A retry of a camera that is enrolled already always gets its current answer.
 4. **Start grant.** 3 test QOR cover the setup and the first hours of sealing:
    - ML-DSA-87 key registration of the account: about 0.1 test QOR,
    - EVM window open: 0.1 test QOR,
@@ -56,7 +58,7 @@ The wizard reads exactly these words in `status`. The service no longer sends `i
 | `pending` | Accepted, start grant not sent yet | 200 |
 | `funded` | Start grant sent, waiting for the camera registration | 200 |
 | `active` | On chain with the enrolled key, refills apply | 200 |
-| `full` | Pilot full, owner has 2 cameras, IP has a new camera today, or today's start grants or budget used up | 409 |
+| `full` | Fees included full, owner has 2 cameras, IP has a new camera today, or today's start grants or budget used up | 409 |
 | `paused` | Kill switch on (also for a `pending` camera in status) | 423 |
 | `rejected` | Bad signature, wrong key, revoked, or expired | 403 |
 
@@ -79,12 +81,12 @@ Malformed requests (bad hex, bad nonce) get HTTP 400 without a status word.
 | Rate limits per IP per minute | challenge 10, enrol 5, status 30, healthz 60 |
 | New cameras per client IP | 1 per UTC day (counted in memory only) |
 
-One faucet claim (100 test QOR per 24 h) covers about 14 cameras at 10-minute windows. For more cameras, ask the QoreChain team for a pilot allocation.
+One faucet claim (100 test QOR per 24 h) covers about 14 cameras at 10-minute windows. For more cameras, ask the QoreChain team for a beta allocation.
 
 The sponsor keeps a buffer of 10 to 15 test QOR on the owner account. The start grant counts toward the camera day cap, so on day one the account reaches about 8.6 test QOR and on day two the full 15. The runway after a sponsor stop is the balance the owner holds: at least about 1.4 days once the buffer is built.
 
 Abuse limits of the start grant:
-- Anyone can make a camera key and an owner address and get 3 test QOR (two grants in the rare "unknown result" retry). Residual risk, accepted for the pilot: the coins are test tokens. Limits: 6 start grants per day (18 test QOR), one new camera per IP per day, 12 live cameras.
+- Anyone can make a camera key and an owner address and get 3 test QOR (two grants in the rare "unknown result" retry). Residual risk, accepted for the beta: the coins are test tokens. Limits: 6 start grants per day (18 test QOR), one new camera per IP per day, 12 live cameras.
 - Someone with many IPs could take all 12 places with fake cameras. Expired cameras free their place after 48 h. An active camera that has not sealed for 48 h frees its place too. It stays enrolled, and refills start again when it seals again. Mitigation if it happens: pause the sponsor, check `state.json`, and lower `SPONSOR_MAX_GRANTS_DAY`.
 - An owner can move the grant away and never register. The camera then expires after 48 h and gets no second grant.
 - The IP counter lives in memory. A restart of the service resets it.
@@ -102,9 +104,9 @@ Abuse limits of the start grant:
 
 - A fresh hybrid testnet account, used for nothing else. Never a mainnet or personal phrase.
 - The recovery phrase is in `/etc/qw-sponsor/secret.env` (mode 600, owner `qw-sponsor`). The service refuses a file that group or others can read. It reads the file once at start. The phrase never goes into the environment, a log line or an HTTP answer.
-- Keep a small float: at most about 2 days of the global cap (200 test QOR). The service warns above `SPONSOR_MAX_FLOAT_QOR` and alerts when the float is below one day of the global cap. Refill it by hand from a separate treasury test account.
+- Keep a small float: at most about 2 days of the global cap (200 test QOR). The service warns above `SPONSOR_MAX_FLOAT_QOR`. It alerts (`float_low`) when the float is below 2 days of worst-case payouts for the live cameras (each up to its camera day cap, at most the global day cap), with a floor of 15 test QOR (`SPONSOR_FLOAT_LOW_FLOOR_QOR`). One camera: 18 test QOR. Twelve cameras: 180 test QOR. Refill it by hand from a separate treasury test account.
 - The service refuses to start, and every pass stops, unless the EVM chain id is 9800 and the Cosmos network is `qorechain-diana`. There is no mainnet setting.
-- Risk: the pilot runs the hot wallet on the web host. A stolen key loses test QOR only. Later: a separate host and a secret store (Azure Key Vault) or KMS signing.
+- Risk: the beta runs the hot wallet on the web host. A stolen key loses test QOR only. Later: a separate host and a secret store (Azure Key Vault) or KMS signing.
 
 ## Records
 
@@ -118,7 +120,7 @@ Abuse limits of the start grant:
 - The service stores owner address, device id and the hash of the camera public key. It never stores IP addresses on disk.
 - IP addresses are used in memory for rate limits and the one-camera-per-day rule only. They are gone at the end of the UTC day or on a restart. Log lines carry truncated IPs (IPv4 /24, IPv6 /48). nginx writes no access log for `/sponsor/`.
 - Logs go to their own journald namespace (`qw-sponsor`) with 14-day retention (`journald@qw-sponsor.conf`). Log lines hold no secrets and no request bodies. Device ids are shortened.
-- `state.json` and `payouts.jsonl` are kept until 3 months after the pilot ends, then deleted.
+- `state.json` and `payouts.jsonl` are kept until 3 months after the beta ends, then deleted.
 - Owner address, payouts and anchors are public on the testnet chain and cannot be deleted there.
 
 ## Deploy (lead)
@@ -137,3 +139,5 @@ On the web host, as root. Read each step before you run it.
 6. Service: `cp deploy/sponsor/qw-sponsor.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now qw-sponsor`. Check `journalctl --namespace=qw-sponsor -u qw-sponsor -f` for `start` and `listening`.
 7. nginx: add `deploy/sponsor/nginx-sponsor.conf` to the site's 443 server block, `nginx -t && systemctl reload nginx`. Check `curl -s https://qorewitness.fnoufnou.com/sponsor/healthz`.
 8. Alerts: forward log lines with `"level":"alert"` to Telegram (as `qw-health.sh`). Events: `float_low`, `float_empty`, `auto_pause`, `top_up_unknown`, `start_grant_unknown`, `grant_failed`, `rejected`, `pass_failed`, `http_error`.
+   - Alerts for a condition that lasts (`float_low`, `float_empty`, `float_high`, `hourly_wait`, `pass_failed`, `http_error`) go out at most once per 6 hours while the condition lasts. When it ends, one info line `<kind>_recovered` follows (not for `http_error` and `hourly_wait`, which have no clear end). The counter lives in memory: a restart can send one alert again.
+   - Single events (`auto_pause`, `top_up_unknown`, `start_grant_unknown`, `grant_failed`, `rejected`) go out each time.

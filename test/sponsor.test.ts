@@ -562,12 +562,12 @@ describe("sponsor: bootstrap (camera not on chain yet)", () => {
     );
   });
 
-  it("answers full when the pilot has its maximum number of cameras", async () => {
+  it("answers full when Fees included has its maximum number of cameras", async () => {
     const { sponsor } = setup({ maxCameras: 1 });
     await sponsor.enroll(bootBody(sponsor, camKey));
     await assert.rejects(
       sponsor.enroll(bootBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 })),
-      (e: unknown) => e instanceof ApiError && e.word === "full" && /pilot is full/.test(e.message),
+      (e: unknown) => e instanceof ApiError && e.word === "full" && /is full at the moment/.test(e.message),
     );
   });
 
@@ -781,5 +781,84 @@ describe("sponsor: security review 2", () => {
     ]);
     assert.equal(r.filter((x) => x.status === "fulfilled").length, 1);
     assert.equal(sponsor.health().enrolled, 1);
+  });
+});
+
+// ---------------------------------------------------------------- alerts and wording
+
+describe("sponsor: alerts and beta wording", () => {
+  const capture = () => {
+    const lines: { level: string; event: string }[] = [];
+    const log = {
+      info: (event: string) => lines.push({ level: "info", event }),
+      warn: (event: string) => lines.push({ level: "warn", event }),
+      alert: (event: string) => lines.push({ level: "alert", event }),
+    };
+    return { lines, log, count: (event: string) => lines.filter((l) => l.event === event).length };
+  };
+
+  it("float_low threshold: 2 days of worst-case payouts for live cameras, floor 15 test QOR", async () => {
+    const { sponsor, chain } = setup();
+    assert.equal(sponsor.floatLowUqor(), 15n * QOR); // no camera: the floor
+    chain.add(OWNER, DEV, camKey);
+    await sponsor.enroll(enrollBody(sponsor, camKey));
+    assert.equal(sponsor.floatLowUqor(), 18n * QOR); // 1 camera x 9 x 2 days
+    const many = setup({ capGlobalDayUqor: 20n * QOR });
+    many.chain.add(OWNER, DEV, camKey);
+    many.chain.add(OTHER, DEV2, strangerKey);
+    many.chain.add(OWNER, DEV2, strangerKey);
+    await many.sponsor.enroll(enrollBody(many.sponsor, camKey));
+    await many.sponsor.enroll(enrollBody(many.sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 }));
+    await many.sponsor.enroll(enrollBody(many.sponsor, strangerKey, { deviceId: DEV2 }));
+    assert.equal(many.sponsor.floatLowUqor(), 40n * QOR); // 3 x 9 = 27 per day, cut to the global cap 20
+  });
+
+  it("sends float_low at most once per 6 hours while it lasts, then one recovered line", async () => {
+    const f = setup();
+    const c = capture();
+    const sponsor = new Sponsor(f.cfg, f.chain, f.payer, f.clock, c.log);
+    f.payer.float = 10n * QOR;
+    for (let i = 0; i < 20; i++) { // 5 hours of 15-minute passes
+      await sponsor.runOnce();
+      f.clock.t += 900;
+    }
+    assert.equal(c.count("float_low"), 1);
+    f.clock.t += 3600 + 1; // past 6 h since the first alert
+    await sponsor.runOnce();
+    assert.equal(c.count("float_low"), 2);
+    f.payer.float = 58_800_000n; // funded, as on the live host
+    await sponsor.runOnce();
+    await sponsor.runOnce();
+    assert.equal(c.count("float_low_recovered"), 1);
+    assert.equal(c.count("float_low"), 2);
+    await sponsor.runOnce(); // healthy: no line at all
+    assert.equal(c.lines.filter((l) => l.level === "alert").length, 2);
+  });
+
+  it("a healthy funded float sends no alert (58.8 test QOR, one camera)", async () => {
+    const f = setup();
+    const c = capture();
+    f.chain.add(OWNER, DEV, camKey);
+    const sponsor = new Sponsor(f.cfg, f.chain, f.payer, f.clock, c.log);
+    await sponsor.enroll(enrollBody(sponsor, camKey));
+    f.payer.float = 58_800_000n;
+    f.chain.balances.set(OWNER, 12n * QOR);
+    for (let i = 0; i < 40; i++) {
+      await sponsor.runOnce();
+      f.clock.t += 900;
+    }
+    assert.equal(c.lines.filter((l) => l.level === "alert").length, 0);
+  });
+
+  it("says beta on the QoreChain test network in every public note", async () => {
+    const { sponsor, chain, cfg } = setup();
+    const note = "Beta on the QoreChain test network. Test tokens without value. No payment is collected.";
+    assert.equal(sponsor.health().note, note);
+    chain.add(OWNER, DEV, camKey);
+    const a = await sponsor.enroll(enrollBody(sponsor, camKey));
+    assert.equal(a.note, note);
+    assert.equal(sponsor.status(DEV).note, note);
+    writeFileSync(cfg.pauseFile, "x\n");
+    await assert.rejects(sponsor.enroll(enrollBody(sponsor, camKey)), (e: Error) => !/pilot/i.test(e.message));
   });
 });
