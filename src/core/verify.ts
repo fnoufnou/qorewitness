@@ -163,9 +163,9 @@ async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8A
   add("pass", `Signed after block ${a.refBlock} (${iso(ref.timestamp)}) and anchored in block ${a.blockNumber} (${iso(a.anchoredAt)}).`);
 
   // 4. What the stream shows.
-  if (seg.gapBeforeMs) add("warn", `${(seg.gapBeforeMs / 1000).toFixed(1)} s of recording are missing before this segment.`);
-  if (seg.overlapMs) add("warn", `This segment overlaps the previous one by ${(seg.overlapMs / 1000).toFixed(1)} s: two recordings claim the same time.`);
-  if (seg.sourceChanged) add("warn", "The stream description changed at this segment (codec, size, frame rate or encoder settings).");
+  if (seg.gapBeforeMs) add("warn", `${humanDuration(seg.gapBeforeMs)} of video ${seg.gapBeforeMs < 1500 ? "is" : "are"} missing before this clip.`);
+  if (seg.overlapMs) add("warn", `This clip overlaps the one before it by ${humanDuration(seg.overlapMs).replace(/^About/, "about")}: two recordings claim the same time.`);
+  if (seg.sourceChanged) add("warn", "The camera's video settings changed at this clip, for example after a restart (codec, size or frame rate).");
   if (v.deviceStatus === 2) {
     add("warn", `The owner revoked this camera at ${iso(v.deviceRevokedAt)}. The anchor was made before that, while the camera was active. Check why it was revoked.`);
   }
@@ -182,4 +182,17 @@ async function verifyReceiptV3(pub: PublicClient, r: ReceiptV3, fileHash: Uint8A
     windowStart: new Date(Number(a.windowStart) * 1000),
     windowEnd: new Date((Number(a.windowStart) + a.windowSeconds) * 1000),
   };
+}
+
+/** Rounded, readable duration: "About 1 second", "About 40 seconds", "About 6 minutes", "About 2 hours". */
+export function humanDuration(ms: number): string {
+  const sec = Math.max(1, Math.round(ms / 1000));
+  if (sec < 60) {
+    const n = sec < 10 ? sec : Math.round(sec / 5) * 5;
+    return `About ${n} second${n === 1 ? "" : "s"}`;
+  }
+  const min = Math.round(sec / 60);
+  if (min < 90) return `About ${min} minute${min === 1 ? "" : "s"}`;
+  const h = Math.round(min / 60);
+  return `About ${h} hour${h === 1 ? "" : "s"}`;
 }

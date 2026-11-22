@@ -4,6 +4,13 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+### 2026-11-22: calmer words after the first real run
+- Setup: one text on the progress bar ("Connecting your camera…"), only the bar moves. "This takes a few minutes".
+- Done page: also shows the address that the installer printed, when the browser used another one (for example qorewitness.local).
+- Dashboard: each seal shows the real clip times (the first seal after setup can hold only a few minutes, and then says "2 minutes of video") and the file size before the download. A line advises to share the file with an upload or a link rather than by e-mail. Gap sign tooltip: "Part of the video is missing here, or the camera restarted".
+- QoreWitness Verify: rounded durations ("About 6 minutes of video are missing before this clip"), plain words for a camera restart, and one calm line under an orange result: "The clips are original. Some minutes are missing, for example when the camera was off." New SHA-256 in the site and the preview.
+- Site screenshots of the progress, done, dashboard and evidence screens re-taken from the app.
+
 ### 2026-11-22: verifier wording
 - QoreWitness Verify: no "pilot" or "box" in its text. The result says the file is exactly what "the camera's QoreWitness" recorded and that QoreWitness is in beta on the QoreChain test network. "Sealed within 1 minute" is now singular. Rebuilt as one offline HTML file, SHA-256 `d894ee8cad7d6b68b5a6fc41ec93693a2f6111c2971108ed72571f2a33fa2100`, shown on the Developers and jury pages and in `web/site/index.html`. The Verify screenshots are taken again.
 

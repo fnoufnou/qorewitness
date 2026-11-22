@@ -358,7 +358,7 @@ export class Wizard {
       return s.camera && this.lastSnapshot ? this.renderPicture(csrf) : this.renderCameraForm(csrf, undefined, this.formValues(s), undefined, base);
     }
     if (screen === "connect") return this.renderConnect(csrf);
-    if (screen === "done") return renderDone(base);
+    if (screen === "done") return renderDone(base, process.env.QW_UI_PUBLIC_URL);
     return "";
   }
 
@@ -436,8 +436,7 @@ ${job.reason === "error" ? `<details><summary>Technical details</summary><pre>${
       }
     }
     return `<div class="card">${eyebrow(2, "Connect")}
-<h1>Connecting your camera</h1>
-<p>${esc(job?.text ?? "Preparing QoreWitness")}</p>
+<h1>Connecting your camera…</h1>
 <progress value="${esc(step)}" max="${esc(total)}" aria-label="Progress"></progress>
 <p class="muted">This takes a few minutes. You can close this page. QoreWitness goes on.</p>${waitSelf}</div>`;
   }
@@ -458,12 +457,15 @@ export function freeBytes(path: string): number | undefined {
   }
 }
 
-export function renderDone(dashboardUrl: string): string {
+/** The done page shows the address the browser used and, when it differs, the address that the installer printed. */
+export function renderDone(dashboardUrl: string, installerUrl?: string): string {
+  const big = (u: string) => `<p style="font-size:clamp(15px,4.6vw,24px);font-weight:600;margin:4px 0 12px;word-break:normal;overflow-wrap:anywhere" class="mono">${esc(u)}</p>`;
+  const other = installerUrl && /^https?:\/\/[^\s"<>]+$/.test(installerUrl) && installerUrl.replace(/\/+$/, "") !== dashboardUrl.replace(/\/+$/, "") ? installerUrl.replace(/\/+$/, "") : undefined;
   return `<div class="card"><div class="eyebrow">Done</div>
 <h1>Sealing started</h1>
 <p>QoreWitness records your camera and seals the video every 10 minutes. The first seal comes in about 10 to 15 minutes.</p>
 <p>Your dashboard is here. Bookmark it now, or add it to your home screen:</p>
-<p style="font-size:clamp(15px,4.6vw,24px);font-weight:600;margin:4px 0 12px;word-break:normal;overflow-wrap:anywhere" class="mono">${esc(dashboardUrl || "/")}</p>
+${big(dashboardUrl || "/")}${other ? `<p>From any phone or computer in your home, this address also works:</p>${big(other)}` : ""}
 <a class="btn" href="/">Open my dashboard</a>
 <p style="margin-top:16px">To prove a video later: open the dashboard and press <strong>Download</strong> next to the time you need.</p>
 <p class="muted">QoreWitness keeps its keys in the qorewitness folder on this computer. Back up that folder once.</p></div>`;
