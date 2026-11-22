@@ -21,7 +21,9 @@ import {
   FAUCET, MIN_SETUP_UQOR, REGISTER_STEPS, ensureDeviceKey, ensureOwnerAccount, finishSetup, isSetupDone, keyFingerprint,
   readAccountInfo, readEnvFile, readOwnerPublic, registerOnChain, saveCamera, writeSecretFile, type ChainOps, type Paths, type Plan,
 } from "../setup/steps.js";
-import { cameraAccountProblem, cameraHostProblem, parseStreamUrl, proposeRetentionDays, tapoUrl, type SnapshotResult, type StreamPath } from "./camera.js";
+import { brandStreamUrl, parseStreamUrl, proposeRetentionDays, type SnapshotResult, type StreamPath } from "./camera.js";
+import { CAMERA_BRANDS, brandById, type BrandId } from "./cameras.js";
+import { cameraLabel, type FoundCamera } from "./discover.js";
 import { esc, hidden } from "./html.js";
 import { SPONSOR_TEXT, enrollDevice, type SponsorClient, type SponsorStatus } from "./sponsor.js";
 
@@ -44,7 +46,11 @@ export interface JobState {
 
 export interface WizardState {
   v: 2;
-  camera?: { label: string; host: string; user: string; path: StreamPath; retentionDays: number; testedAt: string };
+  camera?: {
+    label: string; host: string; user: string; retentionDays: number; testedAt: string;
+    brand?: BrandId; quality?: "main" | "sub";
+    path?: StreamPath; // before 0.6.1: Tapo only
+  };
   cameraConfirmed?: boolean;
   plan?: Plan; // default "sponsored"
   sponsor?: { status: SponsorStatus; at: string };
@@ -76,7 +82,12 @@ export interface WizardDeps {
   pollMs?: number;
   /** How long the connect step waits for network fees (default 20 minutes). */
   fundsTimeoutMs?: number;
+  /** "Find my camera": search the home network. Missing: no search (tests). The server passes discoverCameras. */
+  discover?: (hints: (string | undefined)[]) => Promise<FoundCamera[]>;
 }
+
+/** Address hints for the home /24: QW_LAN_CIDR, the address from install.sh, the address the browser used. */
+export const lanHints = (base: string) => [process.env.QW_LAN_CIDR, process.env.QW_UI_PUBLIC_URL, base];
 
 export interface PostResult {
   redirect?: string;
@@ -112,6 +123,7 @@ class StopError extends Error {
 export class Wizard {
   private running?: Promise<void>;
   private lastSnapshot?: Buffer;
+  private scan?: { at: number; found: FoundCamera[]; running?: Promise<void> };
   private ownerPub?: { cosmos: string; evm: `0x${string}`; registry: `0x${string}` };
 
   constructor(private readonly d: WizardDeps) {}
@@ -163,7 +175,7 @@ export class Wizard {
     const setJob = (j: Partial<JobState>) => this.update((s) => {
       s.job = { ...(s.job ?? { kind: "connect", status: "running", step: 0, total: CONNECT_TOTAL, text: "", startedAt: new Date().toISOString() }), ...j };
     });
-    setJob({ kind: "connect", status: "running", step: 0, total: CONNECT_TOTAL, text: "Preparing your box", reason: undefined, error: undefined, startedAt: new Date().toISOString() });
+    setJob({ kind: "connect", status: "running", step: 0, total: CONNECT_TOTAL, text: "Preparing QoreWitness", reason: undefined, error: undefined, startedAt: new Date().toISOString() });
     this.running = this.connect((step, text) => setJob({ step, text }))
       .then(() => setJob({ status: "done", step: CONNECT_TOTAL, text: "Sealing started" }))
       .catch((e: unknown) => setJob({ status: "failed", reason: e instanceof StopError ? e.reason : "error", error: safeError(e) }))
@@ -179,7 +191,7 @@ export class Wizard {
     const label = s0.camera.label;
 
     // 1. Keys and account, made silently. Both steps keep what exists.
-    progress(1, "Preparing your box");
+    progress(1, "Preparing QoreWitness");
     const owner = await ensureOwnerAccount(p);
     const { key } = ensureDeviceKey(p, label);
     this.ownerPub = { cosmos: owner.cosmos, evm: owner.evm, registry: owner.registry };
@@ -257,7 +269,11 @@ export class Wizard {
     }
     if (action === "retry") {
       this.lastSnapshot = undefined;
-      return { html: this.renderCameraForm(csrf, undefined, { host: s.camera?.host ?? "", user: s.camera?.user ?? "" }) };
+      return { html: await this.renderCameraForm(csrf, undefined, this.formValues(s)) };
+    }
+    if (action === "rescan") {
+      this.scan = undefined;
+      return { html: await this.renderCameraForm(csrf, undefined, this.formValues(s), undefined, form._base ?? "") };
     }
 
     let url: string;
@@ -265,27 +281,39 @@ export class Wizard {
     if (action === "standard") {
       const saved = readEnvFile(this.d.paths.cameraEnv).QW_STREAM_URL;
       const parsed = saved ? parseStreamUrl(saved) : undefined;
-      if (!s.camera || !parsed) return { html: this.renderCameraForm(csrf) };
-      cam = { ...s.camera, path: "stream2" };
-      url = tapoUrl({ host: parsed.host, user: parsed.user, password: parsed.password, path: "stream2", port: parsed.port });
+      const brand = brandById(s.camera?.brand ?? (s.camera?.path ? "tapo" : undefined));
+      if (!s.camera || !parsed || brand.fullLink || !brand.subPath) return { html: await this.renderCameraForm(csrf, undefined, this.formValues(s)) };
+      cam = { ...s.camera, brand: brand.id, quality: "sub" };
+      url = brandStreamUrl(brand, { host: parsed.host, user: parsed.user, password: parsed.password, quality: "sub" });
     } else {
-      const values = { host: (form.host ?? "").trim(), user: form.user ?? "" };
-      const fail = (msg: string) => ({ html: this.renderCameraForm(csrf, msg, values) });
+      const host = ((form.host ?? "").trim() || (form.found ?? "")).trim();
+      const values: CameraFormValues = { host, user: form.user ?? "", brand: form.brand ?? "", link: form.link ?? "" };
+      const fail = async (msg: string) => ({ html: await this.renderCameraForm(csrf, msg, values) });
+      if (!CAMERA_BRANDS.some((b) => b.id === values.brand)) return fail("Pick the brand of your camera. Not in the list? Pick Other camera.");
       if (form.consent !== "yes") return fail("Tick the box: my camera films my own property.");
-      const problem = cameraHostProblem(values.host) ?? cameraAccountProblem(values.user, form.password ?? "");
-      if (problem) return fail(problem);
+      const brand = brandById(values.brand);
+      try {
+        url = brandStreamUrl(brand, { host, user: values.user, password: form.password ?? "", link: values.link, quality: "main" });
+      } catch (e) {
+        return fail(e instanceof Error ? e.message : "Check the camera details.");
+      }
       const label = readAccountInfo(this.d.paths)?.device ?? s.camera?.label ?? DEFAULT_LABEL;
-      url = tapoUrl({ host: values.host, user: values.user, password: form.password ?? "", path: "stream1" });
-      cam = { label, host: values.host, user: values.user, path: "stream1", retentionDays: 14, testedAt: "" };
+      const shownHost = brand.fullLink ? (parseStreamUrl(url)?.host ?? "") : host;
+      cam = { label, host: shownHost, user: values.user, brand: brand.id, quality: "main", retentionDays: 14, testedAt: "" };
       // Advanced: pay the fees yourself.
       this.update((n) => (n.plan = form.selfManaged === "yes" ? "self" : "sponsored"));
     }
 
     const result = await this.d.snapshot(url);
-    if (!result.ok) return { html: this.renderCameraForm(csrf, result.message, { host: cam.host, user: cam.user }, result.detail) };
+    if (!result.ok) {
+      // Brand hints only for that brand (for example the Tapo recording rule).
+      const hint = result.kind === "no_video" || result.kind === "busy" ? brandById(cam.brand).notes[0] : undefined;
+      const msg = cam.brand === "tapo" && hint ? `${result.message} ${hint}` : result.message;
+      return { html: await this.renderCameraForm(csrf, msg, { host: cam.host, user: cam.user, brand: cam.brand ?? "", link: "" }, result.detail) };
+    }
     cam.testedAt = new Date().toISOString();
     // Without an injected value, ask the disk that holds /data (the server passes none).
-    cam.retentionDays = proposeRetentionDays(this.d.diskFree ? this.d.diskFree() : freeBytes(this.d.paths.data), cam.path);
+    cam.retentionDays = proposeRetentionDays(this.d.diskFree ? this.d.diskFree() : freeBytes(this.d.paths.data), cam.quality === "sub" ? "stream2" : "stream1");
     saveCamera(this.d.paths, { label: cam.label, streamUrl: url, retentionDays: cam.retentionDays });
     this.update((n) => {
       n.camera = cam;
@@ -295,12 +323,39 @@ export class Wizard {
     return { html: this.renderPicture(csrf) };
   }
 
+  private formValues(s: WizardState): CameraFormValues {
+    return { host: s.camera?.host ?? "", user: s.camera?.user ?? "", brand: s.camera?.brand ?? (s.camera?.path ? "tapo" : ""), link: "" };
+  }
+
+  /** Runs "Find my camera" once (cached for 2 minutes). At most about 5 seconds. */
+  private async findCameras(base: string): Promise<FoundCamera[] | undefined> {
+    if (!this.d.discover) return undefined;
+    if (this.scan && !this.scan.running && Date.now() - this.scan.at < 120_000) return this.scan.found;
+    if (!this.scan?.running) {
+      const scan: { at: number; found: FoundCamera[]; running?: Promise<void> } = { at: Date.now(), found: [] };
+      scan.running = this.d.discover(lanHints(base))
+        .then((f) => {
+          scan.found = f;
+        })
+        .catch(() => {
+          scan.found = [];
+        })
+        .finally(() => {
+          scan.at = Date.now();
+          scan.running = undefined;
+        });
+      this.scan = scan;
+    }
+    await this.scan.running;
+    return this.scan.found;
+  }
+
   // ------------------------------------------------------------ pages
 
   async render(screen: Screen, csrf: string, base = ""): Promise<string> {
     if (screen === "camera") {
       const s = this.state();
-      return s.camera && this.lastSnapshot ? this.renderPicture(csrf) : this.renderCameraForm(csrf, undefined, { host: s.camera?.host ?? "", user: s.camera?.user ?? "" });
+      return s.camera && this.lastSnapshot ? this.renderPicture(csrf) : this.renderCameraForm(csrf, undefined, this.formValues(s), undefined, base);
     }
     if (screen === "connect") return this.renderConnect(csrf);
     if (screen === "done") return renderDone(base);
@@ -312,31 +367,48 @@ export class Wizard {
     return screen === "connect" && this.state().job?.status !== "failed" ? 5 : undefined;
   }
 
-  private renderCameraForm(csrf: string, error?: string, v: { host: string; user: string } = { host: "", user: "" }, detail?: string): string {
+  private async renderCameraForm(csrf: string, error?: string, v: CameraFormValues = { host: "", user: "", brand: "", link: "" }, detail?: string, base?: string): Promise<string> {
     const plan = this.state().plan;
+    // "Find my camera" runs when the screen opens (base is set on a page load, not after a failed test).
+    const found = base !== undefined ? await this.findCameras(base) : this.scan?.found;
+    const pick = v.host || found?.[0]?.ip || "";
+    const brand = v.brand || found?.find((f) => f.ip === pick)?.brand || "";
+    const list = found === undefined ? ""
+      : found.length
+        ? `<fieldset style="border:0;padding:0;margin:0"><legend style="font-weight:500;margin:14px 0 4px">Cameras on your network</legend>${found.map((f) =>
+            `<label class="check" style="margin:6px 0"><input type="radio" name="found" value="${esc(f.ip)}"${f.brand ? ` data-brand="${esc(f.brand)}"` : ""}${f.ip === pick ? " checked" : ""}> <span>${esc(cameraLabel(f))}</span></label>`).join("")}</fieldset>`
+        : `<p class="note">No camera answered on your network. Type its address below. Your router's app lists the devices on your network.</p>`;
+    const brands = CAMERA_BRANDS.map((b) => `<option value="${b.id}"${b.id === brand ? " selected" : ""}${b.fullLink ? ' data-full="1"' : ""}>${esc(b.name)}</option>`).join("");
+    const howTo = CAMERA_BRANDS.map((b) => `<p data-hint="${b.id}"><strong>${esc(b.name)}:</strong> ${esc(b.enableRtsp)}${b.notes.map((n) => ` ${esc(n)}`).join("")}${b.pathStatus === "check-manual" ? "" : ""}</p>`).join("");
     return `<div class="card">${eyebrow(1, "Camera")}
 <h1>Connect your camera</h1>
-<div class="note"><strong>In the Tapo app:</strong> tap the camera, then the gear, then <em>Advanced Settings</em> &gt; <em>Camera Account</em>. Make a user name and a password of 6 to 32 letters and digits. The camera address (IP) is under <em>Device Info</em>.</div>
+<p>QoreWitness works with cameras that send a video stream (RTSP or ONVIF). Pick your camera, choose its brand and type the camera account.</p>
 ${error ? `<div class="error" role="alert">${esc(error)}</div>` : ""}${detail ? `<details><summary>Technical details</summary><pre>${esc(detail)}</pre></details>` : ""}
 <form method="post" action="/setup/camera">${hidden("_csrf", csrf)}${hidden("action", "test")}
-<label for="host">Camera address</label><input id="host" name="host" type="text" inputmode="decimal" autocomplete="off" placeholder="192.168.1.20" value="${esc(v.host)}">
+${list}
+<label for="host">${found?.length ? "Or type the camera address" : "Camera address"}</label><input id="host" name="host" type="text" inputmode="decimal" autocomplete="off" placeholder="192.168.1.20" value="${esc(found?.some((f) => f.ip === v.host) ? "" : v.host)}">
+<label for="brand">Brand</label><select id="brand" name="brand" data-brand><option value="">Choose the brand</option>${brands}</select>
 <label for="user">Camera account name</label><input id="user" name="user" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" value="${esc(v.user)}">
 <label for="password">Camera account password</label><input id="password" name="password" type="password" autocomplete="off">
+<div data-linkfield><label for="link">Camera link (only for Other camera and UniFi Protect)</label><input id="link" name="link" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="rtsp://..." value="${esc(v.link)}"></div>
 <label class="check"><input type="checkbox" name="consent" value="yes"> <span>My camera films my own property.</span></label>
-<p class="hint">Tapo Care, the microSD card and a recorder such as this box: only two of the three work at a time. If all three are on, turn one off.</p>
 <button>Test camera</button><div class="hint">The test takes up to 15 seconds.</div>
+<details><summary>Where do I find the camera account?</summary>${howTo}</details>
 <details><summary>Advanced</summary><label class="check"><input type="checkbox" name="selfManaged" value="yes"${plan === "self" ? " checked" : ""}> <span>Use my own wallet (Self-managed). You pay the network fees with your own test tokens.</span></label></details>
-</form></div>`;
+</form>
+${this.d.discover ? `<form method="post" action="/setup/camera">${hidden("_csrf", csrf)}${hidden("action", "rescan")}<button class="secondary">Search my network again</button></form>` : ""}</div>`;
   }
 
   private renderPicture(csrf: string): string {
     const form = (action: string, label: string, cls = "") => `<form method="post" action="/setup/camera">${hidden("_csrf", csrf)}${hidden("action", action)}<button${cls ? ` class="${cls}"` : ""}>${label}</button></form>`;
     const img = this.lastSnapshot ? `<img class="snap" alt="Picture from your camera" src="data:image/jpeg;base64,${this.lastSnapshot.toString("base64")}">` : "";
-    const std = this.state().camera?.path === "stream1";
+    const cam = this.state().camera;
+    const b = brandById(cam?.brand ?? (cam?.path ? "tapo" : undefined));
+    const std = !!cam && cam.quality !== "sub" && cam.path !== "stream2" && !b.fullLink && !!b.subPath;
     return `<div class="card">${eyebrow(1, "Camera")}
 <h1>Is this your camera?</h1>${img}
 <div class="row">${form("confirm", "Yes, this is my camera")}${form("retry", "Try again", "secondary")}</div>
-${std ? `<details><summary>Why standard quality?</summary><p>Standard quality uses less disk space and Wi-Fi. Use it when the box has a small disk or the camera is far from the router.</p>${form("standard", "Use standard quality", "secondary")}</details>` : ""}</div>`;
+${std ? `<details><summary>Why standard quality?</summary><p>Standard quality uses less disk space and Wi-Fi. Use it when the computer has a small disk or the camera is far from the router.</p>${form("standard", "Use standard quality", "secondary")}</details>` : ""}</div>`;
   }
 
   private async renderConnect(csrf: string): Promise<string> {
@@ -365,9 +437,9 @@ ${job.reason === "error" ? `<details><summary>Technical details</summary><pre>${
     }
     return `<div class="card">${eyebrow(2, "Connect")}
 <h1>Connecting your camera</h1>
-<p>${esc(job?.text ?? "Preparing your box")}</p>
+<p>${esc(job?.text ?? "Preparing QoreWitness")}</p>
 <progress value="${esc(step)}" max="${esc(total)}" aria-label="Progress"></progress>
-<p class="muted">This takes 2 to 5 minutes. You can close this page. The box goes on.</p>${waitSelf}</div>`;
+<p class="muted">This takes a few minutes. You can close this page. QoreWitness goes on.</p>${waitSelf}</div>`;
   }
 
   /** Last test picture, for tests. */
@@ -389,19 +461,19 @@ export function freeBytes(path: string): number | undefined {
 export function renderDone(dashboardUrl: string): string {
   return `<div class="card"><div class="eyebrow">Done</div>
 <h1>Sealing started</h1>
-<p>Your box records your camera and seals the video every 10 minutes. The first seal comes in about 10 to 15 minutes.</p>
+<p>QoreWitness records your camera and seals the video every 10 minutes. The first seal comes in about 10 to 15 minutes.</p>
 <p>Your dashboard is here. Bookmark it now, or add it to your home screen:</p>
 <p style="font-size:24px;font-weight:600;margin:4px 0 12px" class="mono">${esc(dashboardUrl || "/")}</p>
 <a class="btn" href="/">Open my dashboard</a>
 <p style="margin-top:16px">To prove a video later: open the dashboard and press <strong>Download</strong> next to the time you need.</p>
-<p class="muted">Your box keeps its keys in the qorewitness folder. Back up that folder once.</p></div>`;
+<p class="muted">QoreWitness keeps its keys in the qorewitness folder on this computer. Back up that folder once.</p></div>`;
 }
 
 // ---------------------------------------------------------------- claim (pairing and password)
 
 export function renderClaimCode(error?: string, locked = false): string {
   return `<div class="card"><div class="eyebrow">Welcome</div>
-<h1>Set up your QoreWitness box</h1>
+<h1>Set up QoreWitness</h1>
 <p>Type the 6-digit pairing code that the installer showed.</p>
 ${error ? `<div class="error" role="alert">${esc(error)}</div>` : ""}
 ${locked ? "" : `<form method="post" action="/setup/pair"><label for="code">Pairing code</label>
@@ -413,7 +485,7 @@ const showToggle = (id: string) => `<label class="check" style="margin-top:8px">
 
 export function renderClaimPassword(csrf: string, error?: string): string {
   return `<div class="card"><div class="eyebrow">Welcome</div>
-<h1>Choose a password for this box</h1>
+<h1>Choose a password for QoreWitness</h1>
 <p>You need it to open your dashboard later.</p>
 ${error ? `<div class="error" role="alert">${esc(error)}</div>` : ""}
 <form method="post" action="/setup/password">${hidden("_csrf", csrf)}
@@ -427,4 +499,11 @@ ${error ? `<div class="error" role="alert">${esc(error)}</div>` : ""}
 <form method="post" action="/login"><label for="pw">Password</label><input id="pw" name="password" type="password" autocomplete="current-password">
 ${showToggle("pw")}<button>Open</button></form>
 <details><summary>Forgot the password?</summary><p>Run the install command again and add <span class="mono">--new-password</span>. It shows a new pairing code. Your camera and video stay as they are.</p></details></div>`;
+}
+
+interface CameraFormValues {
+  host: string;
+  user: string;
+  brand: string;
+  link: string;
 }

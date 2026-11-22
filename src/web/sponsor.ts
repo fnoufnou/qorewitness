@@ -48,14 +48,14 @@ export interface SponsorAnswer {
 
 /** Plain words for each status. */
 export const SPONSOR_TEXT: Record<SponsorStatus, string> = {
-  enrolled: "Your pilot code is accepted. The pilot is adding the network fees to your box.",
-  pending: "The pilot is adding the network fees to your box.",
+  enrolled: "Your pilot code is accepted. The pilot is adding the network fees to your account.",
+  pending: "The pilot is adding the network fees to your account.",
   funded: "The pilot added the network fees.",
   active: "Network fees are covered by the pilot.",
   full: "The pilot is full at the moment. You can pay the network fees with your own wallet, or try again later.",
-  invalid_code: "The pilot did not accept this box. You can pay the network fees with your own wallet.",
-  used_code: "The pilot did not accept this box. You can pay the network fees with your own wallet.",
-  paused: "The pilot is paused at the moment. Your box keeps recording. Try again later.",
+  invalid_code: "The pilot did not accept this camera. You can pay the network fees with your own wallet.",
+  used_code: "The pilot did not accept this camera. You can pay the network fees with your own wallet.",
+  paused: "The pilot is paused at the moment. Your camera keeps recording. Try again later.",
   rejected: "The pilot service did not accept this box.",
   unknown: "The pilot service gave an answer we do not know. Try again later.",
 };

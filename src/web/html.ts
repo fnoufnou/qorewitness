@@ -15,13 +15,16 @@ export const LOGO = `<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><r
  * nothing when its elements are missing, and every page works without it.
  * - [data-copy]: copy button.  - [data-show]: show the password.
  * - time[data-local]: the time in the browser's own time zone.  - input[name=tz]: the zone offset.
+ * - select[data-brand]: show the link field only for brands that need a full link, and only that brand's hint.
+ *   A found camera with a known brand (ONVIF) sets the brand when it is picked.
  */
 export const BOX_SCRIPT = `(function(){var q=function(s){return document.querySelectorAll(s)};
 q("[data-copy]").forEach(function(b){b.addEventListener("click",function(){var t=document.getElementById(b.getAttribute("data-copy"));if(t&&navigator.clipboard)navigator.clipboard.writeText(t.textContent.trim()).then(function(){b.textContent="Copied";});});});
 q("[data-show]").forEach(function(c){c.addEventListener("change",function(){var i=document.getElementById(c.getAttribute("data-show"));if(i)i.type=c.checked?"text":"password";});});
 var d=function(x){return x.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})},h=function(x){return x.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})};
 q("time[data-local]").forEach(function(t){var a=new Date(t.getAttribute("datetime")),e=t.getAttribute("data-end");if(isNaN(a))return;t.textContent=d(a)+", "+h(a)+(e?" to "+h(new Date(e)):"");});
-q("input[name=tz]").forEach(function(i){i.value=String(-new Date().getTimezoneOffset());});})();`;
+q("input[name=tz]").forEach(function(i){i.value=String(-new Date().getTimezoneOffset());});
+q("select[data-brand]").forEach(function(sel){var f=function(){var o=sel.options[sel.selectedIndex],full=o&&o.getAttribute("data-full")==="1";q("[data-linkfield]").forEach(function(e){e.hidden=!full;});q("[data-hint]").forEach(function(e){e.hidden=!!sel.value&&e.getAttribute("data-hint")!==sel.value;});};sel.addEventListener("change",f);f();q("input[name=found][data-brand]").forEach(function(r){r.addEventListener("change",function(){sel.value=r.getAttribute("data-brand");f();});});});})();`;
 const BOX_HASH = `'sha256-${createHash("sha256").update(BOX_SCRIPT).digest("base64")}'`;
 
 /** Fills the "Save evidence" form: the browser's time zone and the last hour as default. Runs without it too. */
