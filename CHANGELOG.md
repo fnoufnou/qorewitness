@@ -4,6 +4,9 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+### 2026-11-22: verifier wording
+- QoreWitness Verify: no "pilot" or "box" in its text. The result says the file is exactly what "the camera's QoreWitness" recorded and that QoreWitness is in beta on the QoreChain test network. "Sealed within 1 minute" is now singular. Rebuilt as one offline HTML file, SHA-256 `d894ee8cad7d6b68b5a6fc41ec93693a2f6111c2971108ed72571f2a33fa2100`, shown on the Developers and jury pages and in `web/site/index.html`. The Verify screenshots are taken again.
+
 ### 2026-11-22: site round 2 (real screens, plans, jury page, accessibility)
 - Site: every screenshot placeholder is replaced by a real screen of the app, captured from the local ui server with the chain, camera, network search and fee sponsor mocked (phone 390 x 844 and desktop 1280 x 800 at 2x, WebP in `web/site/assets/screens/`), in CSS phone, browser and terminal frames. Camera app steps (Tapo, Reolink) use a neutral illustrated phone with the menu path as text. QoreWitness Verify is shown with a green Original for the published sample record, checked against the live testnet contract.
 - Site: Plans are now Free (recommended: runs on your own hardware, and during the beta we cover the network fees) and Hands-off (USD 10 or EUR 9 per camera per month), with the banner "Available when QoreWitness launches on the QoreChain main network" and a "Get notified on X" link to @fnoufnou (no form, no email). EUR 4 is gone from the site and the FAQ.

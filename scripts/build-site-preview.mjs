@@ -23,7 +23,7 @@ const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
 // TODO lead: pin a release tag instead of main before launch.
 const INSTALL = 'ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.1/install.sh | bash -s -- --yes"';
-const VERIFIER_SHA = "a995b6e408847daa288aa41ec4e7d03e2ce85bd0088b77c297c9634c5b5eb623";
+const VERIFIER_SHA = "d894ee8cad7d6b68b5a6fc41ec93693a2f6111c2971108ed72571f2a33fa2100";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 const TESTS = 233; // automated tests (pnpm test), counted on 22 Nov 2026
 
@@ -927,7 +927,7 @@ ${head("For the jury", "QoreWitness, in ten minutes.", "Thank you for judging th
 <section class="alt edged-chain" id="try"><div class="wrap narrow">
 <p class="eyebrow">Try it yourself</p><h2>Four checks you can run in a few minutes.</h2>
 <ol class="steps compact" style="margin-top:24px">
-<li class="step"><h3>Check the sample record</h3><div class="body"><p>Download the <a href="${UP}demo-clip.mp4" download>sample clip</a> and its <a href="${UP}demo-receipt.json" download>receipt</a>, open ${VERIFY} and choose both files under <b>Or check one clip with its receipt</b>. The result is a green <b>Original</b>, read from the chain in your own browser.</p></div></li>
+<li class="step"><h3>Check the sample record</h3><div class="body"><p>Download the <a href="${UP}demo-clip.mp4" download>sample clip</a> and its <a href="${UP}demo-receipt.json" download>receipt</a>, open ${VERIFY} and choose both files under <b>Or check one clip with its receipt</b>. The result is a green <b>Original</b>, read from the chain in your own browser.</p><p class="small">QoreWitness Verify is one offline HTML file. Its SHA-256 is <code class="break">${VERIFIER_SHA}</code>. Rebuild it with <code>pnpm build:verifier</code> and compare.</p></div></li>
 <li class="step"><h3>Break it on purpose</h3><div class="body"><p>Press <b>Change one byte and check again</b>. The verifier flips one bit of the clip in memory and the result turns red.</p></div></li>
 <li class="step"><h3>Find the anchor on chain</h3><div class="body"><p>Open the registry on the <a href="${"https://explore.qore.network"}/address/${REGISTRY}">testnet explorer</a> and look up the sample record in block 10,120,133.</p></div></li>
 <li class="step"><h3>Run the tests</h3><div class="body"><p>Clone the repository and run <code>pnpm install --ignore-scripts</code> and <code>pnpm test</code>. The contract tests run against a mock of the precompiles, and the app tests use a mocked chain.</p></div></li>
