@@ -2,6 +2,16 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
+## Unreleased
+
+### 2026-11-22: site in the product voice, any camera, cameras page
+- Site (preview): every page rewritten in a confident, warm product voice after the owner's feedback. One slim beta banner on every page is the only beta wording outside Trust, Developers, the plan price and one FAQ line. No "demo", "pilot" or "box" in the body copy. No sealing interval in marketing copy ("as it is recorded", "pinned to the time it was recorded").
+- Site: "Set up your camera" for any RTSP or ONVIF camera: check compatibility, prepare the camera (hints for Tapo, Reolink, Hikvision/Annke, Dahua/Amcrest, UniFi Protect, Axis, generic ONVIF), install, open the setup, done. "What you need" with minimum and recommended hardware, storage guide, platforms, and a short Docker Compose guide (only the Linux installer is tested end to end).
+- Site: new page `cameras.html` with honest statuses (Tested by us, Works with RTSP, Not supported) and a VLC check.
+- Site: new hero composition with replaceable photo slots (`web/site/assets/hero-frames.jpg`, `hero-frame-2.jpg`, `hero-frame-3.jpg`), seal badges and a verification report card. A dark gradient placeholder shows until the photos exist.
+- Site: Plans shows "EUR 4 per camera per month" with "Free while we're in beta", and Self-managed as a free second card. The verifier is named "QoreWitness Verify" everywhere.
+- Site: tables stack as cards on phones. Trust has a new `#beta` section. Developers: test count and built features updated.
+
 ## 0.6.0-alpha.1 (22 Nov 2026, Customer Edition preview)
 
 First build for non-technical owners: install with one paste, setup in the browser, Fees included by default, evidence download and a verifier that takes it. Tested end to end on a clean Debian box with a stand-in camera and the live sponsor (22 Nov).
