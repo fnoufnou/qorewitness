@@ -8,7 +8,7 @@
  */
 import { deriveUnifiedAccount, evmToQor, type UnifiedAccount } from "@qorechain/sdk";
 import {
-  createPublicClient, decodeFunctionData, getAddress, http, keccak256, parseAbi, type Address, type Hex,
+  createPublicClient, getAddress, http, parseAbi, type Address, type Hex,
 } from "viem";
 import { qorechainTestnet, REGISTRY_ABI } from "../../src/agent/anchor-client.js";
 import { balanceUqor, finalCode, hybridBankSend, type NativeNet } from "../../src/agent/bank.js";
@@ -23,8 +23,6 @@ export interface ChainReader {
   evmChainId(): Promise<number>;
   cosmosChainId(): Promise<string>;
   getDevice(owner: Address, deviceId: Hex): Promise<DeviceInfo>;
-  /** The full ML-DSA-87 public key whose keccak256 equals keyHash, read from registry transactions on chain. */
-  devicePubkey(owner: Address, deviceId: Hex, keyHash: Hex): Promise<Hex | undefined>;
   anchorCount(owner: Address, deviceId: Hex): Promise<bigint>;
   /** End (unix seconds) of the last anchored window of the device, 0 if none. */
   lastWindowEnd(owner: Address, deviceId: Hex): Promise<number>;
@@ -52,14 +50,11 @@ export async function assertPilotChain(chain: ChainReader): Promise<void> {
 const EXTRA_ABI = parseAbi([
   "function anchorCount(address owner, bytes32 deviceId) view returns (uint256)",
   "function nextWindowStart(address owner, bytes32 deviceId) view returns (uint64)",
-  "event DeviceRegistered(address indexed owner, bytes32 indexed deviceId, bytes32 keyHash)",
-  "event DeviceKeyRotated(address indexed owner, bytes32 indexed deviceId, bytes32 oldKeyHash, bytes32 newKeyHash, uint32 keyVersion)",
 ]);
 const STATUS = ["none", "active", "revoked"] as const;
 
 export class RpcChainReader implements ChainReader {
   private readonly pub;
-  private readonly keyCache = new Map<string, Hex>();
 
   constructor(private readonly cfg: SponsorConfig) {
     this.pub = createPublicClient({ chain: qorechainTestnet, transport: http(cfg.evmRpc) });
@@ -91,53 +86,6 @@ export class RpcChainReader implements ChainReader {
 
   async balanceUqor(owner: Address): Promise<bigint> {
     return balanceUqor(this.cfg.rest, evmToQor(owner));
-  }
-
-  /**
-   * The registry stores only keccak256 of the device key. The full key is in the
-   * call data of registry transactions: anchor (newest), rotateDeviceKey or
-   * registerDevice. Searches newest first and accepts a key only when its hash
-   * equals the current on-chain key hash.
-   */
-  async devicePubkey(owner: Address, deviceId: Hex, keyHash: Hex): Promise<Hex | undefined> {
-    const cached = this.keyCache.get(keyHash.toLowerCase());
-    if (cached) return cached;
-    const head = await this.pub.getBlockNumber();
-    const lowest = head > this.cfg.keyLookbackBlocks ? head - this.cfg.keyLookbackBlocks : 0n;
-    const step = this.cfg.logChunkBlocks;
-    for (let to = head; to >= lowest; to -= step) {
-      const from = to - step + 1n > lowest ? to - step + 1n : lowest;
-      const [anchored, registered, rotated] = await Promise.all([
-        this.pub.getContractEvents({ address: this.cfg.registry, abi: REGISTRY_ABI, eventName: "Anchored", args: { owner, deviceId }, fromBlock: from, toBlock: to }),
-        this.pub.getContractEvents({ address: this.cfg.registry, abi: EXTRA_ABI, eventName: "DeviceRegistered", args: { owner, deviceId }, fromBlock: from, toBlock: to }),
-        this.pub.getContractEvents({ address: this.cfg.registry, abi: EXTRA_ABI, eventName: "DeviceKeyRotated", args: { owner, deviceId }, fromBlock: from, toBlock: to }),
-      ]);
-      const logs = [...anchored, ...registered, ...rotated].sort((a, b) => Number((b.blockNumber ?? 0n) - (a.blockNumber ?? 0n)));
-      for (const log of logs) {
-        if (!log.transactionHash) continue;
-        const key = await this.keyFromTx(log.transactionHash);
-        if (key && keccak256(key).toLowerCase() === keyHash.toLowerCase()) {
-          this.keyCache.set(keyHash.toLowerCase(), key);
-          return key;
-        }
-      }
-      if (from === lowest) break;
-    }
-    return undefined;
-  }
-
-  private async keyFromTx(hash: Hex): Promise<Hex | undefined> {
-    const tx = await this.pub.getTransaction({ hash });
-    if (!tx.to || getAddress(tx.to) !== getAddress(this.cfg.registry)) return undefined;
-    try {
-      const call = decodeFunctionData({ abi: REGISTRY_ABI, data: tx.input });
-      if (call.functionName === "anchor") return call.args[1] as Hex;
-      if (call.functionName === "registerDevice") return call.args[1] as Hex;
-      if (call.functionName === "rotateDeviceKey") return call.args[2] as Hex;
-    } catch {
-      return undefined;
-    }
-    return undefined;
   }
 }
 

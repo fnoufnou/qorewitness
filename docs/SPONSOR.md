@@ -17,9 +17,9 @@ The setup wizard of the box (`src/web/sponsor.ts`, `src/web/wizard.ts`) is the c
    qorewitness-sponsor-v1|9800|<registry>|<deviceId>|<owner>|<nonce>
    ```
 
-   registry, deviceId and owner are lower-case `0x` hex. The service also accepts EIP-55 spelling for `registry` and `owner`. The box then sends `POST /sponsor/v1/enroll {deviceId, owner, nonce, signature, devicePubkey}`. `signature` (4,627 bytes) and `devicePubkey` (2,592 bytes) are `0x` hex. No pilot code is needed. A `pilotCode` field is accepted and ignored.
+   registry, deviceId and owner are lower-case `0x` hex. The service also accepts EIP-55 spelling for `registry` and `owner`. The box then sends `POST /sponsor/v1/enroll {deviceId, owner, nonce, signature, devicePubkey}`. `signature` (4,627 bytes) and `devicePubkey` (2,592 bytes) are `0x` hex. `devicePubkey` is required (HTTP 400 `bad_pubkey` without it). The box always sends it. No pilot code is needed. A `pilotCode` field is accepted and ignored.
 3. **Checks on enrol.** The service deletes the nonce (single use, also when a later check fails). Then it reads `getDevice(owner, deviceId)` from AnchorRegistry v4 (`0xa1378D6558B32e1f8d37b68cf90e3C93839Da365`). Devices are stored per owner, so an entry under `owner` proves that `owner` is the on-chain owner.
-   - **Camera on chain (active).** The key must be the one on chain: `keccak256(devicePubkey)` must equal the key hash in the registry. Without `devicePubkey`, the service reads the key from the newest `anchor`, `rotateDeviceKey` or `registerDevice` call of this device (about 2 days back, `SPONSOR_KEY_LOOKBACK_BLOCKS`). The signature must verify. The camera must pass admission (below). It is active at once. Answer: `enrolled`.
+   - **Camera on chain (active).** The key must be the one on chain: `keccak256(devicePubkey)` must equal the key hash in the registry. The service never scans the chain history for a key. The signature must verify. The camera must pass admission (below). It is active at once. Answer: `enrolled`.
    - **Camera not on chain yet (bootstrap).** The signature must verify against `devicePubkey`. The camera must pass admission (below), and today's start grants must not be used up. The service binds owner, device id and `keccak256(devicePubkey)` together, marks the camera `pending` and sends one start grant to `owner` in the background (default 3 test QOR). Answer: `pending`. After the send: `funded`.
    - **Camera revoked.** Answer: `rejected`.
    - The signature check uses `@qorechain/pqc`, the same ML-DSA-87 code as the agent.
@@ -28,18 +28,18 @@ The setup wizard of the box (`src/web/sponsor.ts`, `src/web/wizard.ts`) is the c
    - ML-DSA-87 key registration of the account: about 0.1 test QOR,
    - EVM window open: 0.1 test QOR,
    - camera registration: 480,117 gas, about 0.054 test QOR charged (the balance must cover the maximum fee, about 0.15),
-   - the wizard needs 2 test QOR before it starts (`MIN_SETUP_UQOR`). After setup about 2.7 test QOR are left, about 9 hours of anchors at 10-minute windows. Then refills take over.
+   - the wizard needs 2 test QOR before it starts (`MIN_SETUP_UQOR`). After setup about 2.6 test QOR are left. The first refill pass after activation tops the account up toward the buffer (below).
    - The grant is written as "unknown" before the send, so a crash never pays twice. A refused send is tried again (3 attempts at most). An unknown result is tried again once, and only when the owner still holds 0 test QOR after 10 minutes.
 5. **Registration check.** Every pass looks at each `pending` or `funded` camera:
-   - registered under `owner` with the enrolled key hash: `active`. Refills count anchors from that moment,
+   - registered under `owner` with the enrolled key hash: `active`. Refills start from that moment,
    - registered under `owner` with another key, or revoked: `rejected`. No more payouts,
    - not registered within 48 hours of enrolment: expired (status word `rejected`). The camera gets no second start grant.
 6. **Refill loop.** Every 15 minutes, per owner, for `active` cameras:
    - skip while the kill switch is on, or within 1 hour of the last payout (the start grant counts),
    - skip when the owner balance is 10 test QOR or more,
    - per device: skip when it is no longer active, or when its last anchored window ended more than 2 hours ago (`nextWindowStart` in the registry),
-   - credit = anchors seen on chain since the last payout x 0.048 QOR. This is the measured fee of 0.0457 QOR per anchor plus a share of the EVM window opens. At most one anchor per 10 minutes counts, so tiny windows cannot farm the sponsor,
-   - payout = the smallest of: the credit, the caps left today, 15 QOR minus the balance, the hot wallet float minus a 1 QOR reserve, and the hourly limit left. No payout below 0.5 QOR,
+   - otherwise top up to the buffer: payout = 15 QOR minus the balance, cut to the camera, owner and global caps left today and the hot wallet float minus a 1 QOR reserve. No payout below 0.5 QOR. A buffer of 10 to 15 test QOR is about 1.5 to 2 days of sealing at 10-minute windows (about 6.9 test QOR per day),
+   - when the payout would pass the hourly limit, it waits for a later pass. This never pauses the service,
    - one hybrid-signed (secp256k1 + ML-DSA-87) native `MsgSend` to the owner address. The service never takes a payout address from a request. The send path is `src/agent/bank.ts`, the same one the Q-Day drill uses for `fund` and `self-send`. Fee about 0.025 QOR. Grants and refills go out one at a time.
 7. **Status.** `GET /sponsor/v1/status/<deviceId>` returns `status` (word below), `state`, `owner`, `startGrant`, `lastTopUp`, `usedTodayUqor`, `capPerDayUqor` and `paused`. HTTP 404 when the camera is not enrolled. When two owners use the same device id, add `?owner=0x..`.
 8. **Health.** `GET /sponsor/healthz` returns `ok`, `paused` and the number of live cameras.
@@ -71,28 +71,30 @@ Malformed requests (bad hex, bad nonce) get HTTP 400 without a status word.
 | Per camera per UTC day | 9 test QOR (one camera uses about 6.9 per day) |
 | Per owner per UTC day | 18 test QOR |
 | Global per UTC day | 90 test QOR (start grants count) |
-| Live cameras | 12 in total, 2 per owner (pending, funded and active) |
+| Live cameras | 12 in total, 2 per owner (pending, funded, and active cameras that sealed in the last 48 h) |
 | Balance | top up below 10, never above 15 test QOR |
 | Payouts | at most 1 per owner per hour, at least 0.5 test QOR |
-| Hourly outflow | 30 test QOR, then automatic pause |
+| Hourly outflow | 30 test QOR. A payout that would pass it waits for a later pass |
+| Float check | automatic pause when the hot wallet drops more than the payouts and fees since the last pass explain, plus 1 test QOR |
 | Rate limits per IP per minute | challenge 10, enrol 5, status 30, healthz 60 |
 | New cameras per client IP | 1 per UTC day (counted in memory only) |
 
 One faucet claim (100 test QOR per 24 h) covers about 14 cameras at 10-minute windows. For more cameras, ask the QoreChain team for a pilot allocation.
 
-The sponsor refills what was used. The runway after a sponsor stop is the balance the owner holds (about 9 hours after the start grant, about 1.4 days at 10 test QOR).
+The sponsor keeps a buffer of 10 to 15 test QOR on the owner account. The start grant counts toward the camera day cap, so on day one the account reaches about 8.6 test QOR and on day two the full 15. The runway after a sponsor stop is the balance the owner holds: at least about 1.4 days once the buffer is built.
 
 Abuse limits of the start grant:
 - Anyone can make a camera key and an owner address and get 3 test QOR (two grants in the rare "unknown result" retry). Residual risk, accepted for the pilot: the coins are test tokens. Limits: 6 start grants per day (18 test QOR), one new camera per IP per day, 12 live cameras.
-- Someone with many IPs could take all 12 places with fake cameras. Expired cameras free their place after 48 h. Mitigation if it happens: pause the sponsor, check `state.json`, and lower `SPONSOR_MAX_GRANTS_DAY`.
+- Someone with many IPs could take all 12 places with fake cameras. Expired cameras free their place after 48 h. An active camera that has not sealed for 48 h frees its place too. It stays enrolled, and refills start again when it seals again. Mitigation if it happens: pause the sponsor, check `state.json`, and lower `SPONSOR_MAX_GRANTS_DAY`.
 - An owner can move the grant away and never register. The camera then expires after 48 h and gets no second grant.
 - The IP counter lives in memory. A restart of the service resets it.
+- Refills are tied to sealing: only a camera that sealed in the last 2 hours gets one. An owner who moves the buffer away gets it back at most up to the camera cap (9 test QOR per day), as long as the camera seals. Residual risk, bounded by the owner and global caps.
 
 ## Kill switch
 
 - Pause: `sudo touch /var/lib/qw-sponsor/PAUSED`. The service checks the file before every pass and before every payout. Enrol answers `paused` (HTTP 423). Status shows `paused: true`. Start grants and refills wait.
 - Resume: `sudo rm /var/lib/qw-sponsor/PAUSED`.
-- Automatic pause: the service writes the file itself when the payouts of the last hour reach `SPONSOR_MAX_HOURLY_QOR`. The file holds the reason. Read it before you resume.
+- Automatic pause: the service writes the file itself only for a real anomaly. Each pass compares the hot wallet balance with the last pass. If it dropped more than the payouts and their fees explain, plus `SPONSOR_FLOAT_SLACK_QOR` (1), the key may be stolen or a payout went out twice. Money added by hand is fine. The hourly limit never pauses: a payout that would pass it waits. The file holds the reason. Read it before you resume.
 - There is no admin HTTP endpoint.
 - When paused, recorders keep recording. Anchors stop when the owner runs out of test QOR, and the gap shows on chain.
 

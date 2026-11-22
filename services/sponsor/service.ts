@@ -18,6 +18,7 @@
 import { randomBytes } from "node:crypto";
 import { existsSync, writeFileSync } from "node:fs";
 import { getAddress, isAddress, keccak256, type Address, type Hex } from "viem";
+import { FEE_HYBRID_SEND } from "../../src/agent/bank.js";
 import { assertPilotChain, type ChainReader, type Payer } from "./chain.js";
 import type { SponsorConfig } from "./config.js";
 import { silentLogger, type Logger } from "./log.js";
@@ -29,6 +30,7 @@ import {
 export const NONCE_TTL_SECONDS = 300;
 const MAX_NONCES = 2000;
 const MAX_GRANT_ATTEMPTS = 3;
+const FEE_UQOR = BigInt(FEE_HYBRID_SEND.amount[0].amount);
 export const PILOT_NOTE = "Free pilot. Test tokens without value. No payment is collected.";
 
 /** The words the setup wizard reads (src/web/sponsor.ts). */
@@ -140,8 +142,22 @@ export class Sponsor {
     return { status, capPerDayUqor: this.cfg.capCameraDayUqor.toString(), note: PILOT_NOTE, ...(message ? { message } : {}) };
   }
 
+  /**
+   * Does this camera hold a place in the pilot? Pending and funded cameras do (they
+   * expire after pendingTtlSeconds). An active camera does while it seals: after
+   * pendingTtlSeconds without a sealed window it frees its place, so abandoned test
+   * boxes and idle fake cameras cannot fill the pilot for ever. It stays enrolled,
+   * and refills start again when it seals again.
+   */
+  private holdsPlace(e: Enrollment, now: number): boolean {
+    if (!LIVE.has(e.state)) return false;
+    if (e.state !== "active") return true;
+    return Math.max(e.activatedAt ?? e.enrolledAt, e.lastSealAt ?? 0) > now - this.cfg.pendingTtlSeconds;
+  }
+
   private liveCount(owner?: string): number {
-    return Object.values(this.state.enrollments).filter((e) => LIVE.has(e.state) && (!owner || e.owner === owner)).length;
+    const now = this.clock.now();
+    return Object.values(this.state.enrollments).filter((e) => this.holdsPlace(e, now) && (!owner || e.owner === owner)).length;
   }
 
   private ipUsed(ip: string): number {
@@ -173,14 +189,12 @@ export class Sponsor {
     if (!/^0x[0-9a-fA-F]+$/.test(sigHex) || sigHex.length !== 2 + 2 * ML_DSA_87_SIG_BYTES) {
       throw new ApiError(400, "bad_signature", "signature must be a 4,627-byte ML-DSA-87 signature in 0x hex");
     }
-    let pubHex: Hex | undefined;
-    if (devicePubkey !== undefined) {
-      const p = typeof devicePubkey === "string" ? (devicePubkey.startsWith("0x") ? devicePubkey : `0x${devicePubkey}`) : "";
-      if (!/^0x[0-9a-fA-F]+$/.test(p) || p.length !== 2 + 2 * ML_DSA_87_PUBKEY_BYTES) {
-        throw new ApiError(400, "bad_pubkey", "devicePubkey must be a 2,592-byte ML-DSA-87 public key in 0x hex");
-      }
-      pubHex = lowerHex(p);
+    // The box always sends the camera public key. The registry stores only its hash.
+    const p = typeof devicePubkey === "string" ? (devicePubkey.startsWith("0x") ? devicePubkey : `0x${devicePubkey}`) : "";
+    if (!/^0x[0-9a-fA-F]+$/.test(p) || p.length !== 2 + 2 * ML_DSA_87_PUBKEY_BYTES) {
+      throw new ApiError(400, "bad_pubkey", "devicePubkey must be a 2,592-byte ML-DSA-87 public key in 0x hex");
     }
+    const pubHex = lowerHex(p);
     this.consumeNonce(nonce, deviceId);
 
     const own = owner.toLowerCase();
@@ -199,19 +213,14 @@ export class Sponsor {
       // On-chain path. Devices are stored per owner, so an active entry under `owner`
       // proves that `owner` is the on-chain owner.
       const keyHash = lowerHex(d.keyHash);
-      let pub: Hex | undefined;
-      if (pubHex) {
-        if (keccak256(pubHex) !== keyHash) throw refuse("rejected", "devicePubkey is not the camera key on chain");
-        pub = pubHex;
-      } else {
-        pub = await this.chain.devicePubkey(getAddress(own), dev, keyHash);
-        if (!pub) throw new ApiError(409, "key_not_found", "device key not found on chain: send devicePubkey");
-      }
-      if (!verify(pub, keyHash)) throw refuse("rejected", "the camera signature does not verify");
+      if (keccak256(pubHex) !== keyHash) throw refuse("rejected", "devicePubkey is not the camera key on chain");
+      if (!verify(pubHex, keyHash)) throw refuse("rejected", "the camera signature does not verify");
       if (existing) return this.answer(this.wordOf(existing));
+      // Read before admission: no await between the admission check and the write (parallel enrols).
+      const count = await this.chain.anchorCount(getAddress(own), dev);
+      if (this.state.enrollments[key]) return this.answer(this.wordOf(this.state.enrollments[key]));
       this.admit(own, ip);
       const now = this.clock.now();
-      const count = await this.chain.anchorCount(getAddress(own), dev);
       this.ipCount.set(ip, this.ipUsed(ip) + 1);
       this.state.enrollments[key] = {
         owner: own, deviceId: dev, keyHash, path: "onchain", state: "active", enrolledAt: now, activatedAt: now,
@@ -223,7 +232,6 @@ export class Sponsor {
     }
 
     // Bootstrap path: the camera is not on chain yet.
-    if (!pubHex) throw refuse("rejected", "the camera is not on chain yet: send devicePubkey");
     const keyHash = keccak256(pubHex);
     if (!verify(pubHex, keyHash)) throw refuse("rejected", "the camera signature does not verify");
     if (existing) {
@@ -361,7 +369,7 @@ export class Sponsor {
       if (this.cfg.capGlobalDayUqor - BigInt(day.globalUqor) < amount) { this.log.warn("grant_waits_budget", { owner: e.owner }); continue; }
       const float = await this.payer.floatUqor();
       if (float - this.cfg.reserveUqor < amount) { this.log.alert("float_empty", { floatUqor: float.toString() }); break; }
-      if (this.hourlyOutflow(now) + amount > this.cfg.maxHourlyUqor) { this.autoPause("hourly outflow limit reached"); break; }
+      if (this.hourlyOutflow(now) + amount > this.cfg.maxHourlyUqor) { this.log.warn("hourly_wait", { owner: e.owner }); break; }
 
       const key = enrollmentKey(e.owner, e.deviceId);
       const parts = [{ key, amount }];
@@ -444,15 +452,50 @@ export class Sponsor {
     if (changed) this.save();
   }
 
+  /** Notes the newest sealed window of each active camera (for holdsPlace). Never later than now. */
+  private async refreshLastSeal(now: number): Promise<void> {
+    let changed = false;
+    for (const e of Object.values(this.state.enrollments)) {
+      if (e.state !== "active") continue;
+      const end = Math.min(await this.chain.lastWindowEnd(getAddress(e.owner), e.deviceId as Hex), now);
+      if (end > (e.lastSealAt ?? 0)) {
+        e.lastSealAt = end;
+        changed = true;
+      }
+    }
+    if (changed) this.save();
+  }
+
+  // ------------------------------------------------------------ float check
+
+  /**
+   * The real anomaly that pauses the service: the hot wallet lost more than the
+   * payouts since the last pass and their fees explain (plus SPONSOR_FLOAT_SLACK_QOR).
+   * For example a stolen key or a bug that sends twice. Money added by hand is fine.
+   */
+  private floatAnomaly(now: number, float: bigint): boolean {
+    const last = this.state.lastFloat;
+    this.state.lastFloat = { at: now, uqor: float.toString() };
+    this.save();
+    if (!last) return false;
+    const paid = this.state.recent.filter((p) => p.at >= last.at && p.status !== "refused");
+    const explained = paid.reduce((s, p) => s + BigInt(p.amountUqor) + FEE_UQOR, 0n);
+    const drop = BigInt(last.uqor) - float;
+    if (drop <= explained + this.cfg.floatSlackUqor) return false;
+    this.autoPause(`float dropped ${drop} uqor, payouts explain ${explained} uqor`);
+    return true;
+  }
+
   // ------------------------------------------------------------ top-up loop
 
   /**
-   * One pass: registration check, start grants, then refills of active cameras.
-   * Refills per owner: skip while paused, while the balance is at or above the
-   * threshold, or within the minimum payout interval. Credit = anchors seen on
-   * chain since the last payout x perAnchorUqor, for devices that anchored recently.
-   * The payout is the smallest of: the credit, the camera, owner and global day
-   * caps left, target minus balance, and the float minus the reserve.
+   * One pass: registration check, start grants, float check, then refills.
+   * Refills per owner with at least one active camera that sealed recently: skip
+   * while paused, while the balance is at or above the threshold, or within the
+   * minimum payout interval. Otherwise top up to the target buffer. The payout is
+   * the smallest of: target minus balance, the camera, owner and global day caps
+   * left, and the float minus the reserve. A payout that would pass the hourly
+   * limit waits for a later pass.
    */
   runOnce(): Promise<{ paid: number; grants: number; totalUqor: bigint; skipped: string[] }> {
     return this.exclusive(() => this.pass());
@@ -468,6 +511,7 @@ export class Sponsor {
     const now = this.clock.now();
     this.prune(now);
     await this.checkRegistrations();
+    await this.refreshLastSeal(now);
     result.grants = await this.sendGrants();
     const day = this.dayUsage(utcDay(now));
 
@@ -477,6 +521,7 @@ export class Sponsor {
     }
 
     let float = await this.payer.floatUqor();
+    if (this.floatAnomaly(now, float)) return { ...result, skipped: ["paused"] };
     if (float > this.cfg.maxFloatUqor) this.log.warn("float_high", { floatUqor: float.toString(), maxUqor: this.cfg.maxFloatUqor.toString() });
     if (float < this.cfg.capGlobalDayUqor) this.log.alert("float_low", { floatUqor: float.toString() });
 
@@ -489,7 +534,7 @@ export class Sponsor {
       const balance = await this.chain.balanceUqor(getAddress(owner));
       if (balance >= this.cfg.thresholdUqor) { skip("balance_ok"); continue; }
 
-      const parts: { e: Enrollment; key: string; count: bigint; allow: bigint }[] = [];
+      const parts: { e: Enrollment; key: string; allow: bigint }[] = [];
       for (const e of devices) {
         const key = enrollmentKey(e.owner, e.deviceId);
         const d = await this.chain.getDevice(getAddress(owner), e.deviceId as Hex);
@@ -503,35 +548,31 @@ export class Sponsor {
         if (d.status !== "active") { skip(`${e.deviceId}:inactive`); continue; }
         const end = await this.chain.lastWindowEnd(getAddress(owner), e.deviceId as Hex);
         if (end < now - this.cfg.activeWithinSeconds) { skip(`${e.deviceId}:no_recent_anchor`); continue; }
-        const count = await this.chain.anchorCount(getAddress(owner), e.deviceId as Hex);
-        let anchors = count - BigInt(e.paidAnchorCount);
-        // At most one anchor per minWindowSeconds since the baseline (plus one): blocks 1-second windows.
-        const maxAnchors = BigInt(Math.floor(Math.max(0, now - e.paidAt) / this.cfg.minWindowSeconds) + 1);
-        if (anchors > maxAnchors) anchors = maxAnchors;
-        if (anchors <= 0n) continue;
-        const used = BigInt(day.devices[key] ?? "0");
-        const capLeft = this.cfg.capCameraDayUqor - used;
-        const credit = anchors * this.cfg.perAnchorUqor;
-        const allow = credit < capLeft ? credit : capLeft;
-        if (allow > 0n) parts.push({ e, key, count, allow });
+        const capLeft = this.cfg.capCameraDayUqor - BigInt(day.devices[key] ?? "0");
+        if (capLeft > 0n) parts.push({ e, key, allow: capLeft });
         else skip(`${e.deviceId}:camera_cap`);
       }
-      if (!parts.length) { skip("no_credit"); continue; }
+      if (!parts.length) { skip("no_sealing_camera"); continue; }
 
-      let amount = parts.reduce((s, p) => s + p.allow, 0n);
+      // Top up to the target buffer, within the caps.
+      let amount = this.cfg.targetUqor - balance;
       const limits: [string, bigint][] = [
-        ["target", this.cfg.targetUqor - balance],
+        ["camera_cap", parts.reduce((s, p) => s + p.allow, 0n)],
         ["owner_cap", this.cfg.capOwnerDayUqor - BigInt(day.owners[owner] ?? "0")],
         ["global_cap", this.cfg.capGlobalDayUqor - BigInt(day.globalUqor)],
         ["float", float - this.cfg.reserveUqor],
-        ["hourly", this.cfg.maxHourlyUqor - this.hourlyOutflow(now)],
       ];
-      let limitedBy = "credit";
+      let limitedBy = "target";
       for (const [name, v] of limits) if (v < amount) { amount = v; limitedBy = name; }
       if (amount <= 0n || amount < this.cfg.minPayoutUqor) {
         skip(`below_min:${limitedBy}`);
-        if (limitedBy === "hourly") this.autoPause("hourly outflow limit reached");
         if (limitedBy === "float") this.log.alert("float_empty", { floatUqor: float.toString() });
+        continue;
+      }
+      // The hourly limit never pauses the service: the payout waits for a later pass.
+      if (this.hourlyOutflow(now) + amount > this.cfg.maxHourlyUqor) {
+        skip("hourly_wait");
+        this.log.warn("hourly_wait", { owner, amountUqor: amount.toString() });
         continue;
       }
 
@@ -548,12 +589,7 @@ export class Sponsor {
         at: now, kind: "refill", owner, amountUqor: amount.toString(), status: "pending",
         devices: split.map((s) => ({ deviceId: s.e.deviceId, amountUqor: s.amount.toString() })),
       };
-      const before = split.map((s) => ({ key: s.key, paidAnchorCount: s.e.paidAnchorCount, paidAt: s.e.paidAt }));
       this.addUsage(day, owner, split, 1n);
-      for (const s of split) {
-        s.e.paidAnchorCount = s.count.toString();
-        s.e.paidAt = now;
-      }
       this.state.recent.push(payout);
       this.save();
       appendPayoutLog(this.cfg.payoutLog, payout);
@@ -572,11 +608,6 @@ export class Sponsor {
           // Refused by the chain: nothing moved. Undo the accounting.
           payout.status = "refused";
           this.addUsage(day, owner, split, -1n);
-          for (const b of before) {
-            const e = this.state.enrollments[b.key];
-            e.paidAnchorCount = b.paidAnchorCount;
-            e.paidAt = b.paidAt;
-          }
           this.log.warn("top_up_refused", { owner, code: r.code, tx: r.txHash });
         }
       } catch (err) {
@@ -586,7 +617,8 @@ export class Sponsor {
       }
       this.save();
       appendPayoutLog(this.cfg.payoutLog, payout);
-      if (this.hourlyOutflow(now) > this.cfg.maxHourlyUqor) this.autoPause("hourly outflow above the limit");
+      // Cannot happen with the check above: a bug, so stop paying.
+      if (this.hourlyOutflow(now) > this.cfg.maxHourlyUqor) this.autoPause("hourly outflow above the limit (bug)");
     }
     return result;
   }

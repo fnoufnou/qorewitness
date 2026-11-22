@@ -36,10 +36,6 @@ export interface SponsorConfig {
   thresholdUqor: bigint;
   /** Never top up above this balance. */
   targetUqor: bigint;
-  /** Credit per anchor seen on chain: 0.0457 QOR fee plus a share of the window opens. */
-  perAnchorUqor: bigint;
-  /** Shortest window the agent uses. Caps the creditable anchors per elapsed time. */
-  minWindowSeconds: number;
   capCameraDayUqor: bigint;
   capOwnerDayUqor: bigint;
   capGlobalDayUqor: bigint;
@@ -47,8 +43,10 @@ export interface SponsorConfig {
   maxCamerasPerOwner: number;
   minPayoutUqor: bigint;
   minPayoutIntervalSeconds: number;
-  /** Automatic pause when the payouts of the last hour pass this. */
+  /** Payouts of the last hour stay at or below this. A payout that would pass it waits for a later pass. */
   maxHourlyUqor: bigint;
+  /** Automatic pause when the float drops more than the payouts and fees explain, plus this slack. */
+  floatSlackUqor: bigint;
   /** Keep at least this in the hot wallet for fees. */
   reserveUqor: bigint;
   /** Warn when the hot wallet holds more than this (keep only a small float). */
@@ -63,9 +61,6 @@ export interface SponsorConfig {
   pendingTtlSeconds: number;
   /** After an unknown grant result, retry once when the owner still holds 0 after this time. */
   grantRetrySeconds: number;
-  /** Blocks to search back for the device public key (registration or rotation event). */
-  keyLookbackBlocks: bigint;
-  logChunkBlocks: bigint;
 }
 
 const qor = (v: string | undefined, dflt: string): bigint => {
@@ -99,8 +94,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): SponsorConfig 
     activeWithinSeconds: int(env.SPONSOR_ACTIVE_WITHIN_SECONDS, 7200, 60),
     thresholdUqor: qor(env.SPONSOR_THRESHOLD_QOR, "10"),
     targetUqor: qor(env.SPONSOR_TARGET_QOR, "15"),
-    perAnchorUqor: qor(env.SPONSOR_PER_ANCHOR_QOR, "0.048"),
-    minWindowSeconds: int(env.SPONSOR_MIN_WINDOW_SECONDS, 600, 1),
     capCameraDayUqor: qor(env.SPONSOR_CAP_CAMERA_DAY_QOR, "9"),
     capOwnerDayUqor: qor(env.SPONSOR_CAP_OWNER_DAY_QOR, "18"),
     capGlobalDayUqor: qor(env.SPONSOR_CAP_GLOBAL_DAY_QOR, "90"),
@@ -109,6 +102,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): SponsorConfig 
     minPayoutUqor: qor(env.SPONSOR_MIN_PAYOUT_QOR, "0.5"),
     minPayoutIntervalSeconds: int(env.SPONSOR_MIN_PAYOUT_INTERVAL_SECONDS, 3600, 0),
     maxHourlyUqor: qor(env.SPONSOR_MAX_HOURLY_QOR, "30"),
+    floatSlackUqor: qor(env.SPONSOR_FLOAT_SLACK_QOR, "1"),
     reserveUqor: qor(env.SPONSOR_RESERVE_QOR, "1"),
     maxFloatUqor: qor(env.SPONSOR_MAX_FLOAT_QOR, "200"),
     grantUqor: qor(env.SPONSOR_GRANT_QOR, "3"),
@@ -116,8 +110,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): SponsorConfig 
     maxEnrolPerIpDay: int(env.SPONSOR_MAX_ENROL_PER_IP_DAY, 1, 0),
     pendingTtlSeconds: int(env.SPONSOR_PENDING_TTL_SECONDS, 48 * 3600, 60),
     grantRetrySeconds: int(env.SPONSOR_GRANT_RETRY_SECONDS, 600, 60),
-    keyLookbackBlocks: BigInt(int(env.SPONSOR_KEY_LOOKBACK_BLOCKS, 120_000, 1)),
-    logChunkBlocks: BigInt(int(env.SPONSOR_LOG_CHUNK_BLOCKS, 5_000, 1)),
   };
   if (cfg.targetUqor < cfg.thresholdUqor) throw new Error("SPONSOR_TARGET_QOR must be at least SPONSOR_THRESHOLD_QOR");
   return cfg;

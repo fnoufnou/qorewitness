@@ -4,6 +4,13 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+### 2026-11-22: sponsor buffer, required key, no pause on the hourly limit
+- Sponsor: below 10 test QOR, refills top the owner up to the 15 test QOR target (about 1.5 to 2 days of sealing), within the camera, owner and global day caps. Before, refills only paid back what was used, so after the start grant a box ran for about 9 hours when the sponsor stopped. Only a camera that sealed in the last 2 hours gets a refill.
+- Sponsor: `devicePubkey` is required on enrol. The 120,000-block history scan for the key is gone (security review 2, item 3).
+- Sponsor: a payout that would pass the hourly limit waits for a later pass. The automatic pause is kept only for a real anomaly: the hot wallet dropped more than the payouts and fees explain (security review 2, item 4).
+- Tests: target top-up, sealing required, hourly wait without pause, float anomaly pause, required key (210 tests).
+- Docs: `docs/SPONSOR.md`, `deploy/sponsor/sponsor.env.example` (`SPONSOR_PER_ANCHOR_QOR`, `SPONSOR_MIN_WINDOW_SECONDS` and the key lookup settings removed, `SPONSOR_FLOAT_SLACK_QOR` added).
+
 ### 2026-11-21: keep it simple (box setup, installer, dashboard)
 - Setup in the browser: 3 screens and 1 progress bar. Password (one field, "Show password"), camera (address, camera account name and password, one tick), "Is this your camera?" with the picture, then one progress bar that starts by itself and ends at "Sealing started". The plan, keys, backup, funding and Ready/Start screens are gone. Keys and the owner account are made in the background. The camera name is always `camera-1`.
 - Fees included is the default and sends no pilot code. When the pilot says no (full, paused), the progress bar says so in plain words and offers "Use my own wallet". Self-managed also sits under "Advanced" on the camera screen. Sponsor status asks with `?owner=`, because every box uses the same camera name.
