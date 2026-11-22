@@ -820,7 +820,7 @@ verifier (static page or CLI): clip + receipt
 <dt>QoreWitness Verify SHA-256</dt><dd><code>${VERIFIER_SHA}</code><br><span class="small muted">Build it with <code>pnpm build:verifier</code> and compare.</span></dd>
 <dt>Check a receipt in a terminal</dt><dd><code>pnpm tsx scripts/verify-receipt.ts demo-receipt.json demo-clip.mp4</code></dd>
 <dt>Without our code</dt><dd><code>python3 tools/verify_receipt.py &lt;receipt&gt; &lt;file&gt;</code> (standard library only)</dd>
-<dt>Run the tests</dt><dd><code>pnpm test</code> (210 automated tests on 22 Nov 2026)</dd>
+<dt>Run the tests</dt><dd><code>pnpm test</code> (233 automated tests on 22 Nov 2026)</dd>
 </dl>
 </div></section>
 
