@@ -2,7 +2,9 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
-## Unreleased
+## 0.6.0-alpha.1 (22 Nov 2026, Customer Edition preview)
+
+First build for non-technical owners: install with one paste, setup in the browser, Fees included by default, evidence download and a verifier that takes it. Tested end to end on a clean Debian box with a stand-in camera and the live sponsor (22 Nov).
 
 ### 2026-11-22: sponsor buffer, required key, no pause on the hourly limit
 - Sponsor: below 10 test QOR, refills top the owner up to the 15 test QOR target (about 1.5 to 2 days of sealing), within the camera, owner and global day caps. Before, refills only paid back what was used, so after the start grant a box ran for about 9 hours when the sponsor stopped. Only a camera that sealed in the last 2 hours gets a refill.

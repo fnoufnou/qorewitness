@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # QoreWitness installer for Linux (Raspberry Pi OS 64-bit, Debian, Ubuntu).
-#   curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.1/install.sh | bash
 #
 # It installs into ~/qorewitness, pulls the published image, starts the box and
 # prints the dashboard address and the pairing code. Testnet pilot only.
 # Run it again at any time: it keeps your camera, keys and account.
 #
 # From your own laptop, in one paste (the box is a Raspberry Pi named qorewitness):
-#   ssh -t <user>@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/main/install.sh | bash -s -- --yes"
+#   ssh -t <user>@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.1/install.sh | bash -s -- --yes"
 #
 # Options:
 #   --yes            accept the defaults without questions (installs Docker when it is missing)
