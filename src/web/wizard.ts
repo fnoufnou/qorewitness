@@ -14,8 +14,7 @@
  * job in this process, so a closed browser or a restart resumes it. Chain, sponsor
  * and camera access go through injected dependencies.
  */
-import { readFileSync } from "node:fs";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, statfsSync } from "node:fs";
 import { deviceIdOf } from "../core/message.js";
 import { safeError } from "../core/redact.js";
 import {
@@ -285,7 +284,8 @@ export class Wizard {
     const result = await this.d.snapshot(url);
     if (!result.ok) return { html: this.renderCameraForm(csrf, result.message, { host: cam.host, user: cam.user }, result.detail) };
     cam.testedAt = new Date().toISOString();
-    cam.retentionDays = proposeRetentionDays(this.d.diskFree?.(), cam.path);
+    // Without an injected value, ask the disk that holds /data (the server passes none).
+    cam.retentionDays = proposeRetentionDays(this.d.diskFree ? this.d.diskFree() : freeBytes(this.d.paths.data), cam.path);
     saveCamera(this.d.paths, { label: cam.label, streamUrl: url, retentionDays: cam.retentionDays });
     this.update((n) => {
       n.camera = cam;
@@ -373,6 +373,16 @@ ${job.reason === "error" ? `<details><summary>Technical details</summary><pre>${
   /** Last test picture, for tests. */
   get snapshotBytes(): number {
     return this.lastSnapshot?.length ?? 0;
+  }
+}
+
+/** Free bytes on the disk that holds `path`, or undefined when statfs is missing. */
+export function freeBytes(path: string): number | undefined {
+  try {
+    const st = statfsSync(path);
+    return st.bavail * st.bsize;
+  } catch {
+    return undefined;
   }
 }
 

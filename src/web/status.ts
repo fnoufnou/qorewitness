@@ -154,6 +154,9 @@ export interface BoxHealth {
   feeDaysLeft?: number;
 }
 
+/** "1 minute", "4 minutes". */
+export const minutesText = (n: number) => `${n} minute${n === 1 ? "" : "s"}`;
+
 /** "less than a day", "about 1 day", "about 4 days". */
 export function daysText(days: number): string {
   if (days < 1) return "less than a day";
@@ -201,10 +204,10 @@ export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
       : { level: "warn", title: "Waiting for the first seal.", action: "The first seal comes about 10 to 15 minutes after setup. Nothing to do.", feeDaysLeft: days };
   }
   if (s.lastAnchorAgeSeconds > 3 * f.windowSeconds) {
-    return { level: "bad", title: `Sealing stopped ${lastSealMin} minutes ago.`, action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days };
+    return { level: "bad", title: `Sealing stopped ${minutesText(lastSealMin!)} ago.`, action: "Check the internet connection of the box. If this stays, restart the box.", feeDaysLeft: days };
   }
   if (s.diskFreeBytes !== undefined && s.diskTotalBytes && s.diskFreeBytes / s.diskTotalBytes < 0.15) {
     return { level: "warn", title: "The disk is almost full.", action: "Keep video for fewer days, or connect a bigger disk.", feeDaysLeft: days };
   }
-  return { level: "ok", title: `Sealing OK. Last seal ${lastSealMin} minutes ago.`, feeDaysLeft: days };
+  return { level: "ok", title: `Sealing OK. Last seal ${lastSealMin! < 1 ? "less than a minute" : minutesText(lastSealMin!)} ago.`, feeDaysLeft: days };
 }
