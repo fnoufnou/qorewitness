@@ -412,22 +412,18 @@ dl.kv code{word-break:break-all}
 }
 @media (min-width:1200px){.bar .cta{display:inline-flex;margin-left:8px}}
 
-/* section edges: skyline, wave, chain links (decorative, aria-hidden) */
+/* section edges: soft waves (decorative, aria-hidden) */
 .edge{position:absolute;left:0;right:0;bottom:-1px;height:var(--eh);pointer-events:none;overflow:hidden;color:var(--to,var(--bg))}
 .edge svg{display:block;width:100%;height:100%}
-.t-bg{--to:var(--bg)}.t-alt{--to:var(--surface)}.t-foot{--to:var(--pine-900)}
-.e-wave{height:calc(var(--eh) * .8)}
-.e-chain{bottom:-13px;height:26px;z-index:2;color:color-mix(in srgb,var(--brand) 38%,var(--line))}
+.edge{--wave-line:var(--brand)}.t-bg{--to:var(--bg)}.t-alt{--to:var(--surface)}.t-foot{--to:var(--pine-900)}
 section,.band{position:relative}
-section.edged{padding-bottom:calc(56px + var(--eh) * .8)}
-section.edged-chain{padding-bottom:68px}
+section.edged{padding-bottom:calc(56px + var(--eh))}
 .edged+section.alt,.edged+.band,.page-head+section.alt{border-top:0}
-section.alt.edged-chain{border-bottom:1px solid var(--line)}
 .site-footer{position:relative}
 .site-footer>.edge{top:calc(var(--eh) * -1 + 1px);bottom:auto}
 main>:last-child{padding-bottom:calc(56px + var(--eh))}
 main>.band:last-child{padding-bottom:calc(48px + var(--eh))}
-@media (min-width:860px){section.edged{padding-bottom:calc(88px + var(--eh) * .8)}section.edged-chain{padding-bottom:100px}main>:last-child{padding-bottom:calc(88px + var(--eh))}}
+@media (min-width:860px){section.edged{padding-bottom:calc(88px + var(--eh))}main>:last-child{padding-bottom:calc(88px + var(--eh))}}
 
 /* "Technical names" fold-outs point to the Developers page */
 details.tech>summary small{display:block;margin-top:3px;font-size:14px;font-weight:400;color:var(--muted)}

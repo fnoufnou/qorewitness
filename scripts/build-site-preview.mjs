@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 // Builds the customer website pages (static HTML, no dependencies).
 //
-//   node scripts/build-site-preview.mjs          -> web/site/preview/*.html (noindex, links to ../ for shared files)
-//   node scripts/build-site-preview.mjs --live   -> web/site/*.html (indexable, REPLACES web/site/index.html)
+//   node scripts/build-site-preview.mjs          -> web/site-draft/*.html (noindex draft, not deployed, links to ../site/ for shared files)
+//   node scripts/build-site-preview.mjs --live   -> web/site/*.html (indexable, REPLACES web/site/index.html), plus the
+//     redirect stubs in web/site/preview/, sitemap.xml, robots.txt and verifier.html (copied from web/verifier/dist)
 //
 // Shared CSS and JS live in web/site/assets/. Fonts live in web/site/fonts/.
 // Copy and facts are in this file. Edit here, then run the script again.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const live = process.argv.includes("--live");
-const root = join(dirname(fileURLToPath(import.meta.url)), "..", "web", "site");
-const outDir = live ? root : join(root, "preview");
-const UP = live ? "" : "../"; // prefix for files that live in web/site/ (verifier, demo, fonts, assets)
+const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
+const root = join(repo, "web", "site");
+const outDir = live ? root : join(repo, "web", "site-draft");
+const UP = live ? "" : "../site/"; // prefix for files that live in web/site/ (verifier, demo, fonts, assets)
 mkdirSync(outDir, { recursive: true });
 
 const SITE = "https://qorewitness.fnoufnou.com";
@@ -23,7 +25,7 @@ const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
 // TODO lead: pin a release tag instead of main before launch.
 const INSTALL = 'ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash -s -- --yes"';
-const VERIFIER_SHA = "a486e33e19c66d22ea587064ae9ca25c1bdecce98729531fa19791e592c9723c";
+const VERIFIER_SHA = "564408e4cf00c6e2abad06e1ab28a11eff8e19e28707e831d953912d74eec166";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 const TESTS = 233; // automated tests (pnpm test), counted on 22 Nov 2026
 
@@ -132,83 +134,33 @@ ${betaBar}
 }
 
 /* ---------- section edges ----------
- * Decorative strips between sections: a tiny street skyline (some houses carry a small
- * camera with a recording dot), a soft wave, and a row of chain links (the chain of
- * fingerprints). They are SVG symbols, drawn in the colour of the next section through
- * currentColor, so they follow light and dark mode. All are aria-hidden.
+ * Decorative soft waves between sections, all in the style of the wave between "The app"
+ * and "What you need". They are SVG symbols drawn in the colour of the next section
+ * through currentColor, so they follow light and dark mode. Variants differ in direction,
+ * amplitude and phase so a page never repeats the same edge twice in a row. The hero and
+ * the footer get a second, faint line behind the wave for depth. All are aria-hidden.
  */
-function rng(seed) {
-  let s = seed >>> 0;
-  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-}
-function skyline(id, seed, W = 1440, H = 56) {
-  const r = rng(seed);
-  const parts = [];
-  const holes = [];
-  const dots = [];
-  let x = -10;
-  let n = 0;
-  while (x < W + 10) {
-    n++;
-    const w = Math.round(34 + r() * 40);
-    const h = Math.round(14 + r() * 18);
-    const top = H - h;
-    const roof = r();
-    const base = `M${x} ${H}V${top}`;
-    if (r() < 0.12) {
-      // a tree
-      const cx = x + 10, cr = 8 + r() * 5;
-      parts.push(`M${cx - 1.2} ${H}V${H - 12}h2.4V${H}Z`, `M${cx} ${H - 12 - cr * 2}a${cr.toFixed(1)} ${cr.toFixed(1)} 0 1 0 0.01 0Z`);
-      x += 22 + Math.round(r() * 8);
-      continue;
-    }
-    if (roof < 0.62) {
-      const peak = Math.round(w * (0.32 + r() * 0.12));
-      parts.push(`${base}L${x + w / 2} ${top - peak}L${x + w} ${top}V${H}Z`);
-      if (r() < 0.4) parts.push(`M${x + w * 0.68} ${top - peak * 0.62}V${top - peak - 3}h5V${top - peak * 0.36}Z`);
-    } else if (roof < 0.85) {
-      const peak = Math.round(w * 0.22);
-      parts.push(`${base}L${x + w * 0.22} ${top - peak}H${x + w * 0.78}L${x + w} ${top}V${H}Z`);
-    } else {
-      parts.push(`${base}H${x + w}V${H}Z`, `M${x - 2} ${top}h${w + 4}v-3h-${w + 4}Z`);
-    }
-    // windows and a door: holes (drawn the other way round, so the nonzero rule cuts them out)
-    const wy = top + 5;
-    if (h > 20) holes.push(`M${x + 7} ${wy}v6h6v-6Z`, `M${x + w - 13} ${wy}v6h6v-6Z`);
-    holes.push(`M${x + w / 2 - 3} ${H - 9}v9h6v-9Z`);
-    // every third or fourth house: a small camera under the roof, with its recording dot
-    if (n % 4 === 2 || (n % 7 === 0)) {
-      const left = r() < 0.5;
-      const cx = left ? x : x + w;
-      const dir = left ? -1 : 1;
-      parts.push(`M${cx} ${top + 3}h${dir * 3}v2h${-dir * 3}Z`, `M${cx + dir * 2} ${top + 1.5}h${dir * 8}v5h${-dir * 8}Z`);
-      dots.push(`<circle cx="${cx + dir * 11.5}" cy="${top + 4}" r="1.8"/>`);
-    }
-    x += w + Math.round(3 + r() * 12);
-  }
-  parts.push(`M-20 ${H - 2}H${W + 20}V${H + 2}H-20Z`);
-  return `<symbol id="${id}" viewBox="0 0 ${W} ${H}"><path fill="currentColor" d="${parts.join("")}${holes.join("")}"/><g fill="var(--signal)">${dots.join("")}</g></symbol>`;
-}
-const wave = `<symbol id="edge-wave" viewBox="0 0 1440 48"><path fill="currentColor" opacity=".45" d="M0 30C180 6 360 6 560 22S920 44 1120 26 1360 8 1440 14V48H0Z"/><path fill="currentColor" d="M0 38C220 18 420 18 640 32S1000 48 1200 34 1380 22 1440 26V48H0Z"/></symbol>`;
-function chain(W = 1440, H = 24) {
-  const out = [];
-  let i = 0;
-  for (let x = 6; x < W; x += 30, i++) {
-    if (i % 2 === 0) out.push(`<rect x="${x}" y="${H / 2 - 7}" width="40" height="14" rx="7"/>`);
-    else out.push(`<rect x="${x}" y="${H / 2 - 2}" width="40" height="4" rx="2"/>`);
-  }
-  const dots = Array.from({ length: 6 }, (_, k) => `<circle cx="${126 + k * 240}" cy="${H / 2}" r="3"/>`).join("");
-  return `<symbol id="edge-chain" viewBox="0 0 ${W} ${H}"><g fill="none" stroke="currentColor" stroke-width="2">${out.join("")}</g><g fill="var(--signal)">${dots}</g></symbol>`;
-}
-const edgeDefs = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>${skyline("edge-sky", 7)}${skyline("edge-sky2", 31)}${wave}${chain()}</defs></svg>`;
-/** An edge at the bottom of a section. kind: sky, sky2, wave, chain. to: the next section (bg, alt, band, foot). */
-const edge = (kind, to, from = "bg") => {
-  const vb = kind === "chain" ? "0 0 1440 24" : kind === "wave" ? "0 0 1440 48" : "0 0 1440 56";
-  return `<div class="edge e-${kind} t-${to} f-${from}" aria-hidden="true"><svg viewBox="${vb}" preserveAspectRatio="xMidYMax slice" focusable="false"><use href="#edge-${kind}"/></svg></div>`;
+const WAVE_A = '<path fill="currentColor" opacity=".45" d="M0 30C180 6 360 6 560 22S920 44 1120 26 1360 8 1440 14V48H0Z"/><path fill="currentColor" d="M0 38C220 18 420 18 640 32S1000 48 1200 34 1380 22 1440 26V48H0Z"/>';
+const WAVE_C = '<path fill="currentColor" opacity=".4" d="M0 20C260 42 520 42 760 26S1160 4 1440 22V48H0Z"/><path fill="currentColor" d="M0 32C200 46 460 48 700 36S1100 18 1440 32V48H0Z"/>';
+const LINE = (d) => `<path fill="none" stroke="var(--wave-line)" stroke-width="1.5" stroke-linecap="round" opacity=".5" d="${d}"/>`;
+const sym = (id, inner, flip = false) => `<symbol id="edge-${id}" viewBox="0 0 1440 48">${flip ? `<g transform="matrix(-1 0 0 1 1440 0)">${inner}</g>` : inner}</symbol>`;
+const edgeDefs = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>${[
+  sym("a", WAVE_A),
+  sym("b", WAVE_A, true),
+  sym("c", WAVE_C),
+  sym("d", WAVE_C, true),
+  sym("hero", LINE("M0 20C200 0 420 2 620 14S980 36 1180 20 1390 4 1440 8") + '<path fill="currentColor" opacity=".35" d="M0 26C200 8 400 8 600 20S980 44 1200 28 1380 14 1440 18V48H0Z"/><path fill="currentColor" d="M0 36C240 16 440 18 660 30S1020 46 1220 32 1390 22 1440 24V48H0Z"/>'),
+  sym("foot", LINE("M0 14C220 34 440 32 660 20S1040 2 1240 18 1400 30 1440 26") + '<path fill="currentColor" opacity=".35" d="M0 22C220 40 420 38 660 26S1040 8 1240 24 1400 36 1440 32V48H0Z"/><path fill="currentColor" d="M0 34C200 46 460 46 700 36S1100 20 1440 34V48H0Z"/>'),
+].join("")}</defs></svg>`;
+let edgeCount = 0;
+/** An edge at the bottom of a section. kind: wave (rotates through four variants), hero or foot. to: the next section (bg, alt, foot). */
+const edge = (kind, to) => {
+  const v = kind === "wave" ? "abcd"[edgeCount++ % 4] : kind;
+  return `<div class="edge t-${to}" aria-hidden="true"><svg viewBox="0 0 1440 48" preserveAspectRatio="xMidYMax slice" focusable="false"><use href="#edge-${v}"/></svg></div>`;
 };
 
 const LICENSE = `${GH}/blob/main/LICENSE`;
-const footer = `<footer class="site-footer">${edge("sky2", "foot", "prev")}<div class="wrap">
+const footer = `<footer class="site-footer">${edge("foot", "foot")}<div class="wrap">
 <div class="cols">
 <div><a class="brand" href="index.html"><svg aria-hidden="true" focusable="false"><use href="#logo"/></svg>QoreWitness</a>
 <p>Your camera footage, sealed as it is recorded and ready to prove whenever you need it.</p>
@@ -220,8 +172,11 @@ const footer = `<footer class="site-footer">${edge("sky2", "foot", "prev")}<div 
 <div class="legal"><p>© 2026 fnoufnou. QoreWitness is open source under the <a href="${LICENSE}">Apache License 2.0</a>.</p><p>QoreChain, TP-Link, Tapo and other names are trademarks of their respective owners. <a href="trust.html">Trust and limits</a></p></div>
 </div></footer>`;
 
+const PAGES = [];
 function page({ file, title, desc, body, current }) {
   const robots = live ? "" : `<meta name="robots" content="noindex">\n`;
+  const url = file === "index.html" ? `${SITE}/` : `${SITE}/${file}`;
+  PAGES.push(file);
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -231,10 +186,17 @@ function page({ file, title, desc, body, current }) {
 <meta name="description" content="${desc}">
 ${robots}<meta name="theme-color" content="#17483A">
 <meta name="color-scheme" content="light dark">
+<link rel="canonical" href="${url}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QoreWitness">
+<meta property="og:url" content="${url}">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${desc}">
 <meta property="og:image" content="${SITE}/qorewitness-featured.png">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${desc}">
+<meta name="twitter:image" content="${SITE}/qorewitness-featured.png">
 <link rel="icon" href="${UP}favicon.svg" type="image/svg+xml">
 <link rel="preload" href="${UP}fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${UP}assets/site.css">
@@ -259,7 +221,7 @@ ${footer}
     return `<div class="tablewrap" role="region" aria-label="${cap ?? `Table: ${cols}`}" tabindex="0">${t}`;
   });
   writeFileSync(join(outDir, file), named);
-  console.log("wrote", join(live ? "web/site" : "web/site/preview", file));
+  console.log("wrote", join(live ? "web/site" : "web/site-draft", file));
 }
 
 /* ---------- real app screens in device frames ----------
@@ -302,7 +264,7 @@ const terminal = `<figure class="shot"><div class="device term"><div class="chro
 Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div><figcaption>The end of the install. Your address and code will differ.</figcaption></figure>`;
 const help = (title, inner, id = "") => `<details class="help"${id ? ` id="${id}"` : ""}><summary>${title}</summary><div class="in">${inner}</div></details>`;
 const copybox = (id, text, label = "Copy") => `<div class="copybox"><code id="${id}" tabindex="0">${text}</code><button class="btn" type="button" data-copy="${id}" aria-label="${label}: ${id === "install-cmd" ? "the install line" : "the text"}">${ico("copy")}<span>${label}</span></button></div>`;
-const head = (eyebrow, h1, lead, meta = []) => `<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">${eyebrow}</p><h1>${h1}</h1><p class="lead">${lead}</p>${meta.length ? `<ul class="meta">${meta.map((m) => `<li>${m}</li>`).join("")}</ul>` : ""}</div>${edge("wave", "bg", "head")}</div>`;
+const head = (eyebrow, h1, lead, meta = []) => `<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">${eyebrow}</p><h1>${h1}</h1><p class="lead">${lead}</p>${meta.length ? `<ul class="meta">${meta.map((m) => `<li>${m}</li>`).join("")}</ul>` : ""}</div>${edge("wave", "bg")}</div>`;
 const closing = (h, p, href, label) => `<div class="band"><div class="wrap"><div><h2>${h}</h2><p>${p}</p></div><a class="btn primary" href="${href}">${label} ${ico("arrow")}</a></div></div>`;
 const VERIFY = `<a href="${UP}verifier.html">QoreWitness Verify</a>`;
 const cert = (tag) => `<div class="cert" role="group" aria-label="Example result from QoreWitness Verify"><span class="tag">${tag}</span>
@@ -374,7 +336,7 @@ page({
 <p class="fine">Works with cameras that offer an RTSP or ONVIF stream. <a href="cameras.html">Check yours</a>.</p>
 </div>
 ${heroVisual}
-</div>${edge("sky", "bg", "hero")}</div>
+</div>${edge("hero", "bg")}</div>
 
 <section class="edged"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Why it matters</p><h2>When any video can be faked, yours deserves proof.</h2>
@@ -386,7 +348,7 @@ ${heroVisual}
 </ul>
 </div>${edge("wave", "alt")}</section>
 
-<section class="alt edged-chain" id="how"><div class="wrap">
+<section class="alt edged" id="how"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">How it works</p><h2>Seal, keep, prove.</h2></div>
 <ol class="grid c3" style="list-style:none;padding:0;margin:0">
 <li class="tile"><div class="art">${artSeal}</div><h3>1. Seal</h3><p>As your camera records, QoreWitness builds a chain of digital fingerprints and stores them on a public ledger. Change a single pixel of the original video later and the seal breaks.</p></li>
@@ -394,7 +356,7 @@ ${heroVisual}
 <li class="tile"><div class="art">${artProve}</div><h3>3. Prove</h3><p>If you ever need to provide video evidence, just share the clip with its QoreWitness seal. Anyone can verify it online and see a clear green result.</p></li>
 </ol>
 <p class="small" style="margin-top:20px"><a href="how-it-works.html">Read how it works</a></p>
-</div>${edge("chain", "bg", "alt")}</section>
+</div>${edge("wave", "bg")}</section>
 
 <section class="edged" id="app"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">The app</p><h2>Simple from the very first screen.</h2>
@@ -444,7 +406,7 @@ ${head("How it works", "Your camera, now a witness.", "As your camera records, Q
 <div class="callout"><b class="t">Think of a sealed letter</b>You press a wax seal on a letter, keep the letter somewhere safe, and the postmark shows when it was sent. Anyone can inspect the seal and the postmark. QoreWitness does the same for video, with a digital seal and a public ledger as the postmark.</div>
 </div>${edge("wave", "alt")}</section>
 
-<section class="alt edged-chain"><div class="wrap">
+<section class="alt edged"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Four steps</p><h2>Fingerprint, bundle, seal, record.</h2>
 <p>All of this runs by itself in the background, for as long as your camera records.</p></div>
 <ol class="grid c4" style="list-style:none;padding:0;margin:0">
@@ -453,7 +415,7 @@ ${head("How it works", "Your camera, now a witness.", "As your camera records, Q
 <li class="tile"><div class="ic">${ico("sign")}</div><div class="num">03</div><h3>Seal</h3><p>Each camera gets its own digital seal, built to withstand the quantum computers of the future, and signs every summary with it.</p></li>
 <li class="tile"><div class="ic">${ico("chain")}</div><div class="num">04</div><h3>Record</h3><p>The public ledger checks the seal before it accepts the summary and its time. A small seal file stays with your recordings at home.</p></li>
 </ol>
-</div>${edge("chain", "bg", "alt")}</section>
+</div>${edge("wave", "bg")}</section>
 
 <section><div class="wrap">
 <div class="sec-head"><p class="eyebrow">The picture</p><h2>What goes where.</h2></div>
@@ -924,7 +886,7 @@ ${head("For the jury", "QoreWitness, in ten minutes.", "Thank you for judging th
 <div>${browser("verify-desktop", ALT.verifyDesk, "qorewitness.fnoufnou.com/verifier.html", "The published sample record, checked against the live contract: Original.")}</div>
 </div>${edge("wave", "alt")}</section>
 
-<section class="alt edged-chain" id="try"><div class="wrap narrow">
+<section class="alt edged" id="try"><div class="wrap narrow">
 <p class="eyebrow">Try it yourself</p><h2>Four checks you can run in a few minutes.</h2>
 <ol class="steps compact" style="margin-top:24px">
 <li class="step"><h3>Check the sample record</h3><div class="body"><p>Download the <a href="${UP}demo-clip.mp4" download>sample clip</a> and its <a href="${UP}demo-receipt.json" download>receipt</a>, open ${VERIFY} and choose both files under <b>Or check one clip with its receipt</b>. The result is a green <b>Original</b>, read from the chain in your own browser.</p><p class="small">QoreWitness Verify is one offline HTML file. Its SHA-256 is <code class="break">${VERIFIER_SHA}</code>. Rebuild it with <code>pnpm build:verifier</code> and compare.</p></div></li>
@@ -932,7 +894,7 @@ ${head("For the jury", "QoreWitness, in ten minutes.", "Thank you for judging th
 <li class="step"><h3>Find the anchor on chain</h3><div class="body"><p>Open the registry on the <a href="${"https://explore.qore.network"}/address/${REGISTRY}">testnet explorer</a> and look up the sample record in block 10,120,133.</p></div></li>
 <li class="step"><h3>Run the tests</h3><div class="body"><p>Clone the repository and run <code>pnpm install --ignore-scripts</code> and <code>pnpm test</code>. The contract tests run against a mock of the precompiles, and the app tests use a mocked chain.</p></div></li>
 </ol>
-</div>${edge("chain", "bg", "alt")}</section>
+</div>${edge("wave", "bg")}</section>
 
 <section><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Your criteria</p><h2>Where to find the proof for each one.</h2></div>
@@ -1070,3 +1032,47 @@ verifier (static page or CLI): clip + receipt
 </ul>
 </div></section>`,
 });
+
+/* ---------- go-live files ---------- */
+if (live) {
+  // Old shared preview links keep working: each /preview/<page>.html redirects to /<page>.html, and /preview/ to /.
+  const prevDir = join(root, "preview");
+  mkdirSync(prevDir, { recursive: true });
+  const stub = (target, label) => `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QoreWitness has moved</title>
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=${target}">
+<link rel="canonical" href="${SITE}${target}">
+</head>
+<body>
+<p>This page has moved. Go to <a href="${target}">${label}</a>.</p>
+</body>
+</html>
+`;
+  for (const f of PAGES) {
+    const target = f === "index.html" ? "/" : `/${f}`;
+    writeFileSync(join(prevDir, f), stub(target, f === "index.html" ? "the QoreWitness home page" : `${SITE.replace("https://", "")}${target}`));
+  }
+  // QoreWitness Verify: the file name stays verifier.html (built by scripts/build-verifier.mjs).
+  const built = join(repo, "web", "verifier", "dist", "index.html");
+  if (existsSync(built)) copyFileSync(built, join(root, "verifier.html"));
+  else console.warn("web/verifier/dist/index.html is missing: run pnpm build:verifier first");
+  const urls = ["", ...PAGES.filter((f) => f !== "index.html"), "verifier.html"];
+  writeFileSync(join(root, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map((u) => `<url><loc>${SITE}/${u}</loc></url>`).join("\n")}
+</urlset>
+`);
+  writeFileSync(join(root, "robots.txt"), `User-agent: *
+Allow: /
+Disallow: /preview/
+Disallow: /sponsor/
+
+Sitemap: ${SITE}/sitemap.xml
+`);
+  console.log("wrote redirects, verifier.html, sitemap.xml, robots.txt");
+}

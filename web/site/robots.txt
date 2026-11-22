@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /preview/
+Disallow: /sponsor/
+
+Sitemap: https://qorewitness.fnoufnou.com/sitemap.xml
