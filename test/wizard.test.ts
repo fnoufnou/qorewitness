@@ -13,7 +13,8 @@ import { ensurePairing, readPairing, setPassword } from "../src/web/auth.js";
 import type { SnapshotResult } from "../src/web/camera.js";
 import { createHandler } from "../src/web/server.js";
 import { SponsorClient } from "../src/web/sponsor.js";
-import { DEFAULT_LABEL, Wizard, screenFor, writeState, type WizardState } from "../src/web/wizard.js";
+import { DEFAULT_LABEL, Wizard, freeBytes, screenFor, writeState, type WizardState } from "../src/web/wizard.js";
+import { proposeRetentionDays } from "../src/web/camera.js";
 import { mockChain } from "./helpers/mock-chain.js";
 
 const CAM_PASS = "Tapo1234Secret";
@@ -357,5 +358,20 @@ describe("wizard: connect step (mocked chain and sponsor)", () => {
     } finally {
       l.server.close();
     }
+  });
+});
+
+describe("e2e-1 regressions", () => {
+  it("proposes the retention days from the real free disk when no value is injected (server default)", async () => {
+    const paths = dataPaths(mkdtempSync(join(tmpdir(), "qw-ret-")));
+    ensureDirs(paths);
+    const w = new Wizard({
+      paths, chain: mockChain().chain, sponsor: () => { throw new Error("no sponsor"); },
+      snapshot: async () => ({ ok: true, jpeg: JPEG, info: {} }),
+    });
+    await w.post("/setup/camera", { action: "test", host: "10.0.0.2", user: "qwcam", password: CAM_PASS, consent: "yes" });
+    const free = freeBytes(paths.data);
+    assert.ok(free && free > 0);
+    assert.equal(readEnvFile(paths.cameraEnv).QW_RETENTION_DAYS, String(proposeRetentionDays(free, "stream1")));
   });
 });

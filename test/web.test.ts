@@ -133,3 +133,14 @@ describe("dashboard: box health in plain words", () => {
     assert.equal(boxHealth({ ...base, diskFreeBytes: 10e9 }, facts).level, "warn");
   });
 });
+
+describe("e2e-1 regressions: dashboard words", () => {
+  const base: LocalStatus = {
+    device: "cam", receipts: 1, unanchored: [], latest: [], lastAnchorAgeSeconds: 60, pendingWindows: 0, openSegments: 1,
+    segmentFiles: 3, segmentBytes: 1e8, newestSegmentAgeSeconds: 5, diskFreeBytes: 400e9, diskTotalBytes: 500e9,
+  };
+  it("says 1 minute, not 1 minutes", () => {
+    assert.equal(boxHealth(base, { windowSeconds: 600, plan: "sponsored" }).title, "Sealing OK. Last seal 1 minute ago.");
+    assert.equal(boxHealth({ ...base, lastAnchorAgeSeconds: 10 }, { windowSeconds: 600, plan: "sponsored" }).title, "Sealing OK. Last seal less than a minute ago.");
+  });
+});

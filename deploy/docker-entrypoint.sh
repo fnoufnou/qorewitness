@@ -6,7 +6,8 @@
 #              wait until setup is done (/data/setup.done), load /data/camera.env,
 #              run the recorder or the agent, and restart it when camera.env changes.
 #              docker-compose.yml uses this mode, so the browser setup needs no restart.
-#   retention  delete segments older than QW_RETENTION_DAYS (default 14), every 6 hours
+#   retention  every 10 minutes: delete segments older than QW_RETENTION_DAYS (default 14),
+#              and the oldest clips when the disk is almost full
 #   setup      first-run wizard in the terminal (account, keys, registration)
 #   ui         local dashboard and browser setup on port 8080
 #   pair [--new-password]  print the first-run pairing token and code (for install.sh)
@@ -129,7 +130,7 @@ case "${1:-agent}" in
   retention)
     while true; do
       ( load_env "$DATA/camera.env"; set_paths; deploy/qw-retention.sh ) || true
-      nap 21600
+      nap "${QW_RETENTION_INTERVAL:-600}"
     done ;;
   # The dashboard never loads qorewitness.env: the recovery phrase stays out of its environment.
   ui)       export QW_UI_HOST="${QW_UI_HOST:-0.0.0.0}"; exec node --import tsx src/web/server.ts ;;
