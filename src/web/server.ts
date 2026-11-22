@@ -110,6 +110,25 @@ const isoTime = (s: number) => new Date(s * 1000).toISOString();
 const utcTime = (s: number) => isoTime(s).replace("T", " ").slice(0, 16) + " UTC";
 const gb = (n?: number) => (n === undefined ? "unknown" : `${(n / 1e9).toFixed(0)} GB`);
 
+export const GAP_TIP = "Part of the video is missing here, or the camera restarted";
+
+/** "34 MB", "1.2 GB". */
+export const sizeText = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : `${Math.max(1, Math.round(n / 1e6))} MB`);
+
+/**
+ * Row time from the real clips (the first window after setup holds only a few
+ * minutes). A short window also says how much video it holds. The browser shows
+ * the times in its own zone (box script), the text inside is the UTC fallback.
+ */
+function rowTime(a: LocalStatus["latest"][number], mark = ""): string {
+  const from = a.videoStartMs ? Math.floor(a.videoStartMs / 1000) : a.windowStart;
+  const to = a.videoEndMs ? Math.floor(a.videoEndMs / 1000) : a.windowStart + a.windowSeconds;
+  const minutes = Math.round(a.videoMs / 60000);
+  const partial = a.videoMs > 0 && a.videoMs < a.windowSeconds * 1000 * 0.8;
+  const extra = [partial ? `${minutes < 1 ? "less than a minute" : `${minutes} minute${minutes === 1 ? "" : "s"}`} of video` : "", a.bytes ? sizeText(a.bytes) : ""].filter(Boolean).join(" · ");
+  return `<time data-local datetime="${esc(isoTime(from))}" data-end="${esc(isoTime(to))}">${esc(utcTime(from))}</time>${mark}${extra ? `<div class="muted" style="font-size:13px">${esc(extra)}</div>` : ""}`;
+}
+
 export interface DashboardView {
   status: LocalStatus;
   health: BoxHealth;
@@ -131,7 +150,7 @@ export function dashboardPage(v: DashboardView): string {
     ? `<form method="post" action="/evidence/download" style="margin:0">${`<input type="hidden" name="_csrf" value="${esc(v.csrf)}">`}<input type="hidden" name="fromMs" value="${a.windowStart * 1000}"><input type="hidden" name="toMs" value="${(a.windowStart + a.windowSeconds) * 1000}"><input type="hidden" name="tz" value="0"><button class="secondary" style="margin:0;padding:8px 12px">Download</button></form>`
     : "";
   const rows = s.latest.map((a) => `<tr>
-    <td><time data-local datetime="${esc(isoTime(a.windowStart))}" data-end="${esc(isoTime(a.windowStart + a.windowSeconds))}">${esc(utcTime(a.windowStart))}</time>${a.warnings ? ` <span title="A short gap or a stream change in this part" aria-label="gap">&#9888;</span>` : ""}</td>
+    <td>${rowTime(a, a.warnings ? ` <span title="${GAP_TIP}" aria-label="${GAP_TIP}">&#9888;</span>` : "")}</td>
     <td style="text-align:right">${download(a)}</td></tr>`).join("");
   const fees = v.info?.plan === "self"
     ? (h.feeDaysLeft === undefined ? "unknown" : `${daysText(h.feeDaysLeft)} left`)
@@ -146,7 +165,7 @@ export function dashboardPage(v: DashboardView): string {
 <div><b>Video kept</b>${esc(v.retentionDays ?? 14)} days, ${esc(gb(s.diskFreeBytes))} free</div>
 </div>
 <div class="card"><h2 style="margin-top:0">Latest seals</h2><div class="scroll"><table><tbody>${rows || `<tr><td>No seals yet.</td></tr>`}</tbody></table></div>
-<p class="muted" style="margin-top:12px">Press Download next to the time you need. You get one file with the original video and its proof. Send it to an insurer, the police or a lawyer. They check it at <a href="${VERIFIER}" rel="noreferrer" target="_blank">qorewitness.fnoufnou.com</a>.</p>
+<p class="muted" style="margin-top:12px">Press Download next to the time you need. You get one file with the original video and its proof. The file is large, so share it with an upload or a link (for example your cloud drive) rather than by e-mail. Send it to an insurer, the police or a lawyer. They check it at <a href="${VERIFIER}" rel="noreferrer" target="_blank">qorewitness.fnoufnou.com</a>.</p>
 <details><summary>Details</summary><p class="mono">${tech}${tech ? "<br>" : ""}Receipts ${esc(s.receipts)}, waiting windows ${esc(s.pendingWindows)}, open segments ${esc(s.openSegments)}, clips on disk ${esc(s.segmentFiles)}<br>
 ${v.balanceUqor !== undefined ? `Balance ${esc((v.balanceUqor / 1e6).toFixed(2))} test QOR<br>` : ""}${v.info ? `Account ${esc(v.info.qor1)}<br>Owner ${esc(v.info.owner)}<br>Device id ${esc(v.info.deviceId)}<br>Camera key ${esc(v.info.keyFingerprint)} (ML-DSA-87)<br>Registry <a href="${EXPLORER}/address/${esc(v.info.registry)}" rel="noreferrer" target="_blank">${esc(v.info.registry)}</a>` : ""}</p></details></div>
 ${v.csrf ? `<details class="card"><summary>Pick another time</summary>${evidenceForm(v.csrf)}</details>` : ""}
@@ -323,7 +342,7 @@ export function createHandler(o: ServerOptions) {
     // 6. Setup is done: dashboard. /setup is closed (no more setup actions), only the done page stays.
     // From now on this process never reads the recovery phrase or the camera keys (enforced in steps.ts).
     lockSecrets();
-    if (req.method === "GET" && path === "/setup/done") return html(res, 200, "Sealing started", renderDone(`http://${req.headers.host ?? ""}`));
+    if (req.method === "GET" && path === "/setup/done") return html(res, 200, "Sealing started", renderDone(`http://${req.headers.host ?? ""}`, process.env.QW_UI_PUBLIC_URL));
     if (req.method === "GET" && path === "/setup") return redirect(res, "/setup/done");
     if (path === "/setup" || path.startsWith("/setup/")) {
       return html(res, 404, "Setup finished", `<div class="card"><h1>Setup is finished</h1><p>QoreWitness is set up. Changes to the camera come in a later version.</p><a class="btn" href="/">Open my dashboard</a></div>`);

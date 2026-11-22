@@ -23,7 +23,7 @@ const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
 // TODO lead: pin a release tag instead of main before launch.
 const INSTALL = 'ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.1/install.sh | bash -s -- --yes"';
-const VERIFIER_SHA = "d894ee8cad7d6b68b5a6fc41ec93693a2f6111c2971108ed72571f2a33fa2100";
+const VERIFIER_SHA = "a486e33e19c66d22ea587064ae9ca25c1bdecce98729531fa19791e592c9723c";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 const TESTS = 233; // automated tests (pnpm test), counted on 22 Nov 2026
 

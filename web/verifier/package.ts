@@ -146,7 +146,12 @@ export function verdictOf(clips: ClipOutcome[], locale?: string): Verdict {
   const subject = clips.length === 1 ? "This video is" : `These ${clips.length} clips are`;
   const base = `${subject} unchanged since ${clips.length === 1 ? "it was" : "they were"} recorded${recorded}.${sealed}`;
   if (clips.some((c) => c.kind === "warn")) {
-    return { level: "warn", headline: "Original, with notes", detail: `${base} Read the notes below.`, notes, clips };
+    // Missing minutes and camera restarts are normal life for a home camera: say so calmly.
+    const calm = notes.length > 0 && notes.every((n) => /of video (is|are) missing|video settings changed|overlaps the one before/.test(n));
+    const line = calm
+      ? ` ${clips.length === 1 ? "The video is" : "The clips are"} original. Some minutes are missing, for example when the camera was off.`
+      : " Read the notes below.";
+    return { level: "warn", headline: "Original, with notes", detail: `${base}${line}`, notes, clips };
   }
   return { level: "ok", headline: "Original", detail: base, notes, clips };
 }

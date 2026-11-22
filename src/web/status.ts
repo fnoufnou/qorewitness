@@ -14,6 +14,10 @@ export interface AnchorSummary {
   txHash?: string;
   spec?: string;
   warnings: number; // segments with a gap, overlap or stream change
+  videoStartMs?: number; // start of the first clip (real clip times, a first window can be partial)
+  videoEndMs?: number; // end of the last clip
+  videoMs: number; // total length of the clips
+  bytes: number; // total size of the clips: about the size of the evidence file
 }
 
 export interface LocalStatus {
@@ -37,10 +41,13 @@ export const RECEIPT_NAME = /^[a-z0-9-]{1,40}-\d{9,11}\.json$/;
 export function summarize(file: string, json: string): AnchorSummary | undefined {
   try {
     const r = JSON.parse(json) as {
-      windowStart?: string; windowSeconds?: number; segments?: { gapBeforeMs?: number; overlapMs?: number; sourceChanged?: boolean }[];
+      windowStart?: string; windowSeconds?: number;
+      segments?: { gapBeforeMs?: number; overlapMs?: number; sourceChanged?: boolean; startMs?: string; durationMs?: number; size?: number }[];
       chain?: { blockNumber?: string; txHash?: string }; generator?: { spec?: string };
     };
     if (!r.windowStart || !Array.isArray(r.segments)) return undefined;
+    const starts = r.segments.map((x) => Number(x.startMs)).filter((x) => Number.isFinite(x) && x > 0);
+    const ends = r.segments.map((x) => Number(x.startMs) + (x.durationMs ?? 0)).filter((x) => Number.isFinite(x) && x > 0);
     return {
       file,
       windowStart: Number(r.windowStart),
@@ -50,6 +57,10 @@ export function summarize(file: string, json: string): AnchorSummary | undefined
       txHash: r.chain?.txHash,
       spec: r.generator?.spec,
       warnings: r.segments.filter((s) => s.gapBeforeMs || s.overlapMs || s.sourceChanged).length,
+      videoStartMs: starts.length ? Math.min(...starts) : undefined,
+      videoEndMs: ends.length ? Math.max(...ends) : undefined,
+      videoMs: r.segments.reduce((t, x) => t + (x.durationMs ?? 0), 0),
+      bytes: r.segments.reduce((t, x) => t + (x.size ?? 0), 0),
     };
   } catch {
     return undefined;
