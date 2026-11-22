@@ -47,7 +47,7 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 - Threat model: what QoreWitness claims and does not claim, its design goal, attackers and controls: `docs/THREAT_MODEL.md`.
 - Audit: QCAI audit stages, each finding with its fix, test or reason, and a map of every PQC precompile call with its tests: `docs/AUDIT.md`.
 - Gas and tx hashes: `docs/TESTNET_FINDINGS.md`. One anchor costs about 0.0457 test QOR (about 406,000 gas). The owner account also opens an EVM window (0.1 test QOR) about every 7 hours. Explorers show about 0.104 QOR per anchor: that is the maximum fee, the chain charges less.
-- Fees included (pilot): a sponsor service refills the test QOR that pilot cameras use. Free, test tokens only: `docs/SPONSOR.md`.
+- Free beta: a sponsor service refills the test QOR that beta cameras use ("Free beta: we cover the network fees"). Test tokens only: `docs/SPONSOR.md`. A paid Hands-off plan (USD 10 or EUR 9 per camera per month) is planned for the QoreChain main network.
 - Save evidence: the dashboard makes one ZIP for a time range (original clips, receipts, a printable `certificate.html`, `HOW-TO-CHECK.txt`). Open `web/verifier/dist/index.html` and drop the ZIP: one plain verdict (green, orange or red), what it proves and cannot prove, and a print button.
 - Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`. Without any QoreWitness code: `python3 tools/verify_receipt.py <receipt> <file>` (standard library only). The exact rules, and how to replay a check with third-party tools, are in `docs/SPEC.md`. The page has a tamper demo: it changes one byte in a copy in memory and checks again.
 
@@ -94,7 +94,7 @@ On a 64-bit Linux machine (Raspberry Pi OS Lite 64-bit, Debian, Ubuntu) on your 
 curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.1/install.sh | bash
 ```
 
-The installer installs Docker when it is missing (Enter or `--yes` means yes), pulls the published image `ghcr.io/fnoufnou/qorewitness:<QW_VERSION>`, starts the box and prints the dashboard address and a pairing code. The rest happens in the browser on your phone or laptop: a password, the camera ("Is this your camera?" with a picture), and one progress bar to "Sealing started". Keys and the owner account are made in the background. The pilot pays the network fees (Fees included, no code). Self-managed sits under "Advanced". Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
+The installer installs Docker when it is missing (Enter or `--yes` means yes), pulls the published image `ghcr.io/fnoufnou/qorewitness:<QW_VERSION>`, starts the box and prints the dashboard address and a pairing code. The rest happens in the browser on your phone or laptop: a password, the camera ("Is this your camera?" with a picture), and one progress bar to "Sealing started". Keys and the owner account are made in the background. The free beta pays the network fees (no code). Self-managed sits under "Advanced". Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
 
 Step by step, with a Tapo C210 section: `docs/INSTALL.md`. The older terminal setup stays available: `install.sh --terminal` or `docker compose run --rm agent setup`.
 

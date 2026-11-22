@@ -5,9 +5,9 @@
  *   connect   one progress bar that starts by itself: keys and account (silent), network fees, registration
  *   done      "Sealing started", the dashboard address, one backup line
  *
- * "Fees included" (the pilot sponsor) is the default and needs no code. "Use my own
+ * "Free beta: we cover the network fees" (the fee sponsor) is the default and needs no code. "Use my own
  * wallet" (Self-managed) sits under "Advanced" on the camera screen, and is offered
- * when the pilot is full.
+ * when the free beta is full.
  *
  * screenFor() is a pure state machine. Wizard keeps the state in
  * /data/ui/setup-state.json (mode 600, no passwords) and runs the connect step as a
@@ -38,7 +38,7 @@ export interface JobState {
   step: number;
   total: number;
   text: string;
-  /** Why it stopped: the pilot said no, no fees arrived, or another error. */
+  /** Why it stopped: the beta sponsor said no, no fees arrived, or another error. */
   reason?: "sponsor_stop" | "no_funds" | "error";
   error?: string;
   startedAt: string;
@@ -196,7 +196,7 @@ export class Wizard {
     const { key } = ensureDeviceKey(p, label);
     this.ownerPub = { cosmos: owner.cosmos, evm: owner.evm, registry: owner.registry };
 
-    // 2. Network fees: the pilot sends them (default), or the owner does (Self-managed).
+    // 2. Network fees: the free beta sends them (default), or the owner does (Self-managed).
     progress(2, "Getting the network fees");
     const poll = this.d.pollMs ?? 10_000;
     const deadline = Date.now() + (this.d.fundsTimeoutMs ?? 20 * 60_000);
@@ -463,7 +463,7 @@ export function renderDone(dashboardUrl: string): string {
 <h1>Sealing started</h1>
 <p>QoreWitness records your camera and seals the video every 10 minutes. The first seal comes in about 10 to 15 minutes.</p>
 <p>Your dashboard is here. Bookmark it now, or add it to your home screen:</p>
-<p style="font-size:24px;font-weight:600;margin:4px 0 12px" class="mono">${esc(dashboardUrl || "/")}</p>
+<p style="font-size:clamp(15px,4.6vw,24px);font-weight:600;margin:4px 0 12px;word-break:normal;overflow-wrap:anywhere" class="mono">${esc(dashboardUrl || "/")}</p>
 <a class="btn" href="/">Open my dashboard</a>
 <p style="margin-top:16px">To prove a video later: open the dashboard and press <strong>Download</strong> next to the time you need.</p>
 <p class="muted">QoreWitness keeps its keys in the qorewitness folder on this computer. Back up that folder once.</p></div>`;

@@ -205,7 +205,7 @@ describe("wizard: browser setup over HTTP (mocked chain, camera and sponsor)", (
     assert.match(readEnvFile(t.paths.cameraEnv).QW_STREAM_URL, /\/stream2$/);
   });
 
-  it("screen 3: one progress bar to Sealing started, keys made silently, Fees included without a code", async () => {
+  it("screen 3: one progress bar to Sealing started, keys made silently, free beta fees without a code", async () => {
     const csrf = csrfOf((await b.get("/setup")).body);
     assert.equal((await b.post("/setup/camera", { action: "confirm", _csrf: csrf })).status, 303);
     const progress = await b.get("/setup");
@@ -274,7 +274,7 @@ async function confirmed(t: ReturnType<typeof setup>, plan?: "self") {
 }
 
 describe("wizard: connect step (mocked chain and sponsor)", () => {
-  it("Fees included: the camera signs the enrolment, no secret leaves the box", async () => {
+  it("Free beta: the camera signs the enrolment, no secret leaves the box", async () => {
     const t = setup();
     await confirmed(t);
     await t.wizard.idle();
@@ -301,12 +301,12 @@ describe("wizard: connect step (mocked chain and sponsor)", () => {
     assert.equal(await t.wizard.screen(), "done");
   });
 
-  it("pilot full: the progress bar stops in plain words and offers Self-managed", async () => {
+  it("beta full: the progress bar stops in plain words and offers Self-managed", async () => {
     const t = setup({ sponsorStatus: "full" });
     await confirmed(t);
     await t.wizard.idle();
     const html = await t.wizard.render("connect", "x");
-    assert.match(html, /The pilot is full/);
+    assert.match(html, /The free beta is full/);
     assert.match(html, /Use my own wallet/);
     await t.wizard.post("/setup/connect", { action: "self" });
     assert.equal(t.wizard.state().plan, "self");

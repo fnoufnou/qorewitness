@@ -109,7 +109,7 @@ Funds affect new anchors only. They never touch existing records.
 | Scope | Risk | Control |
 |---|---|---|
 | Pilot | The faucet stops or its limit is too low (about 5 test QOR per day per camera) | Health check sends a Telegram message below 10 test QOR. Top up from the faucet. |
-| Pilot (box) | The owner does not see that fees run low | The dashboard turns orange below 3 days of fees (Self-managed) and red when sealing stops. With Fees included the pilot sponsor tops up. |
+| Pilot (box) | The owner does not see that fees run low | The dashboard turns orange below 3 days of fees (Self-managed) and red when sealing stops. In the free beta the fee sponsor tops up. |
 | Product | The QOR budget runs out (the owner's own, or the operator's in a subscription plan) | Balance alert, a budget per camera (about 144 anchors per day), and an option for a longer window at lower cost. |
 
 ## Chain of custody
