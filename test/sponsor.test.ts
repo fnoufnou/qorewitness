@@ -65,6 +65,8 @@ class MockPayer implements Payer {
   sent: { owner: Address; uqor: bigint }[] = [];
   float = 500n * QOR;
   mode: "ok" | "refuse" | "throw" = "ok";
+  /** Set by setup(): a sent payout raises the owner balance on the mock chain. */
+  onPay?: (owner: Address, uqor: bigint) => void;
   address(): Address { return "0x000000000000000000000000000000000000bEEF"; }
   async floatUqor() { return this.float; }
   async pay(owner: Address, uqor: bigint) {
@@ -72,6 +74,7 @@ class MockPayer implements Payer {
     if (this.mode === "refuse") return { ok: false, txHash: "AB", code: 5 };
     this.sent.push({ owner, uqor });
     this.float -= uqor;
+    this.onPay?.(owner, uqor);
     return { ok: true, txHash: `TX${this.sent.length}`, code: 0 };
   }
 }
@@ -92,18 +95,20 @@ function setup(over: Partial<SponsorConfig> = {}) {
   const clock = new FakeClock();
   const chain = new MockChain(clock);
   const payer = new MockPayer();
+  payer.onPay = (owner, uqor) => chain.balances.set(owner, (chain.balances.get(owner) ?? 0n) + uqor);
   const sponsor = new Sponsor(cfg, chain, payer, clock);
   return { dir, cfg, clock, chain, payer, sponsor };
 }
 
 const sign = (k: DeviceKey, text: string): Hex => toHex(mldsa.sign(k.secretKey, new TextEncoder().encode(text)));
 
-function enrollBody(sponsor: Sponsor, k: DeviceKey, opts: { owner?: Address; deviceId?: Hex; code?: string; text?: (n: Hex) => string } = {}) {
+/** The box always sends the camera public key (devicePubkey). */
+function enrollBody(sponsor: Sponsor, k: DeviceKey, opts: { owner?: Address; deviceId?: Hex; code?: string; text?: (n: Hex) => string; pub?: Hex } = {}) {
   const deviceId = opts.deviceId ?? DEV;
   const owner = opts.owner ?? OWNER;
   const { nonce } = sponsor.challenge({ deviceId });
   const text = opts.text?.(nonce) ?? sponsorMessageText(REGISTRY_V4.toLowerCase(), deviceId, owner.toLowerCase(), nonce);
-  return { pilotCode: opts.code ?? CODE, deviceId, owner, nonce, signature: sign(k, text) };
+  return { pilotCode: opts.code ?? CODE, deviceId, owner, nonce, signature: sign(k, text), devicePubkey: opts.pub ?? k.publicKeyHex };
 }
 
 const rejects = async (p: Promise<unknown>, code: string) => {
@@ -155,11 +160,19 @@ describe("sponsor: camera signature", () => {
     assert.equal(ok.capPerDayUqor, (9n * QOR).toString());
   });
 
-  it("enrol refuses an owner that does not own the device on chain", async () => {
+  it("enrol refuses another owner that does not hold the camera key", async () => {
     const { sponsor, chain } = setup();
     chain.add(OWNER, DEV, camKey);
-    const body = enrollBody(sponsor, camKey, { owner: OTHER });
+    const body = enrollBody(sponsor, strangerKey, { owner: OTHER, pub: camKey.publicKeyHex });
     await rejects(sponsor.enroll(body), "rejected");
+  });
+
+  it("requires devicePubkey (no history scan on chain)", async () => {
+    const { sponsor, chain } = setup();
+    chain.add(OWNER, DEV, camKey);
+    const { devicePubkey: _k, ...noKey } = enrollBody(sponsor, camKey);
+    await rejects(sponsor.enroll(noKey), "bad_pubkey");
+    await rejects(sponsor.enroll({ ...enrollBody(sponsor, camKey), devicePubkey: "0x1234" }), "bad_pubkey");
   });
 
   it("enrols without a pilot code, and ignores one when sent", async () => {
@@ -197,7 +210,7 @@ describe("sponsor: nonce", () => {
     await rejects(sponsor.enroll(body), "bad_nonce");
     const { nonce } = sponsor.challenge({ deviceId: DEV2 });
     const text = sponsorMessageText(REGISTRY_V4.toLowerCase(), DEV, OWNER.toLowerCase(), nonce);
-    await rejects(sponsor.enroll({ pilotCode: CODE, deviceId: DEV, owner: OWNER, nonce, signature: sign(camKey, text) }), "bad_nonce");
+    await rejects(sponsor.enroll({ pilotCode: CODE, deviceId: DEV, owner: OWNER, nonce, signature: sign(camKey, text), devicePubkey: camKey.publicKeyHex }), "bad_nonce");
   });
 
   it("is 32 random bytes with a 5-minute expiry", () => {
@@ -220,20 +233,22 @@ async function enrolled(over: Partial<SponsorConfig> = {}, balance = 5n * QOR) {
 }
 
 describe("sponsor: top-ups and caps", () => {
-  it("refills what was used: anchors seen on chain since enrolment x credit per anchor", async () => {
-    const { sponsor, chain, payer, clock, cfg } = await enrolled();
+  it("tops up to the target buffer when the balance is below the threshold", async () => {
+    const { sponsor, chain, payer, clock, cfg } = await enrolled({}, 8n * QOR);
     clock.t += 7200;
     chain.anchor(OWNER, DEV, 12);
     const r = await sponsor.runOnce();
     assert.equal(r.paid, 1);
-    assert.deepEqual(payer.sent, [{ owner: OWNER, uqor: 12n * cfg.perAnchorUqor }]);
-    // Nothing new on chain: nothing more to pay.
+    assert.deepEqual(payer.sent, [{ owner: OWNER, uqor: 7n * QOR }]); // target 15 - balance 8
+    // The buffer is full: nothing more to pay.
     clock.t += 3600;
+    chain.anchor(OWNER, DEV, 6);
     assert.equal((await sponsor.runOnce()).paid, 0);
     const st = sponsor.status(DEV);
     assert.equal(st.enrolled, true);
     assert.equal(st.lastTopUp?.txHash, "TX1");
-    assert.equal(st.usedTodayUqor, (12n * cfg.perAnchorUqor).toString());
+    assert.equal(st.usedTodayUqor, (7n * QOR).toString());
+    assert.equal(cfg.targetUqor, 15n * QOR);
     assert.equal(readFileSync(cfg.payoutLog, "utf8").trim().split("\n").length, 2); // pending + sent
   });
 
@@ -266,19 +281,18 @@ describe("sponsor: top-ups and caps", () => {
   });
 
   it("caps a camera per day, and opens again the next UTC day", async () => {
-    const { sponsor, chain, payer, clock } = await enrolled({ targetUqor: 1000n * QOR, thresholdUqor: 1000n * QOR, capOwnerDayUqor: 1000n * QOR, minWindowSeconds: 60 });
+    const { sponsor, chain, payer, clock } = await enrolled({ targetUqor: 1000n * QOR, thresholdUqor: 1000n * QOR, capOwnerDayUqor: 1000n * QOR });
     clock.t += 3600 * 20; // 20:01 UTC
-    chain.anchor(OWNER, DEV, 120); // 5.76 QOR
+    chain.anchor(OWNER, DEV, 120);
     await sponsor.runOnce();
     clock.t += 3600 * 3;
-    chain.anchor(OWNER, DEV, 120); // would be 5.76 more
+    chain.anchor(OWNER, DEV, 18);
     await sponsor.runOnce();
-    const today = payer.sent.reduce((s, p) => s + p.uqor, 0n);
-    assert.equal(today, 9n * QOR);
+    assert.deepEqual(payer.sent.map((p) => p.uqor), [9n * QOR]);
     clock.t += 3600 * 2; // next UTC day
     chain.anchor(OWNER, DEV, 12);
     await sponsor.runOnce();
-    assert.equal(payer.sent.length, 3);
+    assert.deepEqual(payer.sent.map((p) => p.uqor), [9n * QOR, 9n * QOR]);
   });
 
   it("caps an owner per day across cameras", async () => {
@@ -314,12 +328,14 @@ describe("sponsor: top-ups and caps", () => {
     await rejects(f.sponsor.enroll(enrollBody(f.sponsor, strangerKey, { deviceId: DEV2 })), "full");
   });
 
-  it("credits at most one anchor per minimum window length (no farming with 1-second windows)", async () => {
-    const { sponsor, chain, payer, clock, cfg } = await enrolled({ minPayoutUqor: 1n });
-    clock.t += 1200;
-    chain.anchor(OWNER, DEV, 500);
+  it("pays only for a camera that sealed in the last 2 hours", async () => {
+    const { sponsor, chain, payer, clock } = await enrolled({}, 1n * QOR);
+    clock.t += 2 * 3600 + 60; // the last seal is older than 2 h
     await sponsor.runOnce();
-    assert.equal(payer.sent[0].uqor, 3n * cfg.perAnchorUqor); // 1200 s / 600 s + 1
+    assert.equal(payer.sent.length, 0);
+    chain.anchor(OWNER, DEV, 1);
+    await sponsor.runOnce();
+    assert.equal(payer.sent.length, 1);
   });
 
   it("does not pay twice when the send result is unknown, and undoes a refused send", async () => {
@@ -360,17 +376,45 @@ describe("sponsor: kill switch", () => {
     assert.equal(sponsor.status(DEV).paused, true);
   });
 
-  it("pauses itself when the hourly outflow limit is reached", async () => {
-    const { sponsor, chain, payer, clock, cfg } = await enrolled({ maxHourlyUqor: 1n * QOR });
-    clock.t += 43_000;
-    chain.anchor(OWNER, DEV, 100);
-    await sponsor.runOnce();
-    assert.equal(payer.sent[0].uqor, 1n * QOR);
+  it("lets a payout wait for the next hour when the hourly limit would be passed, without a pause", async () => {
+    const { sponsor, chain, payer, clock, cfg } = await enrolled({ maxHourlyUqor: 12n * QOR });
+    chain.add(OTHER, DEV2, strangerKey);
+    chain.balances.set(OTHER, 5n * QOR);
+    await sponsor.enroll(enrollBody(sponsor, strangerKey, { owner: OTHER, deviceId: DEV2 }));
     clock.t += 600;
-    chain.anchor(OWNER, DEV, 10);
+    chain.anchor(OWNER, DEV, 1);
+    chain.anchor(OTHER, DEV2, 1);
+    await sponsor.runOnce();
+    assert.equal(payer.sent.length, 1); // 9 paid, the next 9 would pass 12 per hour
+    assert.equal(sponsor.paused(), false);
+    assert.equal(existsSync(cfg.pauseFile), false);
+    clock.t += 3601;
+    chain.anchor(OWNER, DEV, 6);
+    chain.anchor(OTHER, DEV2, 6);
+    await sponsor.runOnce();
+    assert.equal(payer.sent.length, 2);
+    assert.deepEqual(new Set(payer.sent.map((p) => p.owner)), new Set([OWNER, OTHER]));
+  });
+
+  it("pauses itself when the float drops more than the payouts explain", async () => {
+    const { sponsor, chain, payer, clock, cfg } = await enrolled();
+    clock.t += 600;
+    chain.anchor(OWNER, DEV, 1);
+    await sponsor.runOnce(); // one normal payout: no pause
+    assert.equal(payer.sent.length, 1);
+    assert.equal(sponsor.paused(), false);
+    payer.float -= 50n * QOR; // money leaves the hot wallet without a payout
+    chain.balances.set(OWNER, 1n * QOR);
+    clock.t += 3600;
+    chain.anchor(OWNER, DEV, 1);
     await sponsor.runOnce();
     assert.equal(existsSync(cfg.pauseFile), true);
-    assert.equal(sponsor.paused(), true);
+    assert.match(readFileSync(cfg.pauseFile, "utf8"), /float dropped/);
+    assert.equal(payer.sent.length, 1);
+    payer.float += 100n * QOR; // money added by hand is fine
+    rmSync(cfg.pauseFile);
+    await sponsor.runOnce();
+    assert.equal(sponsor.paused(), false);
   });
 });
 
@@ -437,7 +481,7 @@ describe("sponsor: HTTP API", () => {
       assert.equal(((await h.json()) as { ok: boolean }).ok, true);
       const c = (await (await post("/v1/challenge", { deviceId: DEV })).json()) as { nonce: Hex; expires: number };
       const text = sponsorMessageText(REGISTRY_V4.toLowerCase(), DEV, OWNER.toLowerCase(), c.nonce);
-      const e = await post("/sponsor/v1/enroll", { pilotCode: CODE, deviceId: DEV, owner: OWNER, nonce: c.nonce, signature: sign(camKey, text).slice(2) });
+      const e = await post("/sponsor/v1/enroll", { deviceId: DEV, owner: OWNER, nonce: c.nonce, signature: sign(camKey, text).slice(2), devicePubkey: camKey.publicKeyHex });
       assert.equal(e.status, 200);
       assert.equal(((await e.json()) as { status: string }).status, "enrolled");
       const st = (await (await fetch(url(`/v1/status/${DEV}`))).json()) as { enrolled: boolean; capPerDayUqor: string };
@@ -530,21 +574,28 @@ describe("sponsor: bootstrap (camera not on chain yet)", () => {
   it("checks the signature against devicePubkey", async () => {
     const { sponsor, payer } = setup();
     await rejects(sponsor.enroll(bootBody(sponsor, strangerKey, { pub: camKey.publicKeyHex })), "rejected");
-    await rejects(sponsor.enroll({ ...enrollBody(sponsor, camKey) }), "rejected"); // no devicePubkey and not on chain
+    const { devicePubkey: _k, ...noKey } = enrollBody(sponsor, camKey);
+    await rejects(sponsor.enroll(noKey), "bad_pubkey");
     await sponsor.idle();
     assert.equal(payer.sent.length, 0);
   });
 
   it("becomes active when the camera is registered with the enrolled key, then refills apply", async () => {
-    const { sponsor, chain, payer, clock, cfg } = await booted();
-    chain.balances.set(OWNER, 2n * QOR);
+    const { sponsor, chain, payer, clock } = await booted();
+    chain.balances.set(OWNER, 2n * QOR + 600_000n); // 3 QOR grant minus about 0.4 QOR setup
     chain.add(OWNER, DEV, camKey, 0n);
     await sponsor.runOnce();
     assert.equal(sponsor.status(DEV).status, "active");
-    clock.t += 7200;
-    chain.anchor(OWNER, DEV, 12);
+    clock.t += 600;
+    chain.anchor(OWNER, DEV, 1);
     await sponsor.runOnce();
-    assert.deepEqual(payer.sent.at(-1), { owner: OWNER, uqor: 12n * cfg.perAnchorUqor });
+    // The buffer builds at once: the start grant counts toward the camera day cap (9).
+    assert.deepEqual(payer.sent.at(-1), { owner: OWNER, uqor: 6n * QOR });
+    clock.t += 86_400; // next day: up to the 15 QOR target
+    chain.balances.set(OWNER, 8n * QOR);
+    chain.anchor(OWNER, DEV, 1);
+    await sponsor.runOnce();
+    assert.deepEqual(payer.sent.at(-1), { owner: OWNER, uqor: 7n * QOR });
   });
 
   it("rejects the camera when the key on chain differs from the enrolled key", async () => {

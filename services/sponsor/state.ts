@@ -67,6 +67,8 @@ export interface SponsorState {
   days: Record<string, DayUsage>;
   /** Recent payouts (last 2 days) for the hourly outflow check. The full history is in the payout log. */
   recent: Payout[];
+  /** Hot wallet balance at the last pass, for the float anomaly check. */
+  lastFloat?: { at: number; uqor: string };
 }
 
 export const emptyState = (): SponsorState => ({ version: 1, enrollments: {}, days: {}, recent: [] });
