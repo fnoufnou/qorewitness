@@ -2,6 +2,15 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
+## Unreleased
+
+### 2026-11-22: any camera with a stream
+- Setup: "Find my camera" runs when the camera screen opens. It checks ports 554, 8554 and 2020 on the home /24 and asks each camera for its ONVIF name (WS-Discovery Probe, multicast and directed). Docker's bridge network passes no multicast, so the directed Probes do the work: on the test computer both cameras on the network were found from the bridge network in about 4 seconds. The user picks a camera or types an address.
+- Setup: brand picker (TP-Link Tapo, Reolink, Hikvision or Annke, Dahua or Amcrest, Ubiquiti UniFi Protect, Axis, Other camera). It fills the vendor's RTSP link, so the user types only the camera account. Other and UniFi: one field for the full rtsp:// link. Data in `src/web/cameras.ts`, shared with docs and site.
+- Setup: errors in plain words for any brand (no answer, wrong name or password, no video at this link, busy, unsupported video format). H.264 and H.265 are recorded (segment copy tested for both). Other formats get "choose H.264 or H.265". The Tapo recording rule shows only for Tapo.
+- Wizard and dashboard say "your camera" and "QoreWitness" in place of Tapo-only wording and "box".
+- Docs: `docs/CAMERAS.md` compatibility table (Tested by us, Works with RTSP, Not supported), "check your camera with VLC", how the search works. `docs/INSTALL.md` step 1 for any camera, Tapo as the example.
+
 ## 0.6.0-alpha.1 (22 Nov 2026, Customer Edition preview)
 
 First build for non-technical owners: install with one paste, setup in the browser, Fees included by default, evidence download and a verifier that takes it. Tested end to end on a clean Debian box with a stand-in camera and the live sponsor (22 Nov).
