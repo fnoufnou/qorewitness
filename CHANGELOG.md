@@ -2,6 +2,15 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
+## Unreleased
+
+### 2026-11-22: site go-live build
+- Site: all section edges are now the soft wave from "The app" to "What you need", in four variants (mirrored, other amplitude and phase), with a second faint line behind the wave on the hero and the footer. The skyline and chain links are gone. Light and dark mode, decorative only, same heights as before.
+- Site: `node scripts/build-site-preview.mjs --live` writes the live pages to `web/site/`, copies QoreWitness Verify to `verifier.html`, writes `sitemap.xml` and `robots.txt` (disallows `/preview/` and `/sponsor/`) and turns every `/preview/<page>.html` into a noindex redirect to `/<page>.html`. Every page has a canonical link and Open Graph and Twitter card tags with the absolute `qorewitness-featured.png`. The plain build now writes a noindex draft to `web/site-draft/` (not deployed).
+- Site: the old home page is kept as `web/site/legacy/index-2026-11-21.html` (noindex, not linked). `demo-clip.mp4` and `demo-receipt.json` stay on the server only.
+- Verifier: description, canonical and social tags added. New SHA-256 `564408e4cf00c6e2abad06e1ab28a11eff8e19e28707e831d953912d74eec166`, updated on the site.
+- Tooling: `scripts/check-site-links.mjs` checks every internal link, asset and anchor of every page, and that no live page has noindex.
+
 ## 0.6.0-alpha.2 (22 Nov 2026, launch-ready preview)
 
 Beta wording everywhere, any camera (search, brand picker), Hands-off plan on the site, evidence wording from the first real run, quieter sponsor alerts. Install line pinned to this tag.
