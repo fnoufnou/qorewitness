@@ -1,4 +1,4 @@
-# Install QoreWitness on a Linux box (with a Tapo C210)
+# Install QoreWitness on a Linux computer
 
 Pilot on the QoreChain test network (qorechain-diana). No money is collected. Test tokens have no value.
 
@@ -8,7 +8,7 @@ This guide takes you from a new camera to "Sealing started" in about one hour. Y
 
 | Part | Advice |
 |---|---|
-| Camera | TP-Link Tapo C210, set up in the Tapo app |
+| Camera | Any camera with an RTSP stream (most wired ONVIF cameras). See `docs/CAMERAS.md`. Our example: TP-Link Tapo C210. |
 | Recorder box | Raspberry Pi 5 (4 GB) with Raspberry Pi OS Lite (64-bit). Any 64-bit Debian or Ubuntu machine with Docker also works, for example a mini PC or a Proxmox VM. |
 | Storage | 128 GB or more. A USB SSD lasts longer than an SD card. High quality video likely needs 15 to 20 GB a day (to be measured). |
 | Network | Camera and box on the same home network. The box needs internet access. |
@@ -16,19 +16,18 @@ This guide takes you from a new camera to "Sealing started" in about one hour. Y
 
 The box must stay on. When it is off, it records nothing and seals nothing.
 
-## Step 1. Make a camera account in the Tapo app
+## Step 1. Switch on the video stream of your camera
 
-QoreWitness reads the video from the camera over your home network (RTSP). The camera needs its own account for this.
+QoreWitness reads the video from your camera over your home network (RTSP). Most wired cameras can do this. Battery and cloud-only cameras cannot. See `docs/CAMERAS.md` for the brands, their settings and how to check your camera with VLC.
 
-1. Open the Tapo app and tap your camera.
-2. Tap the gear (settings), then **Advanced Settings** > **Camera Account**. Agree to the notice.
-3. Make a user name and a password. Use 6 to 32 characters each, letters and digits only. Special characters can stop the stream.
-4. Use a new password. Do not use the password of your TP-Link account.
-5. Go back to the settings and open **Device Info**. Write down the **IP address**, for example 192.168.1.20.
+1. Find the camera account: the name and password that let a recorder read the video. For most brands (Reolink, Hikvision, Annke, Dahua, Amcrest, Axis) it is the camera's own login. Tapo cameras need a separate camera account (example below). UniFi Protect gives a link instead.
+2. Check that RTSP is switched on, where the brand has a switch (for example newer Reolink firmware).
+3. Optional: note the camera's address (IP) from its app or your router. The setup also searches your network for it.
+
+Example, TP-Link Tapo: open the Tapo app and tap your camera. Tap the gear, then **Advanced Settings** > **Camera Account**, and agree to the notice. Make a name and a password of 6 to 32 letters and digits (special characters can stop the stream). Use a new password, not the one of your TP-Link account. Tapo Care (cloud), the microSD card and a recorder such as QoreWitness: only two of the three work at the same time.
 
 Recommended:
-- In your router, give the camera a fixed IP address (often called "DHCP reservation"). If the address changes, the box loses the camera.
-- Tapo Care (cloud), the microSD card and a recorder such as QoreWitness: only two of the three work at the same time. If all three are on, turn one off.
+- In your router, give the camera a fixed IP address (often called "DHCP reservation"). If the address changes, QoreWitness loses the camera.
 - Point the camera at your own property. See "Privacy" below.
 
 ## Step 2. Prepare the box
@@ -89,7 +88,7 @@ You can run the line again at any time. It keeps your camera, keys, account and 
 Open the address on your phone or laptop and type the pairing code. Or click the long link that the installer showed under the code.
 
 1. **Password.** Choose a password for your dashboard (10 characters or more).
-2. **Camera.** Type the camera address and the name and password of the camera account from step 1. Tick "My camera films my own property". Press **Test camera**.
+2. **Camera.** QoreWitness searches your network and lists the cameras it finds. Pick yours (or type its address), choose the brand, and type the name and password of the camera account from step 1. For "Other camera" or UniFi Protect, paste the full rtsp:// link. Tick "My camera films my own property". Press **Test camera**.
 3. **Is this your camera?** Within 15 seconds you see a picture from your camera. Press **Yes, this is my camera**.
 4. **Connecting your camera.** One progress bar runs by itself. It takes 2 to 5 minutes. You can close the page.
 5. **Sealing started.** The page shows the address of your dashboard. Bookmark it, or add it to your home screen. The first seal comes in about 10 to 15 minutes.
@@ -106,7 +105,7 @@ On the camera screen, open **Advanced** and tick **Use my own wallet**. During t
 
 ## Daily use
 
-Keep using the Tapo app for live view and alerts. QoreWitness works in the background.
+Keep using your camera's own app for live view and alerts. QoreWitness works in the background.
 
 Open your dashboard once in a while. It shows one line in a colour and one thing to do:
 
@@ -144,10 +143,12 @@ The image version is pinned on purpose. QoreWitness never updates itself.
 
 | Message | Cause and fix |
 |---|---|
-| The camera refused the password. | The user name or password of the Camera Account is wrong. Make it again in the Tapo app with letters and digits only. |
-| No camera answers at this address. | Wrong IP address, or the camera is off or out of Wi-Fi range. Check Device Info in the Tapo app. |
-| The camera is busy. | The C210 sends at most two streams at once. Close the live view in the Tapo app and test again. |
-| The camera sends no picture. | Tapo Care, microSD and a recorder: only two of three work. Turn one off. |
+| The camera refused the name or password. | Check the camera account in the camera's app. Tapo: make the Camera Account again with letters and digits only. |
+| No camera answered at this address. | Wrong address, or the camera is off or out of Wi-Fi range. Check the address in the camera's app or your router. |
+| The camera is busy. | Many cameras send only a few streams at once (the Tapo C210: two). Close the live view in the camera's app and test again. |
+| The camera sends no picture. | Switch on RTSP in the camera's app. Tapo: Tapo Care, microSD and a recorder, only two of three work. Turn one off. |
+| The camera sends a video format that QoreWitness cannot record yet. | Choose H.264 or H.265 in the camera's settings. |
+| The camera answered, but it has no video at this link. | Check the brand, or check the link with VLC (`docs/CAMERAS.md`) and pick Other camera. |
 | Unknown host name. | Open the box by its IP address, as the installer showed. For your own name, set `QW_UI_HOSTNAME` in `~/qorewitness/.env`. |
 | The page does not open at all. | The box and your phone must be on the same network. Guest Wi-Fi often blocks this. Run the line again to see the address. |
 | `qorewitness.local` not found (step 3) | Your network does not know the name. Open your router app, find the IP address of the box, and use it in place of `qorewitness.local`. |
