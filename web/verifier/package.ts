@@ -109,12 +109,12 @@ export function verdictOf(clips: ClipOutcome[], locale?: string): Verdict {
   if (!clips.length) {
     return { level: "bad", headline: "Nothing to check", detail: "No video files were found. Drop a ZIP made by QoreWitness, or choose one clip and its receipt.", notes, clips };
   }
-  const minute = (c: ClipOutcome) => (c.startMs ? ` (recorded ${when(c.startMs, locale).time})` : "");
   const changed = clips.filter((c) => c.kind === "changed");
   const unconfirmed = clips.filter((c) => c.kind === "unconfirmed");
   const errors = clips.filter((c) => c.kind === "error");
   if (changed.length) {
-    const list = changed.slice(0, 3).map((c) => `${c.file}${minute(c)}`).join(", ");
+    // Name a clip by its recording time. A file name means little to a receiver.
+    const list = changed.slice(0, 3).map((c) => (c.startMs ? `the clip recorded at ${when(c.startMs, locale).time}` : c.file)).join(", ");
     return {
       level: "bad", headline: "Changed after sealing", clips, notes,
       detail: `${changed.length === clips.length ? "This video does" : `${changed.length} of ${clips.length} clips do`} not match what was sealed: ${list}${changed.length > 3 ? " and more" : ""}. Do not rely on it.`,

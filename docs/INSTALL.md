@@ -50,7 +50,7 @@ Open a terminal on your laptop:
 Paste this line. Use your Pi user name in place of `mark`. Press Enter.
 
 ```bash
-ssh -t mark@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash -s -- --yes"
+ssh -t mark@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes"
 ```
 
 What you will see:
@@ -66,7 +66,7 @@ What you will see:
 
 Do not share the code. Anyone with it can set up the box until you choose a password.
 
-Already on the box (keyboard and screen, or an SSH session)? Paste the part between the quotes: `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash -s -- --yes`.
+Already on the box (keyboard and screen, or an SSH session)? Paste the part between the quotes: `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes`.
 
 You can run the line again at any time. It keeps your camera, keys, account and video.
 
@@ -133,7 +133,7 @@ Technical facts (block numbers, the registry, the keys) are under **Details** on
 
 ```bash
 cd ~/qorewitness
-# set the new version in .env, for example QW_VERSION=0.6.0-alpha.2
+# set the new version in .env, for example QW_VERSION=0.6.0-alpha.4
 docker compose pull && docker compose up -d
 ```
 
@@ -160,7 +160,7 @@ Logs: `cd ~/qorewitness && docker compose logs --tail 50 recorder agent ui`. Cam
 
 | File in `~/qorewitness/data` | Holds | Mode |
 |---|---|---|
-| `camera.env` | camera name, stream address with the camera password, retention | 600 |
+| `camera.env` | camera name, stream address with the camera password, retention (`QW_RETENTION_DAYS`), sound (`QW_AUDIO=1` keeps the camera's sound, `0` picture only) | 600 |
 | `qorewitness.env` | the recovery phrase of the test account | 600 |
 | `keys/<camera>.key` | the camera key (ML-DSA-87) | 600 |
 | `ui/auth.json` | a hash of the dashboard password and the session key | 600 |

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # QoreWitness installer for Linux (Raspberry Pi OS 64-bit, Debian, Ubuntu).
-#   curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash
 #
 # It installs into ~/qorewitness, pulls the published image, starts the box and
 # prints the dashboard address and the pairing code. Beta on the QoreChain test network.
 # Run it again at any time: it keeps your camera, keys and account.
 #
 # From your own laptop, in one paste (the box is a Raspberry Pi named qorewitness):
-#   ssh -t <user>@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash -s -- --yes"
+#   ssh -t <user>@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes"
 #
 # Options:
 #   --yes            accept the defaults without questions (installs Docker when it is missing)
@@ -16,9 +16,15 @@
 #   --new-password   forget the dashboard password and show a new pairing code
 #   --local-only     open the dashboard on this machine only (127.0.0.1)
 # Env: QW_VERSION (image tag), QW_DIR (install folder), QW_UI_PORT (default 8080).
+
+# Everything runs inside main, which bash reads completely before it starts. With
+# "curl ... | bash" the script comes on stdin, and a command that reads stdin
+# (docker compose up or run) would otherwise eat the rest of it: the address and
+# the pairing code at the end were never printed (found on the test computer, 23 Nov).
+main() {
 set -euo pipefail
 
-QW_VERSION="${QW_VERSION:-0.6.0-alpha.2}"
+QW_VERSION="${QW_VERSION:-0.6.0-alpha.3}"
 REF="${QW_REF:-v$QW_VERSION}"
 REPO="${QW_REPO:-https://github.com/fnoufnou/qorewitness.git}"
 RAW="${QW_RAW:-https://raw.githubusercontent.com/fnoufnou/qorewitness/$REF}"
@@ -150,10 +156,10 @@ chmod 600 .env
 # ---------------------------------------------------------------- image
 if [ "$BUILD" = 1 ]; then
   say "Building the image (10 minutes or more on a Raspberry Pi)"
-  $DOCKER compose build --build-arg QW_COMMIT="$(git rev-parse HEAD)"
+  $DOCKER compose build --build-arg QW_COMMIT="$(git rev-parse HEAD)" </dev/null
 else
   say "Downloading the QoreWitness image $QW_VERSION"
-  $DOCKER compose pull -q || die "The image ghcr.io/fnoufnou/qorewitness:$QW_VERSION is not available. Check the internet connection, or run the installer with --build."
+  $DOCKER compose pull -q </dev/null || die "The image ghcr.io/fnoufnou/qorewitness:$QW_VERSION is not available. Check the internet connection, or run the installer with --build."
 fi
 
 # ---------------------------------------------------------------- setup
@@ -163,10 +169,10 @@ if [ "$TERMINAL" = 1 ]; then
 fi
 
 say "Starting QoreWitness"
-$DOCKER compose up -d
+$DOCKER compose up -d </dev/null
 
 pair_args=(); [ "$NEWPW" = 1 ] && pair_args=(--new-password)
-PAIR="$($DOCKER compose run --rm -T ui pair "${pair_args[@]}" 2>/dev/null || true)"
+PAIR="$($DOCKER compose run --rm -T ui pair "${pair_args[@]}" </dev/null 2>/dev/null || true)"
 TOKEN="$(printf '%s\n' "$PAIR" | sed -n 's/^token=//p')"
 CODE="$(printf '%s\n' "$PAIR" | sed -n 's/^code=//p')"
 
@@ -187,3 +193,6 @@ else
   echo
   echo "Forgot the password? Run the same command again and add --new-password."
 fi
+}
+
+main "$@"

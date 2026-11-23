@@ -392,6 +392,7 @@ ${list}
 <label for="password">Camera account password</label><input id="password" name="password" type="password" autocomplete="off">
 <div data-linkfield><label for="link">Camera link (only for Other camera and UniFi Protect)</label><input id="link" name="link" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="rtsp://..." value="${esc(v.link)}"></div>
 <label class="check"><input type="checkbox" name="consent" value="yes"> <span>My camera films my own property.</span></label>
+<p class="hint">Clips keep sound when your camera's microphone is on. You can switch it off in your camera's app at any time.</p>
 <button>Test camera</button><div class="hint">The test takes up to 15 seconds.</div>
 <details><summary>Where do I find the camera account?</summary>${howTo}</details>
 <details><summary>Advanced</summary><label class="check"><input type="checkbox" name="selfManaged" value="yes"${plan === "self" ? " checked" : ""}> <span>Use my own wallet (Self-managed). You pay the network fees with your own test tokens.</span></label></details>

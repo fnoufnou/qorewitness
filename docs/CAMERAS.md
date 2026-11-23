@@ -19,6 +19,8 @@ The brand data (ports, links, where to switch the stream on) lives in `src/web/c
 | Other ONVIF or RTSP cameras | Works with RTSP, check first | the rtsp:// link from your manual | Check the link with VLC first (below). |
 | Battery cameras and cloud-only cameras (for example Ring, Blink, Google Nest, most Arlo, Tapo and Reolink battery models) | Not supported | none | They send no local stream, or only for a short time after motion. QoreWitness needs a stream that runs all the time. |
 
+Sound: when the camera sends sound, QoreWitness keeps it in the clips (converted to AAC, 32 kbit/s mono, because MP4 cannot hold the G.711 sound of many cameras). Switch the microphone off in the camera's app to keep only the picture, or set `QW_AUDIO=0` in `~/qorewitness/data/camera.env`. The fingerprint covers picture and sound together.
+
 Video formats: H.264 and H.265 are supported. The recorder copies the stream without re-encoding (tested with ffmpeg 6 for both). The setup refuses other formats, such as MJPEG, with a clear message: choose H.264 or H.265 in the camera settings. H.265 clips may not play in every player (QuickTime on older Macs). VLC plays them.
 
 ## Check your camera with VLC

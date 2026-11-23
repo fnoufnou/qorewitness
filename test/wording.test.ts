@@ -78,3 +78,39 @@ describe("wording: dashboard and done page", () => {
     assert.doesNotMatch(renderDone("http://192.168.1.228:8080", "http://192.168.1.228:8080/"), /also works/);
   });
 });
+
+describe("wording: QoreWitness Verify page", () => {
+  it("names a changed clip by its recording time, never by its file name", () => {
+    const c: ClipOutcome = { file: "demo-clip.mp4", kind: "changed", startMs: Date.UTC(2026, 10, 22, 7, 16), durationMs: 60_000, steps: [] };
+    const v = verdictOf([c], "en-GB");
+    assert.equal(v.headline, "Changed after sealing");
+    assert.doesNotMatch(v.detail, /demo-clip|\.mp4/);
+    assert.match(v.detail, /the clip recorded at \d\d:\d\d/);
+  });
+
+  it("heading QoreWitness Verify, a calm try-it button, no demo wording", async () => {
+    const { readFileSync } = await import("node:fs");
+    const html = readFileSync("web/verifier/index.html", "utf8");
+    const main = readFileSync("web/verifier/main.ts", "utf8");
+    assert.match(html, /<h1>QoreWitness Verify<\/h1>/);
+    assert.match(html, /<title>QoreWitness Verify<\/title>/);
+    assert.match(html, />Try it: change one byte and check again</);
+    assert.doesNotMatch(html + main, /Tamper demo|demo-clip/i);
+  });
+});
+
+describe("wording: sound in the setup", () => {
+  it("the camera screen says that clips keep sound when the microphone is on", async () => {
+    const { mkdtempSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { dataPaths, ensureDirs } = await import("../src/setup/steps.js");
+    const { Wizard } = await import("../src/web/wizard.js");
+    const { mockChain } = await import("./helpers/mock-chain.js");
+    const paths = dataPaths(mkdtempSync(join(tmpdir(), "qw-snd-")));
+    ensureDirs(paths);
+    const w = new Wizard({ paths, chain: mockChain().chain, sponsor: () => { throw new Error("x"); }, snapshot: async () => ({ ok: false, kind: "unknown", message: "", detail: "" }) });
+    const html = await w.render("camera", "x");
+    assert.match(html, /My camera films my own property\.<\/span><\/label>\n<p class="hint">Clips keep sound when your camera's microphone is on\. You can switch it off in your camera's app at any time\.<\/p>/);
+  });
+});

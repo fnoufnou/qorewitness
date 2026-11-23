@@ -4,7 +4,12 @@
 # the agent anchors only listed (finished) segments.
 #
 # Env: QW_STREAM_URL (or the older QW_RTSP_URL), QW_SEGMENT_DIR,
-#      optional QW_SEGMENT_SECONDS (default 60), QW_STREAM_LISTEN=1 (RTMP push, see below).
+#      optional QW_SEGMENT_SECONDS (default 60), QW_STREAM_LISTEN=1 (RTMP push, see below),
+#      QW_AUDIO (default 1: keep the camera's sound when the stream has it, 0: video only).
+#
+# Video is a byte copy. Sound is converted to AAC (32 kbit/s mono): MP4 cannot hold the
+# G.711 audio of many cameras (Tapo), and a plain copy would stop the recorder. The "?"
+# makes the audio track optional, so a camera without sound records video only.
 #
 # Input types:
 #   rtsp:// rtsps://     pull from the camera (most home cameras)
@@ -26,6 +31,7 @@ case "$URL" in
 esac
 # File names carry the start second. At start, ffmpeg flushes the first seconds it
 # buffered while probing the stream: segments shorter than 10 s could get the same name.
+audio=(); [ "${QW_AUDIO:-1}" = "1" ] && audio=(-map '0:a:0?' -c:a aac -b:a 32k -ac 1)
 if [ "${QW_SEGMENT_SECONDS:-60}" -lt 10 ]; then echo "QW_SEGMENT_SECONDS must be 10 or more" >&2; exit 2; fi
 mkdir -p "$QW_SEGMENT_DIR"
 cd "$QW_SEGMENT_DIR"
@@ -37,7 +43,7 @@ cd "$QW_SEGMENT_DIR"
 exec 2> >(sed -u -E 's#([A-Za-z][A-Za-z0-9+.-]*://)[^[:space:]/]*@#\1***@#g' >&2)
 exec ffmpeg -hide_banner -loglevel warning -nostdin \
   "${input[@]}" -i "$URL" \
-  -map 0:v -c copy -f segment -segment_time "${QW_SEGMENT_SECONDS:-60}" -reset_timestamps 1 \
+  -map 0:v -c:v copy "${audio[@]}" -f segment -segment_time "${QW_SEGMENT_SECONDS:-60}" -reset_timestamps 1 \
   -segment_format_options movflags=+faststart -strftime 1 \
   -segment_list segments.csv -segment_list_type csv \
   "seg_%Y%m%dT%H%M%SZ.mp4"
