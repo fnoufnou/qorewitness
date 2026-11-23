@@ -3,7 +3,7 @@
  * the device. It needs only the clips, their receipts and the public QoreChain RPC.
  *
  * Two ways in: drop the evidence ZIP from the QoreWitness dashboard (it unpacks here), or choose one
- * clip and its receipt. Tamper demo: "Change one byte and check again" flips one
+ * clip and its receipt. "Try it: change one byte and check again" flips one
  * byte in an in-memory copy of the first clip (the files are not touched) and
  * runs the same checks. The result turns red at once.
  */
@@ -115,7 +115,7 @@ async function start(flip: boolean): Promise<void> {
       const pos = Math.floor(copy.length / 2);
       const before = copy[pos];
       copy[pos] ^= 0x01;
-      note.textContent = `Tamper demo: byte ${pos.toLocaleString()} of ${copy.length.toLocaleString()} in ${clips[0].name.split("/").pop()} changed from 0x${before.toString(16).padStart(2, "0")} to 0x${copy[pos].toString(16).padStart(2, "0")}. One bit in the whole video.`;
+      note.textContent = `We changed one byte in the middle of the first clip, in this browser only (byte ${pos.toLocaleString()} of ${copy.length.toLocaleString()}, from 0x${before.toString(16).padStart(2, "0")} to 0x${copy[pos].toString(16).padStart(2, "0")}). That is one bit in the whole video. Your file stays as it is.`;
       clips = [{ name: clips[0].name, bytes: copy }, ...clips.slice(1)];
     }
     const v = await run(clips, loaded.receipts);
