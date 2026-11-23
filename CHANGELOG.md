@@ -2,7 +2,18 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
-## Unreleased
+## 0.6.0-alpha.3 (23 Nov 2026)
+
+Sound in the clips, the piped installer fixed, QoreWitness Verify wording.
+
+### 2026-11-23: sound, installer, Verify wording
+- Recorder: keeps the camera's sound when the stream has it (`QW_AUDIO`, default 1). Video stays a byte copy, sound becomes AAC 32 kbit/s mono, because MP4 cannot hold the G.711 sound of many cameras. A camera without sound records video only. `QW_AUDIO=0` keeps the picture only. Hashing, receipts and the verifier are unchanged: the fingerprint covers the whole file. Tested on the test computer with a G.711 A-law stand-in: recorded (h264 + aac), sealed in block 10,602,114, evidence file verified, one changed byte found. A stream without sound still records. Product owner decision: team/audio-decision.md.
+- Setup: one line under "My camera films my own property": "Clips keep sound when your camera's microphone is on. You can switch it off in your camera's app at any time." Site FAQ: "Does QoreWitness record sound?".
+- Installer: with `curl ... | bash` it stopped after "Starting QoreWitness" without the address and the pairing code, because docker compose read the rest of the script from stdin. The body now runs in main() and docker gets </dev/null (regression test).
+- QoreWitness Verify: heading "QoreWitness Verify", button "Try it: change one byte and check again", no file names in the result text (a changed clip is named by its recording time), no "demo" wording. New SHA-256 `47082d47f8ec9929fd9890418bcc9739685580620673676d3ced70a0c02f39a6`.
+- Site: dashboard screenshots with consistent numbers (500 GB SSD, 412 GB free, 150 MB per seal, 14 days), test count 249, install lines pinned to v0.6.0-alpha.3. Live site regenerated, link check clean.
+- Version 0.6.0-alpha.3 in package.json, docker-compose.yml (QW_VERSION default), install.sh, README and docs/INSTALL.md.
+
 
 ### 2026-11-22: site go-live build
 - Site: all section edges are now the soft wave from "The app" to "What you need", in four variants (mirrored, other amplitude and phase), with a second faint line behind the wave on the hero and the footer. The skyline and chain links are gone. Light and dark mode, decorative only, same heights as before.

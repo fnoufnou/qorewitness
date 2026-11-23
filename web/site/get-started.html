@@ -89,7 +89,7 @@
 <p class="small muted">The Linux installer is the path we test from start to finish. On a NAS, a home server, Windows or macOS you run the same software with Docker Compose.</p>
 <details class="help" id="compose"><summary>Guide: Docker Compose on a NAS, home server, Windows or Mac</summary><div class="in"><ol class="plain">
 <li>Install Docker with Compose: Docker Desktop on Windows or macOS, Container Manager on Synology, or the Docker tools of your server.</li>
-<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/docker-compose.yml">docker-compose.yml</a> in it.</li>
+<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/docker-compose.yml">docker-compose.yml</a> in it.</li>
 <li>To open the setup from another device, add a file named <code>.env</code> to that folder with the line <code>QW_UI_BIND=0.0.0.0:8080</code>.</li>
 <li>In that folder, run <code>docker compose up -d</code>, then <code>docker compose run --rm -T ui pair</code> to see your setup code.</li>
 <li>Open <code>http://ADDRESS:8080/setup</code>, where ADDRESS is the computer's address (or <code>localhost</code> on the same computer), type the code and continue with step 4.</li>
@@ -113,7 +113,7 @@
 <li class="step" id="s3"><h3>Install QoreWitness on your always-on computer</h3><p class="time">Terminal on your laptop</p><div class="body">
 <p>Open a terminal on your own laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</p>
 <p>Paste this line, replace <code>USER</code> with the user name of your QoreWitness computer, and press Enter.</p>
-<div class="copybox"><code id="install-cmd" tabindex="0">ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash -s -- --yes"</code><button class="btn" type="button" data-copy="install-cmd" aria-label="Copy line: the install line"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div>
+<div class="copybox"><code id="install-cmd" tabindex="0">ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes"</code><button class="btn" type="button" data-copy="install-cmd" aria-label="Copy line: the install line"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div>
 <p>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter that computer's password. The installer takes care of the rest, and at the end it shows a <b>link</b> and a <b>setup code</b> in large text.</p>
 <figure class="shot"><div class="device term"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Terminal</span></div><pre tabindex="0" aria-label="The end of the installer output"><span class="dim">Starting QoreWitness</span>
 <span class="dim"> ✔ Container qorewitness-agent  Started</span>

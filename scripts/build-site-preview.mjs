@@ -24,10 +24,10 @@ const GHDOC = (f) => `${GH}/blob/main/docs/${f}`;
 const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
 // TODO lead: pin a release tag instead of main before launch.
-const INSTALL = 'ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash -s -- --yes"';
-const VERIFIER_SHA = "564408e4cf00c6e2abad06e1ab28a11eff8e19e28707e831d953912d74eec166";
+const INSTALL = 'ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes"';
+const VERIFIER_SHA = "47082d47f8ec9929fd9890418bcc9739685580620673676d3ced70a0c02f39a6";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
-const TESTS = 233; // automated tests (pnpm test), counted on 22 Nov 2026
+const TESTS = 249; // automated tests (pnpm test), counted on 23 Nov 2026
 
 /* ---------- icons and art ---------- */
 const defs = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -315,6 +315,7 @@ const FAQ = [
   ["What if my QoreWitness computer breaks?", `<p>Every seal on the public record stays where it is. To prove a clip you also need the clip itself, so press <b>Save evidence</b> in the dashboard for anything that matters to you and keep that file somewhere safe.</p>`],
   ["Can QoreWitness show that the scene was real?", `<p>No. It proves that the file has not changed since it was sealed. A staged scene or a fake stream would be sealed in exactly the same way.</p>`],
   ["Can someone fake a clip from inside my home network?", `<p>It is hard, and it is possible. Someone who already controls your QoreWitness computer or your camera before the footage is sealed could feed it fake footage.</p><p>Keep the computer and the camera on a network you trust, and use strong passwords. There is more on <a href="trust.html">Trust and limits</a>.</p>`],
+  ["Does QoreWitness record sound?", `<p>Yes, whenever your camera's microphone is switched on, QoreWitness keeps the sound together with the picture and seals both in the same fingerprint, so a clip with sound is just as easy to prove. Would you rather keep only the picture? Simply switch the microphone off in your camera's app and QoreWitness follows your choice.</p><p>Sound travels further than you might expect, so please point your camera at your own home and garden, let visitors know with a small sign that you record picture and sound, and take a moment to read the advice of the Autoriteit Persoonsgegevens on cameras at home.</p>`],
   ["Who can see my recordings?", `<p>Only you, on your own computer. A seal file shows fingerprints and times, and nothing of the picture or the sound.</p>`],
   ["How long are my recordings kept?", `<p>QoreWitness keeps about two weeks of video, depending on your disk, and the seals stay for good. Press <b>Save evidence</b> for any clip you may need later, before it is cleared to make room.</p>`],
 ];
@@ -482,7 +483,7 @@ ${platformTable}
 <p class="small muted">The Linux installer is the path we test from start to finish. On a NAS, a home server, Windows or macOS you run the same software with Docker Compose.</p>
 ${help("Guide: Docker Compose on a NAS, home server, Windows or Mac", `<ol class="plain">
 <li>Install Docker with Compose: Docker Desktop on Windows or macOS, Container Manager on Synology, or the Docker tools of your server.</li>
-<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/docker-compose.yml">docker-compose.yml</a> in it.</li>
+<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/docker-compose.yml">docker-compose.yml</a> in it.</li>
 <li>To open the setup from another device, add a file named <code>.env</code> to that folder with the line <code>QW_UI_BIND=0.0.0.0:8080</code>.</li>
 <li>In that folder, run <code>docker compose up -d</code>, then <code>docker compose run --rm -T ui pair</code> to see your setup code.</li>
 <li>Open <code>http://ADDRESS:8080/setup</code>, where ADDRESS is the computer's address (or <code>localhost</code> on the same computer), type the code and continue with step 4.</li>
@@ -919,7 +920,7 @@ ${head("For the jury", "QoreWitness, in ten minutes.", "Thank you for judging th
 <li class="tile"><h3>Live contract</h3><p>Registry v4, deployed 14 Nov 2026: <code class="break">${REGISTRY}</code>. Earlier versions are listed on the <a href="developers.html#contracts">Developers</a> page.</p></li>
 <li class="tile"><h3>Audit rounds</h3><p>Four rounds with the QCAI Contract Auditor from 12 to 17 Nov 2026, scores 82, 72, 78 and 85. These are automated reviews, and no accredited firm has audited QoreWitness. <a href="developers.html#audit">Details</a>.</p></li>
 <li class="tile"><h3>Drills</h3><p>Q-Day Drill dry run: 13 attacks with only the ECDSA key, 0 succeeded. Custody drill: all 5 attacks after sealing rejected, 4 of 5 swaps before hashing flagged, 1 missed. Recovery drill: the receipt is rebuilt from public data.</p></li>
-<li class="tile"><h3>Tests</h3><p>${TESTS} automated tests on 22 Nov 2026, for the contract, the recorder, the setup, the dashboard, the fee sponsor and the verifier. Run them with <code>pnpm test</code>.</p></li>
+<li class="tile"><h3>Tests</h3><p>${TESTS} automated tests on 23 Nov 2026, for the contract, the recorder, the setup, the dashboard, the fee sponsor and the verifier. Run them with <code>pnpm test</code>.</p></li>
 </ul>
 <h3 style="margin:40px 0 10px">Known limits, stated openly</h3>
 <ul class="limits">
@@ -970,7 +971,7 @@ verifier (static page or CLI): clip + receipt
 <section id="run"><div class="wrap narrow">
 <p class="eyebrow">Run it yourself</p><h2>Install, update, back up, remove.</h2>
 <ul class="plain" style="margin-top:16px">
-<li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.2/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</li>
+<li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</li>
 <li><b>Other platforms:</b> the Linux installer is tested end to end. NAS, home server, Windows and macOS use the same <code>docker-compose.yml</code> (<a href="get-started.html#compose">short guide</a>).</li>
 <li><b>Other camera brands:</b> with <code>--terminal</code> you can give a full stream URL, for example <code>rtsp://user:password@192.168.1.20:554/stream</code>. Compatibility status per brand: <a href="cameras.html">cameras</a>. Research notes: <a href="${GHDOC("CAMERAS.md")}">CAMERAS.md</a>.</li>
 <li><b>Update:</b> set the new version in <code>~/qorewitness/.env</code> (<code>QW_VERSION</code>), then <code>docker compose pull &amp;&amp; docker compose up -d</code>. The version is pinned, and QoreWitness never updates itself.</li>
@@ -993,7 +994,7 @@ verifier (static page or CLI): clip + receipt
 <dt>QoreWitness Verify SHA-256</dt><dd><code>${VERIFIER_SHA}</code><br><span class="small muted">Build it with <code>pnpm build:verifier</code> and compare.</span></dd>
 <dt>Check a receipt in a terminal</dt><dd><code>pnpm tsx scripts/verify-receipt.ts demo-receipt.json demo-clip.mp4</code></dd>
 <dt>Without our code</dt><dd><code>python3 tools/verify_receipt.py &lt;receipt&gt; &lt;file&gt;</code> (standard library only)</dd>
-<dt>Run the tests</dt><dd><code>pnpm test</code> (${TESTS} automated tests on 22 Nov 2026)</dd>
+<dt>Run the tests</dt><dd><code>pnpm test</code> (${TESTS} automated tests on 23 Nov 2026)</dd>
 </dl>
 </div></section>
 
