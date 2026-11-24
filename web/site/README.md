@@ -7,13 +7,16 @@ Files on the server:
 - `index.html` (this folder)
 - `verifier.html`: copy of `web/verifier/dist/index.html` (`pnpm build:verifier`). Its SHA-256 is on the home page. Update the hash after every build.
 - `favicon.svg`, `fonts/` (IBM Plex Sans and IBM Plex Mono, SIL Open Font License), `qorewitness-featured.png` (link preview image)
-- `demo-clip.mp4` and `demo-receipt.json`
+- `sample-clip.mp4` and `sample-receipt.json` (server only, linked from the Prove, jury and developers pages)
+- `demo-clip.mp4` and `demo-receipt.json` (old sample, server only, kept so old links keep working)
 
-The demo clip is a generated test pattern (ffmpeg testsrc2, 20 s), anchored by device `demo-testpattern` on qorechain-diana, block 10,120,133 (registry v4, receipt v3, spec/3 with SHA3-256). Earlier records: block 10,078,733 (spec/2) and block 9,938,157 (registry v3). Verify it with:
+The sample is one 60-second clip from the test camera of the test computer (CT 262): a test pattern with the text "QoreWitness test camera" and a burned-in clock in Amsterdam time, plus a test tone (H.264 1280x720, AAC). Recorded 24 Nov 2026 08:08:20 to 08:09:20 CET (07:08 UTC) by camera `camera-1`, window 08:00 to 08:10 CET, sealed in block 10,653,907 at 08:10:22 CET (registry v4, receipt v3, spec/3, made by 0.6.0-alpha.3). Original names: `seg_20261124T070820Z.mp4` and `camera-1-1795503600.json`. SHA-256 of the clip: `9e825de8438f30996f768a07a51916296ac59c75648d84148e89160c5d4ec4cb`. QoreWitness Verify shows a green "Original, sealed within 1 minute", with no notes. Check it with:
 
 ```bash
-pnpm tsx scripts/verify-receipt.ts demo-receipt.json demo-clip.mp4
+pnpm tsx scripts/verify-receipt.ts sample-receipt.json sample-clip.mp4
 ```
+
+The old sample (`demo-*`, block 10,120,133) now shows an orange result, because its window holds a gap and a late seal.
 
 ## New customer pages (preview, 21 Nov 2026)
 
