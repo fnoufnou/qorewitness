@@ -73,25 +73,25 @@ a{color:#1F5C4B}.btn{display:inline-block;margin-top:14px;padding:9px 14px;backg
 </style></head><body><div class="page">
 <header>${LOGO_LIGHT}<strong>QoreWitness</strong><span>Beta · QoreChain test network</span></header>
 <h1>Evidence certificate</h1>
-<p>This page belongs to a ZIP file with the original video clips and their receipts.</p>
-<div class="ok">${c.clips.length} clip${c.clips.length === 1 ? "" : "s"} checked against their receipts on the camera box before this ZIP was made. All ${c.clips.length} match.</div>
+<p>This page belongs to an evidence file with the original video clips and their receipts.</p>
+<div class="ok">${c.clips.length} clip${c.clips.length === 1 ? "" : "s"} checked against their receipts on the QoreWitness computer before this evidence file was made. All ${c.clips.length} match.</div>
 <dl>
 <dt>Camera</dt><dd>${esc(c.camera)}</dd>
 <dt>Recording time</dt><dd>${esc(stamp(first, c.tzMinutes))} to ${esc(stamp(last, c.tzMinutes))} (${esc(z)})</dd>
-<dt>Sealed in</dt><dd>QoreChain ${esc(sealed)}. Open the ZIP in the public verifier to see the exact seal time.</dd>
+<dt>Sealed in</dt><dd>QoreChain ${esc(sealed)}. Open the evidence file in QoreWitness Verify to see the exact seal time.</dd>
 <dt>Certificate made</dt><dd>${esc(stamp(c.createdAtMs, c.tzMinutes))} (${esc(z)})</dd>
 </dl>
 ${c.leftOut || c.uncoveredMinutes >= 1 ? `<p class="fine" style="border:0;margin:0 0 8px;font-size:13px;color:#8A4B0F">${c.leftOut ? `${esc(c.leftOut)} clip(s) in this range were left out because they could not be checked. ` : ""}${c.uncoveredMinutes >= 1 ? `About ${esc(Math.round(c.uncoveredMinutes))} minute(s) of the chosen time have no sealed clip.` : ""}</p>` : ""}
 <div class="two">
 <div><h2>What this proves</h2>
-<p>The video files in this ZIP are exactly the files the camera box recorded. Not one byte was changed.</p>
+<p>The video files in this evidence file are exactly the ones the camera's QoreWitness recorded, down to the last byte.</p>
 <p>They existed at the time of the seal. The seal is a signed fingerprint in a public record that nobody can edit later.</p></div>
 <div><h2>What it cannot prove</h2>
 <p>It does not prove who is in the video or that the scene was real.</p>
-<p>It does not prove who owns the camera. The recording time comes from the box clock. QoreWitness is in beta on the QoreChain test network, and a seal is not a legal timestamp.</p></div>
+<p>It does not prove who owns the camera. The recording time comes from the clock of the QoreWitness computer. QoreWitness is in beta on the QoreChain test network, which can be reset, and a seal is not a legal timestamp.</p></div>
 </div>
 <h2>How to check it</h2>
-<p>Open <a href="${VERIFIER_URL}">${VERIFIER_URL}</a> and drop the ZIP file on the page. The check runs in your browser. The video does not leave your device. See HOW-TO-CHECK.txt in the ZIP.</p>
+<p>Open <a href="${VERIFIER_URL}">${VERIFIER_URL}</a> (QoreWitness Verify), press <b>Choose files</b> and pick this evidence file, or drop it on the page. The check runs in your browser. The video does not leave your device. See HOW-TO-CHECK.txt in the ZIP.</p>
 <a class="btn noprint" href="#" onclick="window.print();return false">Print this page</a>
 <div class="fine"><strong>Technical details.</strong> Chain ${esc(c.chainId ?? "")} (QoreChain test network). Registry ${esc(c.registry ?? "")}. Account ${esc(c.owner ?? "")}. Camera id ${esc(c.deviceId ?? "")}. Camera key fingerprint ${esc(c.keyFingerprint ?? "")}. Signature ML-DSA-87 over a Merkle root of SHA-256 links, file fingerprints SHA-256 and SHA3-256.
 <table><thead><tr><td>File</td><td>Start</td><td>Length</td><td>Block</td></tr></thead><tbody>${rows}</tbody></table></div>

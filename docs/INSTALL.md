@@ -1,6 +1,6 @@
 # Install QoreWitness on a Linux computer
 
-Pilot on the QoreChain test network (qorechain-diana). No money is collected. Test tokens have no value.
+Beta on the QoreChain test network (qorechain-diana), which can be reset. No money is collected. Test tokens have no value.
 
 This guide takes you from a new camera to "Sealing started" in about one hour. You paste one line in a terminal. Everything else happens in your browser: a password, your camera, and one progress bar.
 
@@ -9,12 +9,12 @@ This guide takes you from a new camera to "Sealing started" in about one hour. Y
 | Part | Advice |
 |---|---|
 | Camera | Any camera with an RTSP stream (most wired ONVIF cameras). See `docs/CAMERAS.md`. Our example: TP-Link Tapo C210. |
-| Recorder box | Raspberry Pi 5 (4 GB) with Raspberry Pi OS Lite (64-bit). Any 64-bit Debian or Ubuntu machine with Docker also works, for example a mini PC or a Proxmox VM. |
+| QoreWitness computer | Raspberry Pi 5 (4 GB) with Raspberry Pi OS Lite (64-bit). Any 64-bit Debian or Ubuntu machine with Docker also works, for example a mini PC or a Proxmox VM. |
 | Storage | 128 GB or more. A USB SSD lasts longer than an SD card. High quality video likely needs 15 to 20 GB a day (to be measured). |
-| Network | Camera and box on the same home network. The box needs internet access. |
+| Network | Camera and computer on the same home network. The computer needs internet access. |
 | Phone or laptop | For the setup in the browser, on the same home network |
 
-The box must stay on. When it is off, it records nothing and seals nothing.
+Your QoreWitness computer must stay on. When it is off, it records nothing and seals nothing.
 
 ## Step 1. Switch on the video stream of your camera
 
@@ -30,7 +30,7 @@ Recommended:
 - In your router, give the camera a fixed IP address (often called "DHCP reservation"). If the address changes, QoreWitness loses the camera.
 - Point the camera at your own property. See "Privacy" below.
 
-## Step 2. Prepare the box
+## Step 2. Prepare the computer
 
 Raspberry Pi:
 
@@ -54,19 +54,19 @@ ssh -t mark@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnou
 ```
 
 What you will see:
-- The first time, a question if you trust the box. Type `yes` and press Enter.
+- The first time, a question if you trust the computer. Type `yes` and press Enter.
 - Your Pi password (from the Imager). You do not see the letters while you type.
 - A few minutes of text. The installer installs Docker when it is missing, downloads QoreWitness and starts it.
-- At the end, in large text: the address of your box and a pairing code.
+- At the end, in large text: the address of your QoreWitness computer and a pairing code.
 
 ```
       http://192.168.1.30:8080
       Pairing code:  123 456
 ```
 
-Do not share the code. Anyone with it can set up the box until you choose a password.
+Do not share the code. Anyone with it can set up QoreWitness until you choose a password.
 
-Already on the box (keyboard and screen, or an SSH session)? Paste the part between the quotes: `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes`.
+Already on the computer itself (keyboard and screen, or an SSH session)? Paste the part between the quotes: `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes`.
 
 You can run the line again at any time. It keeps your camera, keys, account and video.
 
@@ -75,7 +75,7 @@ You can run the line again at any time. It keeps your camera, keys, account and 
 | Option | Use |
 |---|---|
 | `--yes` | Accept the defaults without questions. Without it, the installer asks before it installs Docker (Enter means yes). |
-| `--local-only` | The dashboard opens on the box itself only (127.0.0.1) |
+| `--local-only` | The dashboard opens on that computer itself only (127.0.0.1) |
 | `--new-password` | You forgot the dashboard password. Shows a new pairing code. Camera, keys and account stay. |
 | `--terminal` | The older setup with questions in the terminal, no browser |
 | `--build` | Build the image from source (slow on a Pi) |
@@ -93,9 +93,9 @@ Open the address on your phone or laptop and type the pairing code. Or click the
 4. **Connecting your camera.** One progress bar runs by itself. It takes 2 to 5 minutes. You can close the page.
 5. **Sealing started.** The page shows the address of your dashboard. Bookmark it, or add it to your home screen. The first seal comes in about 10 to 15 minutes.
 
-The pilot pays the network fees. You do nothing. The pilot has a limited number of places. If it is full, the progress bar says so and offers **Use my own wallet**.
+Free beta: we cover the network fees. You do nothing. The beta has a limited number of places. If it is full, the progress bar says so and offers **Use my own wallet**.
 
-Your box keeps its keys in the qorewitness folder. Back up that folder once.
+QoreWitness keeps its keys in the qorewitness folder. Back up that folder once.
 
 <details><summary>Advanced: use my own wallet (Self-managed)</summary>
 
@@ -112,20 +112,20 @@ Open your dashboard once in a while. It shows one line in a colour and one thing
 | Colour | Example | What to do |
 |---|---|---|
 | Green | Sealing OK. Last seal 4 minutes ago. | Nothing |
-| Orange | Waiting for the first seal. | Nothing. It comes 10 to 15 minutes after setup. |
+| Orange | Waiting for the first seal. | Nothing. It arrives within about 15 minutes of the setup. |
 | Orange | Sealing pauses soon: fees are running out. | Free beta: nothing, we top up the fees. Self-managed: add test tokens (the address is under Details). |
-| Orange | The disk is almost full. | Nothing urgent: the box deletes the oldest video first. Connect a bigger disk to keep more. |
+| Orange | The disk is almost full. | Nothing urgent: QoreWitness deletes the oldest video first. Connect a bigger disk to keep more. |
 | Red | No video from the camera. | Check the power and Wi-Fi of the camera. |
-| Red | Sealing stopped 40 minutes ago. | Check the internet connection of the box. Restart the box if this stays. |
+| Red | Sealing stopped 40 minutes ago. | Check the internet connection of your QoreWitness computer. Restart it if this stays. |
 | Red | Sealing paused: the fees ran out. | Free beta: we top up the fees. If this stays for a day, the beta service may be paused. Self-managed: add test tokens. |
 
-Video older than about 2 weeks (the box proposes the days from its free disk) is deleted. Download what you need before then.
+Video older than about 2 weeks (QoreWitness proposes the days from its free disk) is deleted. Download what you need before then.
 
 ### Prove a video
 
 The dashboard lists the latest seals in your own time, for example "Sat 21 Nov, 22:46 to 22:56". Press **Download** next to the time you need. You get one file (ZIP) with the original video of those 10 minutes and its proof. Another time: open **Pick another time** under the list (up to 60 minutes).
 
-Give the file to the receiver, for example an insurer. They open https://qorewitness.fnoufnou.com/verifier.html and drop the file on the page. They see one result: green "Original" with the recording date and time, or red "Changed after sealing". Nobody needs to trust you or us.
+Give the file to the receiver, for example an insurer. They open https://qorewitness.fnoufnou.com/verifier.html press **Choose files** and pick the evidence file, or drop it on the page. They see one result: green "Original" with the recording date and time, or red "Changed after sealing". Nobody needs to trust you or us.
 
 Technical facts (block numbers, the registry, the keys) are under **Details** on the dashboard.
 
@@ -149,14 +149,14 @@ The image version is pinned on purpose. QoreWitness never updates itself.
 | The camera sends no picture. | Switch on RTSP in the camera's app. Tapo: Tapo Care, microSD and a recorder, only two of three work. Turn one off. |
 | The camera sends a video format that QoreWitness cannot record yet. | Choose H.264 or H.265 in the camera's settings. |
 | The camera answered, but it has no video at this link. | Check the brand, or check the link with VLC (`docs/CAMERAS.md`) and pick Other camera. |
-| Unknown host name. | Open the box by its IP address, as the installer showed. For your own name, set `QW_UI_HOSTNAME` in `~/qorewitness/.env`. |
-| The page does not open at all. | The box and your phone must be on the same network. Guest Wi-Fi often blocks this. Run the line again to see the address. |
-| `qorewitness.local` not found (step 3) | Your network does not know the name. Open your router app, find the IP address of the box, and use it in place of `qorewitness.local`. |
+| Unknown host name. | Open QoreWitness by its IP address, as the installer showed. For your own name, set `QW_UI_HOSTNAME` in `~/qorewitness/.env`. |
+| The page does not open at all. | Your QoreWitness computer and your phone must be on the same network. Guest Wi-Fi often blocks this. Run the line again to see the address. |
+| `qorewitness.local` not found (step 3) | Your network does not know the name. Open your router app, find the IP address of your QoreWitness computer, and use it in place of `qorewitness.local`. |
 | `Permission denied` (step 3) | Wrong user name or Pi password. Use the ones you set in the Imager. |
 
 Logs: `cd ~/qorewitness && docker compose logs --tail 50 recorder agent ui`. Camera passwords are masked in the logs.
 
-## What is on the box
+## What is on your QoreWitness computer
 
 | File in `~/qorewitness/data` | Holds | Mode |
 |---|---|---|
@@ -167,12 +167,12 @@ Logs: `cd ~/qorewitness && docker compose logs --tail 50 recorder agent ui`. Cam
 | `account.json` | public facts: addresses, camera id, plan | 644 |
 | `<camera>/segments`, `<camera>/receipts` | video clips and receipts | |
 
-Back up the `data` folder (at least `qorewitness.env` and `keys`). Anyone with these files or with the box can use your test account. QoreWitness never asks for them.
+Back up the `data` folder (at least `qorewitness.env` and `keys`). Anyone with these files or with the computer can use your test account. QoreWitness never asks for them.
 
 Security notes:
 - The setup and the dashboard use plain HTTP on your home network. Someone on the same Wi-Fi could read the dashboard password. Use a home network you trust.
-- Never forward port 8080 on your router. The box refuses requests from public addresses and unknown host names, but it is made for the home network only.
-- The box holds the recovery phrase of the test account. A stolen box gives access to that test account.
+- Never forward port 8080 on your router. QoreWitness refuses requests from public addresses and unknown host names, but it is made for the home network only.
+- Your QoreWitness computer holds the recovery phrase of the test account. A stolen computer gives access to that test account.
 
 ## Privacy
 

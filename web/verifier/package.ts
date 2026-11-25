@@ -27,6 +27,8 @@ export interface Verdict {
   detail: string;
   notes: string[];
   clips: ClipOutcome[];
+  /** The recording time in UTC, for the technical details. */
+  utc?: string;
 }
 
 export const baseName = (n: string) => n.split("/").pop()!;
@@ -51,7 +53,11 @@ export function pickReceipt(file: string, hash: Uint8Array, receipts: ReceiptInp
     const seg = segsOf(r.receipt).find((s) => s.sha256 === h);
     if (seg) return { r, seg };
   }
-  if (onlyClip && receipts.length === 1) return { r: receipts[0] };
+  if (onlyClip && receipts.length === 1) {
+    // One clip and one receipt with one segment: that segment is the clip, even when the clip was changed.
+    const segs = segsOf(receipts[0].receipt);
+    return { r: receipts[0], seg: segs.length === 1 ? segs[0] : undefined };
+  }
   return undefined;
 }
 
@@ -78,7 +84,7 @@ async function checkOne(clip: ClipInput, receipts: ReceiptInput[], verify: Verif
   const h = await sha256(clip.bytes);
   const pick = pickReceipt(file, h, receipts, onlyClip);
   if (!pick) {
-    return { file, kind: "unconfirmed", steps: [{ state: "fail", text: `No receipt in this package belongs to ${file}. Without its receipt a clip cannot be confirmed.` }] };
+    return { file, kind: "unconfirmed", steps: [{ state: "fail", text: `No receipt belongs to ${file}. Add its receipt (.json), or check the evidence file (ZIP) it came from.` }] };
   }
   const base = { file, startMs: pick.seg ? Number(pick.seg.startMs) : undefined, durationMs: pick.seg?.durationMs };
   try {
@@ -95,29 +101,45 @@ async function checkOne(clip: ClipInput, receipts: ReceiptInput[], verify: Verif
   }
 }
 
-const two = (n: number) => String(n).padStart(2, "0");
-export function when(ms: number, locale?: string): { date: string; time: string } {
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** One date style everywhere: "24 Nov 2026" and "08:08", with the zone ("CET", "EST", or "GMT+1" when no short name exists). */
+export function when(ms: number, timeZone?: string): { date: string; time: string; zone: string } {
   const d = new Date(ms);
-  return {
-    date: d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }),
-    time: `${two(d.getHours())}:${two(d.getMinutes())}`,
+  const part = (locale: string, o: Intl.DateTimeFormatOptions) => {
+    const parts = new Intl.DateTimeFormat(locale, { timeZone, hourCycle: "h23", ...o }).formatToParts(d);
+    return (t: string) => parts.find((p) => p.type === t)?.value ?? "";
   };
+  const g = part("en-GB", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  // Short zone names: en-US knows the American ones, en-GB the European ones (CET, BST).
+  let zone = part("en-US", { timeZoneName: "short" })("timeZoneName");
+  if (/^GMT[+-]/.test(zone)) zone = part("en-GB", { timeZoneName: "short" })("timeZoneName") || zone;
+  if (timeZone === "UTC") zone = "UTC";
+  return { date: `${Number(g("day"))} ${MONTHS[Number(g("month")) - 1]} ${g("year")}`, time: `${g("hour")}:${g("minute")}`, zone };
 }
 
-export function verdictOf(clips: ClipOutcome[], locale?: string): Verdict {
+/** "24 Nov 2026, 08:08 to 08:09", or with two dates when the range crosses midnight. */
+export function span(fromMs: number, toMs: number | undefined, timeZone?: string): { text: string; zone: string } {
+  const a = when(fromMs, timeZone);
+  const e = toMs !== undefined ? when(toMs, timeZone) : undefined;
+  if (!e || (e.time === a.time && e.date === a.date)) return { text: `${a.date}, ${a.time}`, zone: a.zone };
+  return { text: e.date === a.date ? `${a.date}, ${a.time} to ${e.time}` : `${a.date}, ${a.time} to ${e.date}, ${e.time}`, zone: a.zone };
+}
+
+export function verdictOf(clips: ClipOutcome[], timeZone?: string): Verdict {
   const notes = [...new Set(clips.flatMap((c) => c.steps.filter((s) => s.state === "warn").map((s) => s.text)))];
   if (!clips.length) {
-    return { level: "bad", headline: "Nothing to check", detail: "No video files were found. Drop a ZIP made by QoreWitness, or choose one clip and its receipt.", notes, clips };
+    return { level: "bad", headline: "Nothing to check", detail: "No video files were found. Choose an evidence file (ZIP), or a video clip together with its receipt (.json).", notes, clips };
   }
   const changed = clips.filter((c) => c.kind === "changed");
   const unconfirmed = clips.filter((c) => c.kind === "unconfirmed");
   const errors = clips.filter((c) => c.kind === "error");
   if (changed.length) {
     // Name a clip by its recording time. A file name means little to a receiver.
-    const list = changed.slice(0, 3).map((c) => (c.startMs ? `the clip recorded at ${when(c.startMs, locale).time}` : c.file)).join(", ");
+    const list = changed.slice(0, 3).map((c) => { if (!c.startMs) return c.file; const w = when(c.startMs, timeZone); return `the clip recorded at ${w.time} ${w.zone}`; }).join(", ");
     return {
       level: "bad", headline: "Changed after sealing", clips, notes,
-      detail: `${changed.length === clips.length ? "This video does" : `${changed.length} of ${clips.length} clips do`} not match what was sealed: ${list}${changed.length > 3 ? " and more" : ""}. Do not rely on it.`,
+      detail: clips.length === 1 && !changed[0].startMs ? "This video does not match what was sealed. Do not rely on it." : `${changed.length === clips.length ? "This video does" : `${changed.length} of ${clips.length} clips do`} not match what was sealed: ${list}${changed.length > 3 ? " and more" : ""}. Do not rely on it.`,
     };
   }
   if (unconfirmed.length) {
@@ -135,10 +157,13 @@ export function verdictOf(clips: ClipOutcome[], locale?: string): Verdict {
   const starts = clips.map((c) => c.startMs).filter((x): x is number => !!x);
   const ends = clips.map((c) => (c.startMs && c.durationMs ? c.startMs + c.durationMs : undefined)).filter((x): x is number => !!x);
   let recorded = "";
+  let utc: string | undefined;
   if (starts.length) {
-    const a = when(Math.min(...starts), locale);
-    const e = ends.length ? when(Math.max(...ends), locale) : undefined;
-    recorded = e && (e.time !== a.time || e.date !== a.date) ? ` on ${a.date} ${a.time} to ${e.date === a.date ? "" : e.date + " "}${e.time}` : ` on ${a.date} ${a.time}`;
+    const from = Math.min(...starts);
+    const to = ends.length ? Math.max(...ends) : undefined;
+    const local = span(from, to, timeZone);
+    recorded = ` on ${local.text} (${local.zone}, your time)`;
+    utc = span(from, to, "UTC").text;
   }
   let sealed = "";
   const delays = clips.map((c) => (c.anchoredAt && c.startMs ? c.anchoredAt.getTime() - (c.startMs + (c.durationMs ?? 0)) : undefined)).filter((x): x is number => x !== undefined);
@@ -151,7 +176,7 @@ export function verdictOf(clips: ClipOutcome[], locale?: string): Verdict {
     const line = calm
       ? ` ${clips.length === 1 ? "The video is" : "The clips are"} original. Some minutes are missing, for example when the camera was off.`
       : " Read the notes below.";
-    return { level: "warn", headline: "Original, with notes", detail: `${base}${line}`, notes, clips };
+    return { level: "warn", headline: "Original, with notes", detail: `${base}${line}`, notes, clips, utc };
   }
-  return { level: "ok", headline: "Original", detail: base, notes, clips };
+  return { level: "ok", headline: "Original", detail: base, notes, clips, utc };
 }

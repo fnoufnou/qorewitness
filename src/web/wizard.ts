@@ -290,7 +290,7 @@ export class Wizard {
       const values: CameraFormValues = { host, user: form.user ?? "", brand: form.brand ?? "", link: form.link ?? "" };
       const fail = async (msg: string) => ({ html: await this.renderCameraForm(csrf, msg, values) });
       if (!CAMERA_BRANDS.some((b) => b.id === values.brand)) return fail("Pick the brand of your camera. Not in the list? Pick Other camera.");
-      if (form.consent !== "yes") return fail("Tick the box: my camera films my own property.");
+      if (form.consent !== "yes") return fail("Please confirm that your camera films your own property: tick \"My camera films my own property\".");
       const brand = brandById(values.brand);
       try {
         url = brandStreamUrl(brand, { host, user: values.user, password: form.password ?? "", link: values.link, quality: "main" });

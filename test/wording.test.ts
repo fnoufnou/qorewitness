@@ -23,14 +23,14 @@ describe("wording: verifier", () => {
   });
 
   it("an orange verdict for missing minutes gets one calm line", () => {
-    const v = verdictOf([clip("ok"), clip("warn", "About 6 minutes of video are missing before this clip.")], "en-GB");
+    const v = verdictOf([clip("ok"), clip("warn", "About 6 minutes of video are missing before this clip.")], "Europe/Amsterdam");
     assert.equal(v.level, "warn");
     assert.match(v.detail, /The clips are original\. Some minutes are missing, for example when the camera was off\.$/);
     assert.deepEqual(v.notes, ["About 6 minutes of video are missing before this clip."]);
   });
 
   it("other notes still ask to read them", () => {
-    const v = verdictOf([clip("warn", "The owner revoked this camera at 2026-11-23.")], "en-GB");
+    const v = verdictOf([clip("warn", "The owner revoked this camera at 2026-11-23.")], "Europe/Amsterdam");
     assert.match(v.detail, /Read the notes below\.$/);
   });
 });
@@ -82,10 +82,10 @@ describe("wording: dashboard and done page", () => {
 describe("wording: QoreWitness Verify page", () => {
   it("names a changed clip by its recording time, never by its file name", () => {
     const c: ClipOutcome = { file: "demo-clip.mp4", kind: "changed", startMs: Date.UTC(2026, 10, 22, 7, 16), durationMs: 60_000, steps: [] };
-    const v = verdictOf([c], "en-GB");
+    const v = verdictOf([c], "Europe/Amsterdam");
     assert.equal(v.headline, "Changed after sealing");
     assert.doesNotMatch(v.detail, /demo-clip|\.mp4/);
-    assert.match(v.detail, /the clip recorded at \d\d:\d\d/);
+    assert.match(v.detail, /the clip recorded at 08:16 CET/);
   });
 
   it("heading QoreWitness Verify, a calm try-it button, no demo wording", async () => {

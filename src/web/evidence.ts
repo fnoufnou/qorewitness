@@ -281,7 +281,7 @@ export async function planEvidence(o: PlanOptions): Promise<EvidencePlan> {
       st = lstatSync(path);
     } catch {
       leftOut++;
-      failed.push(`${h.file} is no longer on this box`);
+      failed.push(`${h.file} is no longer on this computer`);
       continue;
     }
     if (!st.isFile()) { // a link or folder: never follow
@@ -315,11 +315,11 @@ export async function planEvidence(o: PlanOptions): Promise<EvidencePlan> {
   const rangeMs = o.toMs - o.fromMs;
 
   if (!clips.length) {
-    problems.push(notSealed ? "The clips of this time are not sealed yet. Sealing takes about 10 minutes after the recording. Try again later." : "No sealed video was found for this time. Pick another time.");
+    problems.push(notSealed ? "The clips of this time are not sealed yet. Sealing takes a few minutes. Try again soon." : "No sealed video was found for this time. Pick another time.");
     if (failed.length) problems.push(`${leftOut} clip(s) were found but could not be used.`);
     return { ...empty(), leftOut, notSealed, rangeMs, problems };
   }
-  if (rangeMs - coveredMs > 10_000) problems.push(`About ${Math.max(1, Math.round((rangeMs - coveredMs) / 60000))} minute(s) of this time have no sealed video. The ZIP holds only what exists.`);
+  if (rangeMs - coveredMs > 10_000) problems.push(`About ${Math.max(1, Math.round((rangeMs - coveredMs) / 60000))} minute(s) of this time have no sealed video. The evidence file holds only what exists.`);
   if (notSealed) problems.push(`${notSealed} clip(s) of this time are not sealed yet. Try again in 10 minutes to include them.`);
   if (leftOut) problems.push(`${leftOut} clip(s) were left out because they no longer match their receipt or are gone. ${failed.slice(0, 3).join("; ")}.`);
 
@@ -347,14 +347,14 @@ function howTo(n: number): string {
   return `HOW TO CHECK THIS EVIDENCE
 =========================
 
-This ZIP holds ${n} original video clip${n === 1 ? "" : "s"} from a QoreWitness camera box, their receipts and a certificate.
+This evidence file (a ZIP) holds ${n} original video clip${n === 1 ? "" : "s"} from a camera sealed by QoreWitness, their receipts and a certificate.
 
-Step 1. Open the checker
+Step 1. Open QoreWitness Verify
   Go to ${VERIFIER_URL}
   (You need an internet connection. Your video does not leave your device.)
 
-Step 2. Drop this ZIP file on the page
-  Do not unpack it first. Press "Check".
+Step 2. Press "Choose files" and pick this evidence file
+  Or drop it on the page. Do not unpack it first. The check starts by itself.
 
 Step 3. Read the big result
   Green "Original": the video is unchanged since it was recorded.
@@ -410,11 +410,11 @@ export function evidencePage(v: { plan?: EvidencePlan; range?: Range; problems?:
   let body: string;
   if (plan && plan.entries.length && v.range) {
     const minutes = Math.max(1, Math.round(plan.coveredMs / 60000));
-    body = `<div class="status ok" role="status"><span class="dot"></span><div><strong>${esc(plan.clips.length)} clip${plan.clips.length === 1 ? "" : "s"} ready, about ${esc(minutes)} minute${minutes === 1 ? "" : "s"} of video</strong><p>Each clip was checked against its receipt on this box.</p></div></div>
+    body = `<div class="status ok" role="status"><span class="dot"></span><div><strong>${esc(plan.clips.length)} clip${plan.clips.length === 1 ? "" : "s"} ready, about ${esc(minutes)} minute${minutes === 1 ? "" : "s"} of video</strong><p>Each clip was checked against its receipt on this computer.</p></div></div>
 ${list ? `<div class="note"><strong>Please note</strong>${list}</div>` : ""}
 <form method="post" action="/evidence/download">${hidden("_csrf", csrf)}${hidden("fromMs", String(v.range.fromMs))}${hidden("toMs", String(v.range.toMs))}${hidden("tz", String(v.range.tzMinutes))}
 <button type="submit">Download evidence (${esc(mb(plan.zipBytes))})</button> <a class="btn secondary" href="/">Back</a></form>
-<p class="muted" style="margin-top:14px">The ZIP holds the original clips, their receipts, a certificate to print and a short how-to. The receiver drops it on the public checker.</p>`;
+<p class="muted" style="margin-top:14px">The evidence file holds the original clips, their receipts, a certificate to print and a short how-to. Whoever receives it checks it with QoreWitness Verify.</p>`;
   } else {
     body = `<div class="status warn" role="status"><span class="dot"></span><div><strong>No evidence file for this time</strong></div></div>${list ? `<div class="note">${list}</div>` : ""}<a class="btn" href="/">Back</a>`;
   }

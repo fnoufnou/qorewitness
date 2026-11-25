@@ -2,8 +2,9 @@
  * QoreWitness browser verifier. Runs fully in the browser: the video never leaves
  * the device. It needs only the clips, their receipts and the public QoreChain RPC.
  *
- * Two ways in: drop the evidence ZIP from the QoreWitness dashboard (it unpacks here), or choose one
- * clip and its receipt. "Try it: change one byte and check again" flips one
+ * One way in: choose or drop any mix of files on the page. An evidence file (ZIP)
+ * from the dashboard unpacks here, a clip (.mp4, .ts) pairs with its receipt (.json).
+ * "Try it: change one byte and check again" flips one
  * byte in an in-memory copy of the first clip (the files are not touched) and
  * runs the same checks. The result turns red at once.
  */
@@ -27,6 +28,7 @@ const note = $("note");
 let loaded: { clips: ClipInput[]; receipts: ReceiptInput[] } | undefined;
 
 function renderSteps(v: Verdict): void {
+  $("utc").textContent = v.utc ? `In UTC: ${v.utc}.` : "";
   const box = $("steps");
   box.replaceChildren(
     ...v.clips.map((c) => {
@@ -46,14 +48,16 @@ function renderSteps(v: Verdict): void {
   );
 }
 
+const IDLE = "Choose an evidence file, or a clip with its receipt.";
+
 function render(v: Verdict | undefined, busy = ""): void {
   const level = v ? v.level : "";
   $("result").className = `card result ${level}`;
-  $("verdict").textContent = v ? v.headline : busy || "Choose a ZIP, or a clip and its receipt.";
+  $("verdict").textContent = v ? v.headline : busy || IDLE;
   $("detail").textContent = v ? v.detail : "";
-  $("explain").hidden = !v;
+  $("explain").hidden = !v || v.level === "bad";
   $("actions2").hidden = !v;
-  $("tech").hidden = !v;
+  $("tech").hidden = !v || !v.clips.length;
   const notes = $("notes");
   notes.replaceChildren(...(v?.notes ?? []).map((t) => Object.assign(document.createElement("li"), { textContent: t })));
   notes.hidden = !v?.notes.length;
@@ -71,30 +75,47 @@ async function run(clips: ClipInput[], receipts: ReceiptInput[]): Promise<Verdic
   return v;
 }
 
-async function load(): Promise<{ clips: ClipInput[]; receipts: ReceiptInput[] } | undefined> {
-  const zip = $<HTMLInputElement>("zip").files?.[0];
-  const video = $<HTMLInputElement>("video").files?.[0];
-  const rec = $<HTMLInputElement>("receipt").files?.[0];
+type Kind = "evidence file" | "clip" | "receipt" | "not used";
+const kindOf = (f: File): Kind =>
+  /\.zip$/i.test(f.name) || f.type === "application/zip" ? "evidence file"
+  : /\.json$/i.test(f.name) || f.type === "application/json" ? "receipt"
+  : /\.(mp4|ts|m4v)$/i.test(f.name) || f.type.startsWith("video/") ? "clip"
+  : "not used";
+
+function showChosen(files: File[]): void {
+  const list = $("chosen");
+  list.replaceChildren(...files.map((f) => {
+    const li = document.createElement("li");
+    li.append(Object.assign(document.createElement("span"), { textContent: f.name }), Object.assign(document.createElement("span"), { textContent: kindOf(f) }));
+    return li;
+  }));
+  list.hidden = !files.length;
+}
+
+/** Sorts any mix of files: evidence files (ZIP) unpack here, clips and receipts pair up by name or fingerprint. */
+async function load(files: File[]): Promise<{ clips: ClipInput[]; receipts: ReceiptInput[] } | undefined> {
   const bad: string[] = [];
   const clips: ClipInput[] = [];
   const receipts: ReceiptInput[] = [];
-  const addReceipt = async (name: string, text: string) => {
+  const addReceipt = (name: string, text: string) => {
     try {
       receipts.push({ name, receipt: JSON.parse(text) });
     } catch {
       bad.push(`${name} is not a readable receipt.`);
     }
   };
-  if (zip) {
-    for (const f of readZip(new Uint8Array(await zip.arrayBuffer()))) {
-      if (/\.json$/i.test(f.name) && f.name.startsWith("receipts/")) await addReceipt(f.name, new TextDecoder().decode(await f.bytes()));
-      else if (f.name.startsWith("clips/") && /\.(mp4|ts)$/i.test(f.name)) clips.push({ name: f.name, bytes: await f.bytes() });
-    }
-  } else if (video && rec) {
-    clips.push({ name: video.name, bytes: new Uint8Array(await video.arrayBuffer()) });
-    await addReceipt(rec.name, await rec.text());
-  } else {
-    render({ level: "bad", headline: "Nothing chosen yet", detail: "Choose the evidence ZIP, or one clip and its receipt.", notes: [], clips: [] });
+  for (const f of files) {
+    const kind = kindOf(f);
+    if (kind === "evidence file") {
+      for (const z of readZip(new Uint8Array(await f.arrayBuffer()))) {
+        if (/\.json$/i.test(z.name) && z.name.startsWith("receipts/")) addReceipt(z.name, new TextDecoder().decode(await z.bytes()));
+        else if (z.name.startsWith("clips/") && /\.(mp4|ts)$/i.test(z.name)) clips.push({ name: z.name, bytes: await z.bytes() });
+      }
+    } else if (kind === "receipt") addReceipt(f.name, await f.text());
+    else if (kind === "clip") clips.push({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
+  }
+  if (!clips.length) {
+    render({ level: "bad", headline: receipts.length ? "Add the video too" : "Nothing to check yet", detail: receipts.length ? "A receipt alone proves nothing. Choose the clip together with its receipt, or the evidence file (ZIP)." : "Choose an evidence file (ZIP), or a video clip together with its receipt (.json).", notes: [], clips: [] });
     return undefined;
   }
   if (bad.length && !receipts.length) {
@@ -104,12 +125,16 @@ async function load(): Promise<{ clips: ClipInput[]; receipts: ReceiptInput[] } 
   return { clips, receipts };
 }
 
-async function start(flip: boolean): Promise<void> {
+async function start(files: File[] | undefined): Promise<void> {
   note.textContent = "";
   try {
-    if (!flip) loaded = await load();
+    if (files) {
+      showChosen(files);
+      loaded = await load(files);
+    }
     if (!loaded) return;
     let clips = loaded.clips;
+    const flip = !files;
     if (flip && clips.length) {
       const copy = new Uint8Array(clips[0].bytes); // copy in memory, the file stays as it is
       const pos = Math.floor(copy.length / 2);
@@ -125,7 +150,28 @@ async function start(flip: boolean): Promise<void> {
   }
 }
 
-$("go").addEventListener("click", () => void start(false));
-tamper.addEventListener("click", () => void start(true));
+const input = $<HTMLInputElement>("files");
+const drop = $("drop");
+$("pick").addEventListener("click", () => input.click());
+input.addEventListener("change", () => {
+  const files = Array.from(input.files ?? []);
+  input.value = "";
+  if (files.length) void start(files);
+});
+// The whole page is a drop zone.
+let depth = 0;
+const hasFiles = (e: DragEvent) => !!e.dataTransfer && Array.from(e.dataTransfer.types).includes("Files");
+document.addEventListener("dragenter", (e) => { if (hasFiles(e)) { depth++; drop.classList.add("over"); } });
+document.addEventListener("dragleave", () => { if (--depth <= 0) { depth = 0; drop.classList.remove("over"); } });
+document.addEventListener("dragover", (e) => { if (hasFiles(e)) e.preventDefault(); });
+document.addEventListener("drop", (e) => {
+  if (!hasFiles(e)) return;
+  e.preventDefault();
+  depth = 0;
+  drop.classList.remove("over");
+  const files = Array.from(e.dataTransfer!.files);
+  if (files.length) void start(files);
+});
+tamper.addEventListener("click", () => void start(undefined));
 $("print").addEventListener("click", () => window.print());
 render(undefined);
