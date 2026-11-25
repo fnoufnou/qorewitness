@@ -25,7 +25,7 @@ const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
 // TODO lead: pin a release tag instead of main before launch.
 const TAG = "v0.6.0-alpha.4"; // the release the install line runs; the "read the script" link points to the same tag
-const INSTALL = `ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/install.sh | bash -s -- --yes"`;
+const INSTALL = `ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/install.sh | bash -s -- --yes"`;
 const VERIFIER_SHA = "01fb584fe02806b7335ebb44c0abc1fd0da48bc1387281707046e859a59bdae8";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 // Sample record for QoreWitness Verify (24 Nov 2026): one clip of our test computer's stand-in camera
@@ -254,8 +254,6 @@ const phone = (file, alt, cap = "", o = {}) => `<figure class="shot${o.cls ? ` $
 const browser = (file, alt, address, cap = "", o = {}) => `<figure class="shot${o.cls ? ` ${o.cls}` : ""}"><div class="device browser"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>${address}</span></div><img src="${SCR}${file}.webp" width="${o.w ?? 2560}" height="${o.h ?? 1600}" alt="${alt}" loading="lazy" decoding="async"></div>${cap ? `<figcaption>${cap}</figcaption>` : ""}</figure>`;
 /** A row of phone screens. On a phone it scrolls sideways, on a wide screen it is a grid. */
 const screens = (label, items, lg = false) => `<div class="screens${lg ? " lg" : ""}" role="region" aria-label="${label}" tabindex="0"><ol>${items.map(([f, alt, cap]) => `<li>${phone(f, alt, cap)}</li>`).join("")}</ol></div>`;
-/** A neutral illustrated phone that shows the menu path in a camera maker's app as text. Never a copy of a vendor's app. */
-const pathPhone = (app, steps, cap) => `<figure class="shot path"><div class="device phone neutral"><div class="ill" role="img" aria-label="Illustration: in the ${app}, go to ${steps.join(", then ")}."><p class="app">${app}</p><ol>${steps.map((s, i) => `<li${i === steps.length - 1 ? ' class="here"' : ""}><span>${s}</span>${i < steps.length - 1 ? ico("arrow") : ico("check")}</li>`).join("")}</ol><p class="note">Illustration. The real app looks different.</p></div></div>${cap ? `<figcaption>${cap}</figcaption>` : ""}</figure>`;
 /** The last lines the installer prints, as text in a terminal frame (from install.sh). */
 const terminal = `<figure class="shot"><div class="device term"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Terminal</span></div><pre tabindex="0" aria-label="The end of the installer output"><span class="dim">Starting QoreWitness</span>
 <span class="dim"> ✔ Container qorewitness-agent  Started</span>
@@ -267,7 +265,7 @@ const terminal = `<figure class="shot"><div class="device term"><div class="chro
 
 <b class="hl">      Pairing code:  482 913</b>
 
-Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div><figcaption>The end of the install. Your address and code will differ.</figcaption></figure>`;
+Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div></figure>`;
 const help = (title, inner, id = "") => `<details class="help"${id ? ` id="${id}"` : ""}><summary>${title}</summary><div class="in">${inner}</div></details>`;
 const copybox = (id, text, label = "Copy") => `<div class="copybox"><code id="${id}" tabindex="0">${text}</code><button class="btn" type="button" data-copy="${id}" aria-label="${label}: ${id === "install-cmd" ? "the install line" : "the text"}">${ico("copy")}<span>${label}</span></button></div>`;
 const head = (eyebrow, h1, lead, meta = []) => `<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">${eyebrow}</p><h1>${h1}</h1><p class="lead">${lead}</p>${meta.length ? `<ul class="meta">${meta.map((m) => `<li>${m}</li>`).join("")}</ul>` : ""}</div>${edge("wave", "bg")}</div>`;
@@ -291,16 +289,11 @@ const hwTable = `<div class="tablewrap"><table class="stack"><caption class="sr"
 <tr><th scope="row">Raspberry Pi</th><td data-label="Minimum">Raspberry Pi 4 (4 GB) with a USB SSD</td><td data-label="Recommended">Raspberry Pi 5 (4 or 8 GB) with a USB SSD</td></tr>
 <tr><th scope="row">System</th><td colspan="2" data-label="Minimum and recommended">64-bit Linux with Docker, or any system that runs Docker</td></tr>
 </tbody></table></div>`;
-const platformTable = `<div class="tablewrap"><table class="stack"><caption class="sr">Where QoreWitness runs</caption><thead><tr><th scope="col">Where</th><th scope="col">How you install it</th></tr></thead><tbody>
-<tr><td><b>Linux</b>: Debian, Ubuntu, Raspberry Pi OS</td><td data-label="How you install it">The one-line installer (step 3 below)</td></tr>
-<tr><td><b>Home server or NAS</b>: Synology Container Manager, Unraid, Proxmox, TrueNAS</td><td data-label="How you install it"><a href="#compose">Guide: Docker Compose</a></td></tr>
-<tr><td><b>Windows or macOS</b> with Docker Desktop</td><td data-label="How you install it"><a href="#compose">Guide: Docker Compose</a></td></tr>
-</tbody></table></div>`;
 
 /* ---------- camera brand hints ---------- */
 const BRANDS = [
-  ["TP-Link Tapo (wired models, such as the C210)", `<div class="hint-grid"><div><ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Advanced Settings</b>, then <b>Camera Account</b>, and agree to the notice.</li><li>Choose a name and a password of 6 to 32 characters each. Letters and digits work best.</li></ol><p>Stream address: <code>rtsp://NAME:PASSWORD@ADDRESS:554/stream1</code>. Tapo Care, a microSD card and a recorder such as QoreWitness can only run two at a time, so switch one off if all three are on.</p></div>${pathPhone("Tapo app", ["Your camera", "Settings (gear icon)", "Advanced Settings", "Camera Account"], "Where to find the Camera Account in the Tapo app.")}</div>`],
-  ["Reolink (wired and PoE models)", `<div class="hint-grid"><div><p>In the Reolink app or desktop client, open the camera settings, then <b>Network</b>, <b>Advanced</b> and <b>Server Settings</b> (on some models <b>Port Settings</b>), and switch on <b>RTSP</b>. Use the camera's own login.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/h264Preview_01_main</code>.</p></div>${pathPhone("Reolink app", ["Camera settings", "Network", "Advanced", "Server Settings", "RTSP on"], "Where to switch on RTSP in the Reolink app.")}</div>`],
+  ["TP-Link Tapo (wired models, such as the C210)", `<div><ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Advanced Settings</b>, then <b>Camera Account</b>, and agree to the notice.</li><li>Choose a name and a password of 6 to 32 characters each. Letters and digits work best.</li></ol><p>Stream address: <code>rtsp://NAME:PASSWORD@ADDRESS:554/stream1</code>. Tapo Care, a microSD card and a recorder such as QoreWitness can only run two at a time, so switch one off if all three are on.</p></div>`],
+  ["Reolink (wired and PoE models)", `<div><p>In the Reolink app or desktop client, open the camera settings, then <b>Network</b>, <b>Advanced</b> and <b>Server Settings</b> (on some models <b>Port Settings</b>), and switch on <b>RTSP</b>. Use the camera's own login.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/h264Preview_01_main</code>.</p></div>`],
   ["Hikvision and Annke", `<p>RTSP is usually on already. Open the camera in your browser and check <b>Configuration</b>, <b>Network</b>, <b>Advanced Settings</b>. To use ONVIF, switch it on under <b>Integration Protocol</b> and add an ONVIF user.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/Streaming/Channels/101</code>.</p>`],
   ["Dahua and Amcrest", `<p>RTSP is usually on already. You can check it in the camera's web page under the network settings, where you can also switch on ONVIF.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/cam/realmonitor?channel=1&amp;subtype=0</code>.</p>`],
   ["Ubiquiti UniFi Protect", `<p>In UniFi Protect, open the camera, go to its settings and switch on an <b>RTSP</b> stream under the advanced options. Protect then shows a ready-made stream link. Copy it and keep it for the setup.</p>`],
@@ -462,13 +455,49 @@ const railItems = [
   ["s4", "Open the setup"],
   ["s5", "Done"],
 ];
+const COMPOSE_URL = `https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/docker-compose.yml`;
+const ROUTER_IP = `Find the IP address of that computer in your router app, in the list of connected devices. It looks like <code>192.168.1.42</code>.`;
+/** One choice in "Where will QoreWitness run?". The radio buttons show one install path (CSS :has). */
+const whereOpt = (id, title, sub) => `<label class="where-opt" for="w-${id}"><input type="radio" name="where" id="w-${id}" value="${id}"><span><b>${title}</b><small>${sub}</small></span></label>`;
+const pathLinux = `<div class="path-panel" id="path-linux"><h4>Raspberry Pi or Linux computer</h4><ol class="plain path-steps">
+<li><b>New Raspberry Pi?</b> Install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>. In its settings, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>. Write the card or SSD, connect it to the Pi and start it. Skip this if your computer already runs Linux.</li>
+<li>${ROUTER_IP}</li>
+<li>Open a terminal on your laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</li>
+<li>Paste this line. Replace <code>USER</code> with the user name of that computer and <code>IP-ADDRESS</code> with its IP address. Press Enter.
+${copybox("install-cmd", INSTALL, "Copy line")}</li>
+<li>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter that computer's password. At the end, the installer shows a <b>link</b> and a <b>pairing code</b>.
+${terminal}</li>
+</ol>
+${help("Something not working?", `<ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul>`)}
+</div>`;
+const composeSteps = (where) => `<li>Create a folder named <code>qorewitness</code> and save <a href="${COMPOSE_URL}">docker-compose.yml</a> in it.</li>
+${where === "server" ? `<li>In that folder, create a file named <code>.env</code> with this line, so your laptop or phone can open the setup:
+${copybox("env-server", "QW_UI_BIND=0.0.0.0:8080")}</li>
+<li>Open a terminal on the server (on a NAS, connect over SSH), go to that folder and run:` : `<li>Open a terminal in that folder. On a Mac, use <b>Terminal</b>. On Windows, use <b>PowerShell</b>. Go to the folder and run:`}
+${copybox(`compose-${where}`, "docker compose up -d\ndocker compose run --rm -T ui pair")}
+The second line shows your pairing code.</li>`;
+const pathServer = `<div class="path-panel" id="path-server"><h4>NAS or home server</h4><ol class="plain path-steps">
+<li>Make sure Docker with Compose runs on it. On Synology, install <a href="https://www.synology.com/en-global/dsm/packages/ContainerManager">Container Manager</a> from the Package Center. On other systems, see <a href="https://docs.docker.com/engine/install/">Install Docker Engine</a>. On Proxmox, create a Debian container or virtual machine and choose <b>Raspberry Pi or Linux computer</b> above.</li>
+<li>${ROUTER_IP}</li>
+${composeSteps("server")}
+<li>On your laptop or phone, open <code>http://IP-ADDRESS:8080/setup</code> with the server's IP address.</li>
+</ol>
+<p class="small">More detail: <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</p>
+</div>`;
+const pathDesktop = `<div class="path-panel" id="path-desktop"><h4>Windows or Mac</h4><ol class="plain path-steps">
+<li>Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and start it. Set the computer to never sleep, because QoreWitness only records while it is on.</li>
+${composeSteps("desktop")}
+<li>On the same computer, open <code>http://localhost:8080/setup</code>.</li>
+</ol>
+<p class="small">More detail: <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</p>
+</div>`;
 page({
   file: "get-started.html",
   current: "get-started.html",
   title: "Set up your camera | QoreWitness",
   desc: "Step by step: check that your camera is compatible, prepare it, install QoreWitness on an always-on computer and finish the setup in your browser.",
   body: `
-${head("Get started", "Set up your camera.", "QoreWitness works with any camera that offers an RTSP or ONVIF video stream on your home network. Plan about an hour from start to finish. You paste one line, and everything after that happens in your browser.", ["About an hour", "Any RTSP or ONVIF camera", "One line to paste"])}
+${head("Get started", "Set up your camera.", "QoreWitness works with any camera that offers an RTSP or ONVIF video stream on your home network.")}
 <section><div class="wrap">
 <div class="guide">
 <aside class="rail" aria-label="Steps"><h2>On this page</h2><ol>${railItems.map(([id, t]) => `<li${id === "need" ? ' class="nonum"' : ""}><a href="#${id}">${t}</a></li>`).join("")}</ol></aside>
@@ -477,23 +506,11 @@ ${head("Get started", "Set up your camera.", "QoreWitness works with any camera 
 <div id="need" class="need">
 <h2>What you need</h2>
 <ul class="checks" style="margin-top:16px">
-<li>${ico("check")}<span><b>A compatible camera</b> that shares an RTSP or ONVIF stream. Step 1 shows you how to tell.</span></li>
-<li>${ico("check")}<span><b>A computer that stays on</b>, such as a Raspberry Pi, a mini PC, a home server or a NAS. QoreWitness runs anywhere Docker runs.</span></li>
-<li>${ico("check")}<span><b>One home network</b> that connects the camera, that computer and the laptop or phone you use for the setup.</span></li>
+<li>${ico("check")}<span><b>A compatible camera</b> that shares an RTSP or ONVIF stream.</span></li>
+<li>${ico("check")}<span><b>A computer that stays on</b>, such as a Raspberry Pi, a mini PC, a home server or a NAS. A Windows or Mac computer works too.</span></li>
 </ul>
-<h3 style="margin:28px 0 4px">Hardware</h3>
-${hwTable}
-<div class="callout"><b class="t">How much storage?</b>As a rough guide, a 2K camera streams at about 1.5 to 2 Mbit/s and writes about 15 to 20 GB a day, so two weeks of video for one camera needs roughly 200 to 300 GB. On a Raspberry Pi, use a USB SSD, because SD cards wear out quickly when they record video day and night.</div>
-<h3 style="margin:28px 0 4px">Where it runs</h3>
-${platformTable}
-<p class="small muted">The Linux installer is the path we test from start to finish. On a NAS, a home server, Windows or macOS you run the same software with Docker Compose.</p>
-${help("Guide: Docker Compose on a NAS, home server, Windows or Mac", `<ol class="plain">
-<li>Install Docker with Compose: Docker Desktop on Windows or macOS, Container Manager on Synology, or the Docker tools of your server.</li>
-<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml">docker-compose.yml</a> in it.</li>
-<li>To open the setup from another device, add a file named <code>.env</code> to that folder with the line <code>QW_UI_BIND=0.0.0.0:8080</code>.</li>
-<li>In that folder, run <code>docker compose up -d</code>, then <code>docker compose run --rm -T ui pair</code> to see your pairing code.</li>
-<li>Open <code>http://ADDRESS:8080/setup</code>, where ADDRESS is the computer's address (or <code>localhost</code> on the same computer), type the code and continue with step 4.</li>
-</ol><p>The details are in <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</p>`, "compose")}
+${help("Hardware requirements", hwTable, "hardware")}
+${help("How much storage?", `<p>A 2K camera writes about 15 to 20 GB a day, so two weeks of video for one camera needs roughly 200 to 300 GB. On a Raspberry Pi, use a USB SSD, because SD cards wear out quickly when they record video day and night.</p>`)}
 <div class="callout"><b class="t">Aim your camera at your own property</b>If it films the street or a neighbour's home, privacy law may apply to you. A small sign helps. See <a href="trust.html#privacy">Trust and limits</a>.</div>
 </div>
 
@@ -501,6 +518,7 @@ ${help("Guide: Docker Compose on a NAS, home server, Windows or Mac", `<ol class
 
 <li class="step" id="s1"><h3>Check that your camera is compatible</h3><p class="time">Camera app or manual</p><div class="body">
 <p>Look in your camera app, its settings or its manual for any of these words: <b>RTSP</b>, <b>ONVIF</b>, <b>camera account</b>, <b>local stream</b> or <b>NVR</b>. If you find one, your camera can very likely share its video with QoreWitness.</p>
+<p>Not sure? Search the web or ask an AI assistant: "Does my [brand and model] support RTSP?"</p>
 <p>Battery cameras and cameras that only stream to their maker's cloud do not offer that stream, so they cannot work. The <a href="cameras.html">camera list</a> shows what we know brand by brand, and you can <a href="cameras.html#check">check your own camera in two minutes</a> with the free VLC player.</p>
 </div></li>
 
@@ -510,18 +528,22 @@ ${brandHints}
 <p style="margin-top:20px">Two good habits for any camera: use a new password that you do not use anywhere else, and give the camera a fixed address in your router (often called a "DHCP reservation"), so QoreWitness always finds it.</p>
 </div></li>
 
-<li class="step" id="s3"><h3>Install QoreWitness on your always-on computer</h3><p class="time">Terminal on your laptop</p><div class="body">
-<p>Open a terminal on your own laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</p>
-<p>Paste this line, replace <code>USER</code> with the user name of that computer, and press Enter. If you did not name the computer <code>qorewitness</code>, also replace <code>qorewitness.local</code> with its name or with its IP address from your router app.</p>
-${copybox("install-cmd", INSTALL, "Copy line")}
-<p>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter that computer's password. The installer takes care of the rest, and at the end it shows a <b>link</b> and a <b>pairing code</b> in large text.</p>
-${terminal}
-${help("Starting with a new Raspberry Pi", `<ol class="plain"><li>Install Raspberry Pi Imager on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>.</li><li>In its settings, set the host name to <code>qorewitness</code>, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>.</li><li>Write the card or SSD, connect it to the Pi and start it. Give it a moment to boot, then paste the line above.</li></ol>`)}
-${help("Something not working?", `<ul class="plain"><li><b>qorewitness.local not found.</b> Use the computer's IP address from your router app instead of <code>qorewitness.local</code>.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs, and you can run the line again at any time.</li></ul>`)}
+<li class="step" id="s3"><h3>Install QoreWitness</h3><p class="time">Pick where it runs</p><div class="body">
+<div class="where">
+<fieldset class="where-pick"><legend>Where will QoreWitness run?</legend>
+${whereOpt("linux", "Raspberry Pi or Linux computer", "Debian, Ubuntu, Raspberry Pi OS")}
+${whereOpt("server", "NAS or home server", "Synology, Unraid, TrueNAS, Proxmox")}
+${whereOpt("desktop", "Windows or Mac", "With Docker Desktop")}
+</fieldset>
+<p class="where-hint small muted">Pick one to see its steps.</p>
+${pathLinux}
+${pathServer}
+${pathDesktop}
+</div>
 </div></li>
 
 <li class="step" id="s4"><h3>Open the setup in your browser</h3><p class="time">Browser on your laptop or phone</p><div class="body">
-<p>Open the link from the installer and type the pairing code. Choose a password for your dashboard, and QoreWitness looks for cameras on your network.</p>
+<p>Open the setup link from step 3 and type the pairing code. Choose a password for your dashboard, and QoreWitness looks for cameras on your network.</p>
 <ol class="plain">
 <li><b>Pick your camera</b> from the list, or type its address if it is not there.</li>
 <li><b>Enter the camera account</b> name and password from step 2, tick that the camera films your own property, and press <b>Test camera</b>.</li>
@@ -535,12 +557,12 @@ ${screens("The setup in your browser, five screens", [
   ["setup-picture", ALT.picture, "4. Confirm its picture"],
   ["setup-progress", ALT.progress, "5. Let it connect"],
 ])}
-${help("Something not working?", `<ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the line from step 3 again with <code>--new-password</code> added after <code>--yes</code>.</li></ul>`)}
+${help("Something not working?", `<ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the install line from step 3 again with <code>--new-password</code> added after <code>--yes</code>. With Docker Compose, run <code>docker compose run --rm -T ui pair --new-password</code> in the <code>qorewitness</code> folder.</li></ul>`)}
 </div></li>
 
 <li class="step" id="s5"><h3>Done</h3><p class="time">Dashboard</p><div class="body">
 <p>You see <b>Sealing started</b>, and your first seals arrive shortly after. Open your dashboard and bookmark it on your phone and laptop. Its status line turns green as soon as sealing runs.</p>
-<div class="duo">${phone("setup-done", ALT.done, "Sealing started")}${browser("dashboard-desktop", ALT.dashDesk, "qorewitness.local:8080", "Your dashboard, here on a laptop")}</div>
+<div class="duo">${phone("setup-done", ALT.done, "Sealing started")}${browser("dashboard-desktop", ALT.dashDesk, "192.168.1.42:8080", "Your dashboard, here on a laptop")}</div>
 <div class="callout ok"><b class="t">That's it.</b>Keep using your camera app for live view and alerts, just as before. <a href="daily-use.html">Daily use</a> explains the dashboard, and <a href="prove.html">Prove a video</a> shows how to share a sealed clip.</div>
 </div></li>
 </ol>
@@ -627,7 +649,7 @@ page({
 ${head("Daily use", "Set it up once, and it simply keeps going.", "Keep using your camera app for live view and alerts, just as you do today. QoreWitness works quietly in the background, and your dashboard tells you at a glance that all is well.")}
 <section class="edged"><div class="wrap narrow">
 <h2>Your dashboard</h2>
-<p style="margin-top:16px">It shows one status line in a colour, and when something needs you, exactly one thing to do. Bookmark it on your phone and laptop. On a Raspberry Pi named <code>qorewitness</code>, the address is usually <code>http://qorewitness.local:8080</code>.</p>
+<p style="margin-top:16px">It shows one status line in a colour, and when something needs you, exactly one thing to do. Bookmark it on your phone and laptop. Its address is the one the installer showed, such as <code>http://192.168.1.42:8080</code>.</p>
 <div class="tablewrap"><table class="stack"><thead><tr><th scope="col">Colour</th><th scope="col">It says</th><th scope="col">What to do</th></tr></thead><tbody>
 <tr><td><b style="color:var(--ok)">Green</b></td><td data-label="It says">Sealing OK.</td><td data-label="What to do">Nothing at all.</td></tr>
 <tr><td><b style="color:var(--warn)">Orange</b></td><td data-label="It says">Waiting for the first seal.</td><td data-label="What to do">Nothing. It arrives shortly after setup.</td></tr>
@@ -979,7 +1001,7 @@ verifier (static page or CLI): clip + receipt
 <p class="eyebrow">Run it yourself</p><h2>Install, update, back up, remove.</h2>
 <ul class="plain" style="margin-top:16px">
 <li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</li>
-<li><b>Other platforms:</b> the Linux installer is tested end to end. NAS, home server, Windows and macOS use the same <code>docker-compose.yml</code> (<a href="get-started.html#compose">short guide</a>).</li>
+<li><b>Other platforms:</b> a NAS, a home server, Windows and macOS use the same <code>docker-compose.yml</code> (<a href="get-started.html#s3">guide</a>).</li>
 <li><b>Other camera brands:</b> with <code>--terminal</code> you can give a full stream URL, for example <code>rtsp://user:password@192.168.1.20:554/stream</code>. Compatibility status per brand: <a href="cameras.html">cameras</a>. Research notes: <a href="${GHDOC("CAMERAS.md")}">CAMERAS.md</a>.</li>
 <li><b>Update:</b> set the new version in <code>~/qorewitness/.env</code> (<code>QW_VERSION</code>), then <code>docker compose pull &amp;&amp; docker compose up -d</code>. The version is pinned, and QoreWitness never updates itself.</li>
 <li><b>Back up:</b> copy <code>~/qorewitness/data</code>, at least <code>qorewitness.env</code> and <code>keys</code>. Anyone with these files can use the test account.</li>

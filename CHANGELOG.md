@@ -2,6 +2,12 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
+## Unreleased
+
+### 2026-11-25: setup guide after the owner's first walkthrough
+- Get started: shorter intro, no time estimate. "What you need" lists the camera and an always-on computer. Hardware and storage sit in two fold-outs. Step 1 suggests a web search or an AI assistant. Step 3 asks where QoreWitness runs (Raspberry Pi or Linux, NAS or home server, Windows or Mac) and shows only that path, top to bottom. The install line uses `USER@IP-ADDRESS`, not `qorewitness.local`. Illustrated camera-app phones and the caption under the terminal are gone. Raspberry Pi Imager, Docker Desktop, Synology Container Manager and Docker Engine link to their own pages.
+- Daily use and the dashboard frame show an IP address instead of `qorewitness.local`. Developers: the Compose link points to step 3.
+
 ## 0.6.0-alpha.4 (25 Nov 2026)
 
 QoreWitness Verify trusts only our registries, one drop zone, times with the time zone, one name per thing in the app (evidence file, receipt, pairing code), CSP on Verify, installer temp file via mktemp. Install line pinned to this tag.
