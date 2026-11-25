@@ -61,7 +61,31 @@ const iso = (s: bigint | number) => new Date(Number(s) * 1000).toISOString();
  * fileSha3 is the SHA3-256 of the file. For a spec/3 segment both fingerprints decide:
  * without fileSha3 the result is partial, never ok.
  */
+/**
+ * The AnchorRegistry contracts that QoreWitness deployed, per EVM chain id. The
+ * receipt names its registry, and anyone can deploy a contract that answers
+ * "found" with any time. So on these chains only the listed contracts count.
+ * Other chains (a local Hardhat node) are not limited. Security review 3.
+ */
+export const KNOWN_REGISTRIES: Readonly<Record<number, readonly Address[]>> = {
+  9800: [
+    "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365", // v4 (live)
+    "0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2", // v3
+    "0xA73d4347b50C2A373533915d698Bf03a01c65aAF", // first deployment (receipt v2)
+  ],
+};
+
+export function knownRegistry(chainId: number, registry: unknown): boolean {
+  const list = KNOWN_REGISTRIES[chainId];
+  if (!list) return true;
+  return typeof registry === "string" && list.some((a) => a.toLowerCase() === registry.toLowerCase());
+}
+
 export async function verifyReceipt(pub: PublicClient, r: ReceiptV3 | ReceiptV2, fileHash: Uint8Array, fileSha3?: Uint8Array): Promise<VerifyResult> {
+  // The receipt's chain id is checked against the RPC in the next step, so this covers the RPC's chain too.
+  if (!knownRegistry(r.chain?.evmChainId, r.chain?.registry)) {
+    return { ok: false, steps: [{ state: "fail", text: "The receipt points to a contract that is not the QoreWitness registry on QoreChain. The record cannot be confirmed." }] };
+  }
   if (r.format === "qorewitness-receipt/v2") return verifyReceiptV2(pub, r as ReceiptV2, fileHash);
   return verifyReceiptV3(pub, r as ReceiptV3, fileHash, fileSha3);
 }

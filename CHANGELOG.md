@@ -2,6 +2,10 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
+## Unreleased
+
+- Security (review 3): the verifier (QoreWitness Verify and `scripts/verify-receipt.ts`) accepts only the QoreWitness registries on qorechain-diana (v4, v3 and the first deployment). Before, a receipt could name any contract on the chain, and a fake contract could answer "anchored" with any block and time. Such a receipt now shows "Not confirmed". No change for real receipts. QoreWitness Verify SHA-256 `a25d483967e0bad97250c60a6e2f1495ac7d529f9aed06d11b177a67752f943f` (regression test in test/sec-review.test.ts).
+
 ## 0.6.0-alpha.3 (23 Nov 2026)
 
 Sound in the clips, the piped installer fixed, QoreWitness Verify wording.
