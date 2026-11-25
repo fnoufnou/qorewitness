@@ -459,41 +459,57 @@ const railItems = [
   ["s5", "Done"],
 ];
 const COMPOSE_URL = `https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/docker-compose.yml`;
-const ROUTER_IP = `Find the IP address of that computer in your router app, in the list of connected devices. It looks like <code>192.168.1.42</code>.`;
+const INSTALL_HERE = `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/install.sh | bash -s -- --yes`;
 /** One tab in "Where will QoreWitness run?". site.js turns the paths into tabs. Without it, all paths show one after the other. */
 const whereTab = (id, title, sub, on = false) => `<button type="button" role="tab" id="tab-${id}" aria-controls="path-${id}" aria-selected="${on}"${on ? "" : ' tabindex="-1"'}><b>${title}</b><small>${sub}</small></button>`;
-const pathLinux = `<div class="path-panel" id="path-linux" role="tabpanel" aria-labelledby="tab-linux" tabindex="0"><h4>Raspberry Pi or Linux computer</h4><ol class="plain path-steps">
-<li><b>New Raspberry Pi?</b> Install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>. In its settings, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>. Write the card or SSD, connect it to the Pi and start it. Skip this if your computer already runs Linux.</li>
-<li>${ROUTER_IP}</li>
+const panel = (id, title, inner) => `<div class="path-panel" id="path-${id}" role="tabpanel" aria-labelledby="tab-${id}" tabindex="0"><h4>${title}</h4>${inner}</div>`;
+const pathLinux = panel("linux", "Raspberry Pi or Linux computer", `<ol class="plain path-steps">
+<li><b>New Raspberry Pi?</b> Install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>. In its settings, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>. Write the card or SSD, connect it to the Pi and start it.</li>
+<li>Find the IP address of the computer in your router app.</li>
 <li>Open a terminal on your laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</li>
-<li>Paste this line. Replace <code>USER</code> with the user name of that computer and <code>IP-ADDRESS</code> with its IP address. Press Enter.
+<li>Paste this line. Replace <code>USER</code> with the user name of the computer and <code>IP-ADDRESS</code> with its IP address. Press Enter.
 ${copybox("install-cmd", INSTALL, "Copy line")}</li>
-<li>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter that computer's password. At the end, the installer shows a <b>link</b> and a <b>pairing code</b>.
+<li>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter the computer's password. At the end, the installer shows a <b>link</b> and a <b>pairing code</b>.
 ${terminal}</li>
 </ol>
-${help("Something not working?", `<ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul>`)}
-</div>`;
-const composeSteps = (where) => `<li>Create a folder named <code>qorewitness</code> and save <a href="${COMPOSE_URL}">docker-compose.yml</a> in it.</li>
-${where === "server" ? `<li>In that folder, create a file named <code>.env</code> with this line, so your laptop or phone can open the setup:
-${copybox("env-server", "QW_UI_BIND=0.0.0.0:8080")}</li>
-<li>Open a terminal on the server (on a NAS, connect over SSH), go to that folder and run:` : `<li>Open a terminal in that folder. On a Mac, use <b>Terminal</b>. On Windows, use <b>PowerShell</b>. Go to the folder and run:`}
-${copybox(`compose-${where}`, "docker compose up -d\ndocker compose run --rm -T ui pair")}
-The second line shows your pairing code.</li>`;
-const pathServer = `<div class="path-panel" id="path-server" role="tabpanel" aria-labelledby="tab-server" tabindex="0"><h4>NAS or home server</h4><ol class="plain path-steps">
-<li>Make sure Docker with Compose runs on it. On Synology, install <a href="https://www.synology.com/en-global/dsm/packages/ContainerManager">Container Manager</a> from the Package Center. On other systems, see <a href="https://docs.docker.com/engine/install/">Install Docker Engine</a>. On Proxmox, create a Debian container or virtual machine and choose <b>Raspberry Pi or Linux computer</b> above.</li>
-<li>${ROUTER_IP}</li>
-${composeSteps("server")}
-<li>On your laptop or phone, open <code>http://IP-ADDRESS:8080/setup</code> with the server's IP address.</li>
+${help("Something not working?", `<ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul>`)}`);
+const pathProxmox = panel("proxmox", "Proxmox or another home server", `<ol class="plain path-steps">
+<li>Create a Debian 12 container: unprivileged, with <b>nesting</b> and <b>keyctl</b> on (Options, Features). 2 cores and 2 GB memory are enough. Size the disk for the video you want to keep. A Debian or Ubuntu VM works too.</li>
+<li>Open a shell in it, as root or as a user with sudo, and run:
+${copybox("install-here", INSTALL_HERE, "Copy line")}
+The installer adds Docker when it is missing, installs into <code>~/qorewitness</code> and ends with a <b>link</b> and a <b>pairing code</b>.</li>
 </ol>
-<p class="small">More detail: <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</p>
-</div>`;
-const pathDesktop = `<div class="path-panel" id="path-desktop" role="tabpanel" aria-labelledby="tab-desktop" tabindex="0"><h4>Windows or Mac</h4><ol class="plain path-steps">
+<p class="small">Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs.</p>`);
+const nasCmd = `mkdir -p qorewitness/data && cd qorewitness
+curl -fsSLO ${COMPOSE_URL}
+sudo chown 10001:10001 data && sudo chmod 700 data
+echo "QW_UI_BIND=0.0.0.0:8080" > .env
+sudo docker compose up -d
+sudo docker compose run --rm -T ui pair`;
+const pathNas = panel("nas", "NAS", `<ol class="plain path-steps">
+<li>Make sure Docker with Compose runs on it. On Synology, install <a href="https://www.synology.com/en-global/dsm/packages/ContainerManager">Container Manager</a> from the Package Center.</li>
+<li>Connect to the NAS over SSH and go to the folder where you keep your Docker apps, such as <code>/volume1/docker</code> on Synology. Paste:
+${copybox("install-nas", nasCmd)}
+Logged in as root? Leave out <code>sudo</code>. The last line shows your pairing code.</li>
+<li>Open <code>http://IP-ADDRESS:8080/setup</code> with the address of your NAS.</li>
+</ol>`);
+const macCmd = `mkdir -p qorewitness && cd qorewitness
+curl -fsSLO ${COMPOSE_URL}
+docker compose up -d
+docker compose run --rm -T ui pair`;
+const winCmd = `mkdir qorewitness; cd qorewitness
+curl.exe -fsSLO ${COMPOSE_URL}
+docker compose up -d
+docker compose run --rm -T ui pair`;
+const pathDesktop = panel("desktop", "Windows or Mac", `<ol class="plain path-steps">
 <li>Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and start it. Set the computer to never sleep, because QoreWitness only records while it is on.</li>
-${composeSteps("desktop")}
+<li>On a Mac, open <b>Terminal</b> and paste:
+${copybox("install-mac", macCmd)}
+On Windows, open <b>PowerShell</b> and paste:
+${copybox("install-win", winCmd)}
+The last line shows your pairing code.</li>
 <li>On the same computer, open <code>http://localhost:8080/setup</code>.</li>
-</ol>
-<p class="small">More detail: <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</p>
-</div>`;
+</ol>`);
 page({
   file: "get-started.html",
   current: "get-started.html",
@@ -510,7 +526,7 @@ ${head("Get started", "Set up your camera.", "QoreWitness works with any camera 
 <h2>What you need</h2>
 <ul class="checks" style="margin-top:16px">
 <li>${ico("check")}<span><b>A compatible camera</b> that shares an RTSP or ONVIF stream.</span></li>
-<li>${ico("check")}<span><b>A computer that stays on</b>, such as a Raspberry Pi, a mini PC, a home server or a NAS. A Windows or Mac computer works too.</span></li>
+<li>${ico("check")}<span><b>A computer that stays on</b>, such as a Raspberry Pi, a home server, a NAS, or a Windows or Mac computer.</span></li>
 </ul>
 ${help("Hardware requirements", hwTable, "hardware")}
 ${help("How much storage?", `<p>A 2K camera writes about 15 to 20 GB a day, so two weeks of video for one camera needs roughly 200 to 300 GB. On a Raspberry Pi, use a USB SSD, because SD cards wear out quickly when they record video day and night.</p>`)}
@@ -535,12 +551,14 @@ ${brandHints}
 <div class="tabs" data-tabs>
 <p class="tabs-q">Where will QoreWitness run?</p>
 <div class="tablist" role="tablist" aria-label="Where will QoreWitness run?" hidden>
-${whereTab("linux", "Raspberry Pi or Linux", "Debian, Ubuntu, Raspberry Pi OS", true)}
-${whereTab("server", "NAS or home server", "Synology, Unraid, TrueNAS, Proxmox")}
+${whereTab("linux", "Raspberry Pi", "Or another Linux computer", true)}
+${whereTab("proxmox", "Proxmox", "Or another home server")}
+${whereTab("nas", "NAS", "Synology, Unraid, TrueNAS")}
 ${whereTab("desktop", "Windows or Mac", "With Docker Desktop")}
 </div>
 ${pathLinux}
-${pathServer}
+${pathProxmox}
+${pathNas}
 ${pathDesktop}
 </div>
 </div></li>
@@ -560,7 +578,7 @@ ${screens("The setup in your browser, five screens", [
   ["setup-picture", ALT.picture, "4. Confirm its picture"],
   ["setup-progress", ALT.progress, "5. Let it connect"],
 ])}
-${help("Something not working?", `<ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the install line from step 3 again with <code>--new-password</code> added after <code>--yes</code>. With Docker Compose, run <code>docker compose run --rm -T ui pair --new-password</code> in the <code>qorewitness</code> folder.</li></ul>`)}
+${help("Something not working?", `<ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the install line from step 3 again with <code>--new-password</code> added after <code>--yes</code>. Without the install line, run <code>docker compose run --rm -T ui pair --new-password</code> in the <code>qorewitness</code> folder.</li></ul>`)}
 </div></li>
 
 <li class="step" id="s5"><h3>Done</h3><p class="time">Dashboard</p><div class="body">

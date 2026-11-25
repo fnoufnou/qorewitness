@@ -20,7 +20,7 @@
 <meta name="twitter:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/site.css?v=6a66cce070">
+<link rel="stylesheet" href="assets/site.css?v=e6612034e9">
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -68,7 +68,7 @@
 <h2>What you need</h2>
 <ul class="checks" style="margin-top:16px">
 <li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>A compatible camera</b> that shares an RTSP or ONVIF stream.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>A computer that stays on</b>, such as a Raspberry Pi, a mini PC, a home server or a NAS. A Windows or Mac computer works too.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>A computer that stays on</b>, such as a Raspberry Pi, a home server, a NAS, or a Windows or Mac computer.</span></li>
 </ul>
 <details class="help" id="hardware"><summary>Hardware requirements</summary><div class="in"><div class="tablewrap" role="region" aria-label="Minimum and recommended hardware" tabindex="0"><table class="stack"><caption class="sr">Minimum and recommended hardware</caption><thead><tr><th scope="col"><span class="sr">Part</span></th><th scope="col">Minimum</th><th scope="col">Recommended</th></tr></thead><tbody>
 <tr><th scope="row">Processor</th><td data-label="Minimum">2 cores, 64-bit (x86-64 or ARM64)</td><td data-label="Recommended">4 cores</td></tr>
@@ -99,17 +99,18 @@
 <div class="tabs" data-tabs>
 <p class="tabs-q">Where will QoreWitness run?</p>
 <div class="tablist" role="tablist" aria-label="Where will QoreWitness run?" hidden>
-<button type="button" role="tab" id="tab-linux" aria-controls="path-linux" aria-selected="true"><b>Raspberry Pi or Linux</b><small>Debian, Ubuntu, Raspberry Pi OS</small></button>
-<button type="button" role="tab" id="tab-server" aria-controls="path-server" aria-selected="false" tabindex="-1"><b>NAS or home server</b><small>Synology, Unraid, TrueNAS, Proxmox</small></button>
+<button type="button" role="tab" id="tab-linux" aria-controls="path-linux" aria-selected="true"><b>Raspberry Pi</b><small>Or another Linux computer</small></button>
+<button type="button" role="tab" id="tab-proxmox" aria-controls="path-proxmox" aria-selected="false" tabindex="-1"><b>Proxmox</b><small>Or another home server</small></button>
+<button type="button" role="tab" id="tab-nas" aria-controls="path-nas" aria-selected="false" tabindex="-1"><b>NAS</b><small>Synology, Unraid, TrueNAS</small></button>
 <button type="button" role="tab" id="tab-desktop" aria-controls="path-desktop" aria-selected="false" tabindex="-1"><b>Windows or Mac</b><small>With Docker Desktop</small></button>
 </div>
 <div class="path-panel" id="path-linux" role="tabpanel" aria-labelledby="tab-linux" tabindex="0"><h4>Raspberry Pi or Linux computer</h4><ol class="plain path-steps">
-<li><b>New Raspberry Pi?</b> Install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>. In its settings, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>. Write the card or SSD, connect it to the Pi and start it. Skip this if your computer already runs Linux.</li>
-<li>Find the IP address of that computer in your router app, in the list of connected devices. It looks like <code>192.168.1.42</code>.</li>
+<li><b>New Raspberry Pi?</b> Install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>. In its settings, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>. Write the card or SSD, connect it to the Pi and start it.</li>
+<li>Find the IP address of the computer in your router app.</li>
 <li>Open a terminal on your laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</li>
-<li>Paste this line. Replace <code>USER</code> with the user name of that computer and <code>IP-ADDRESS</code> with its IP address. Press Enter.
+<li>Paste this line. Replace <code>USER</code> with the user name of the computer and <code>IP-ADDRESS</code> with its IP address. Press Enter.
 <div class="copybox"><code id="install-cmd" tabindex="0">ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes"</code><button class="btn" type="button" data-copy="install-cmd" aria-label="Copy line: the install line"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div></li>
-<li>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter that computer's password. At the end, the installer shows a <b>link</b> and a <b>pairing code</b>.
+<li>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter the computer's password. At the end, the installer shows a <b>link</b> and a <b>pairing code</b>.
 <figure class="shot"><div class="device term"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Terminal</span></div><pre tabindex="0" aria-label="The end of the installer output"><span class="dim">Starting QoreWitness</span>
 <span class="dim"> ✔ Container qorewitness-agent  Started</span>
 <span class="dim"> ✔ Container qorewitness-ui     Started</span>
@@ -122,33 +123,41 @@
 
 Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div></figure></li>
 </ol>
-<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-alpha.4/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul></div></details>
-</div>
-<div class="path-panel" id="path-server" role="tabpanel" aria-labelledby="tab-server" tabindex="0"><h4>NAS or home server</h4><ol class="plain path-steps">
-<li>Make sure Docker with Compose runs on it. On Synology, install <a href="https://www.synology.com/en-global/dsm/packages/ContainerManager">Container Manager</a> from the Package Center. On other systems, see <a href="https://docs.docker.com/engine/install/">Install Docker Engine</a>. On Proxmox, create a Debian container or virtual machine and choose <b>Raspberry Pi or Linux computer</b> above.</li>
-<li>Find the IP address of that computer in your router app, in the list of connected devices. It looks like <code>192.168.1.42</code>.</li>
-<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml">docker-compose.yml</a> in it.</li>
-<li>In that folder, create a file named <code>.env</code> with this line, so your laptop or phone can open the setup:
-<div class="copybox"><code id="env-server" tabindex="0">QW_UI_BIND=0.0.0.0:8080</code><button class="btn" type="button" data-copy="env-server" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div></li>
-<li>Open a terminal on the server (on a NAS, connect over SSH), go to that folder and run:
-<div class="copybox"><code id="compose-server" tabindex="0">docker compose up -d
-docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="compose-server" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
-The second line shows your pairing code.</li>
-<li>On your laptop or phone, open <code>http://IP-ADDRESS:8080/setup</code> with the server's IP address.</li>
+<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-alpha.4/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul></div></details></div>
+<div class="path-panel" id="path-proxmox" role="tabpanel" aria-labelledby="tab-proxmox" tabindex="0"><h4>Proxmox or another home server</h4><ol class="plain path-steps">
+<li>Create a Debian 12 container: unprivileged, with <b>nesting</b> and <b>keyctl</b> on (Options, Features). 2 cores and 2 GB memory are enough. Size the disk for the video you want to keep. A Debian or Ubuntu VM works too.</li>
+<li>Open a shell in it, as root or as a user with sudo, and run:
+<div class="copybox"><code id="install-here" tabindex="0">curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes</code><button class="btn" type="button" data-copy="install-here" aria-label="Copy line: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div>
+The installer adds Docker when it is missing, installs into <code>~/qorewitness</code> and ends with a <b>link</b> and a <b>pairing code</b>.</li>
 </ol>
-<p class="small">More detail: <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/INSTALL.md">INSTALL.md</a>.</p>
-</div>
+<p class="small">Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-alpha.4/install.sh">GitHub</a>, exactly the version the line runs.</p></div>
+<div class="path-panel" id="path-nas" role="tabpanel" aria-labelledby="tab-nas" tabindex="0"><h4>NAS</h4><ol class="plain path-steps">
+<li>Make sure Docker with Compose runs on it. On Synology, install <a href="https://www.synology.com/en-global/dsm/packages/ContainerManager">Container Manager</a> from the Package Center.</li>
+<li>Connect to the NAS over SSH and go to the folder where you keep your Docker apps, such as <code>/volume1/docker</code> on Synology. Paste:
+<div class="copybox"><code id="install-nas" tabindex="0">mkdir -p qorewitness/data && cd qorewitness
+curl -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
+sudo chown 10001:10001 data && sudo chmod 700 data
+echo "QW_UI_BIND=0.0.0.0:8080" > .env
+sudo docker compose up -d
+sudo docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="install-nas" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+Logged in as root? Leave out <code>sudo</code>. The last line shows your pairing code.</li>
+<li>Open <code>http://IP-ADDRESS:8080/setup</code> with the address of your NAS.</li>
+</ol></div>
 <div class="path-panel" id="path-desktop" role="tabpanel" aria-labelledby="tab-desktop" tabindex="0"><h4>Windows or Mac</h4><ol class="plain path-steps">
 <li>Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and start it. Set the computer to never sleep, because QoreWitness only records while it is on.</li>
-<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml">docker-compose.yml</a> in it.</li>
-<li>Open a terminal in that folder. On a Mac, use <b>Terminal</b>. On Windows, use <b>PowerShell</b>. Go to the folder and run:
-<div class="copybox"><code id="compose-desktop" tabindex="0">docker compose up -d
-docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="compose-desktop" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
-The second line shows your pairing code.</li>
+<li>On a Mac, open <b>Terminal</b> and paste:
+<div class="copybox"><code id="install-mac" tabindex="0">mkdir -p qorewitness && cd qorewitness
+curl -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
+docker compose up -d
+docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="install-mac" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+On Windows, open <b>PowerShell</b> and paste:
+<div class="copybox"><code id="install-win" tabindex="0">mkdir qorewitness; cd qorewitness
+curl.exe -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
+docker compose up -d
+docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="install-win" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+The last line shows your pairing code.</li>
 <li>On the same computer, open <code>http://localhost:8080/setup</code>.</li>
-</ol>
-<p class="small">More detail: <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/INSTALL.md">INSTALL.md</a>.</p>
-</div>
+</ol></div>
 </div>
 </div></li>
 
@@ -161,7 +170,7 @@ The second line shows your pairing code.</li>
 </ol>
 <p>A progress bar then connects your camera to the public ledger. You can close the page while it works. During the beta we cover the network fees, so there is no wallet to set up and nothing to pay or top up.</p>
 <div class="screens" role="region" aria-label="The setup in your browser, five screens" tabindex="0"><ol><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-pair.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Set up QoreWitness, with a field for the 6-digit pairing code and a Continue button." loading="lazy" decoding="async"></div><figcaption>1. Type the pairing code</figcaption></figure></li><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-password.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Choose a password for QoreWitness, with a Show password option and a Save password button." loading="lazy" decoding="async"></div><figcaption>2. Choose a password</figcaption></figure></li><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-camera.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Connect your camera. Two cameras found on the network, the brand TP-Link Tapo picked, the camera account filled in and a Test camera button." loading="lazy" decoding="async"></div><figcaption>3. Pick your camera</figcaption></figure></li><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-picture.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Is this your camera?, with a picture of a back garden from the camera and the buttons Yes, this is my camera and Try again." loading="lazy" decoding="async"></div><figcaption>4. Confirm its picture</figcaption></figure></li><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-progress.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Connecting your camera, with a progress bar and the note that you can close the page." loading="lazy" decoding="async"></div><figcaption>5. Let it connect</figcaption></figure></li></ol></div>
-<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the install line from step 3 again with <code>--new-password</code> added after <code>--yes</code>. With Docker Compose, run <code>docker compose run --rm -T ui pair --new-password</code> in the <code>qorewitness</code> folder.</li></ul></div></details>
+<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the install line from step 3 again with <code>--new-password</code> added after <code>--yes</code>. Without the install line, run <code>docker compose run --rm -T ui pair --new-password</code> in the <code>qorewitness</code> folder.</li></ul></div></details>
 </div></li>
 
 <li class="step" id="s5"><h3>Done</h3><p class="time">Dashboard</p><div class="body">
