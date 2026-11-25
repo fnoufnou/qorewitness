@@ -65,3 +65,38 @@
   check();
   window.addEventListener("resize", check);
 })();
+
+/* Tabs (Get started, step 3). Without this file every panel shows, each with its own heading. */
+(function () {
+  document.querySelectorAll("[data-tabs]").forEach(function (box) {
+    var list = box.querySelector("[role=tablist]");
+    if (!list) return;
+    var tabs = Array.prototype.slice.call(list.querySelectorAll("[role=tab]"));
+    function panel(t) { return document.getElementById(t.getAttribute("aria-controls")); }
+    function select(tab, focus) {
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute("aria-selected", on ? "true" : "false");
+        t.tabIndex = on ? 0 : -1;
+        var p = panel(t);
+        if (p) p.hidden = !on;
+      });
+      if (focus) tab.focus();
+    }
+    var start = tabs[0];
+    var hash = location.hash.replace("#", "");
+    tabs.forEach(function (t) { if (t.getAttribute("aria-controls") === hash) start = t; });
+    list.hidden = false;
+    box.classList.add("js");
+    select(start, false);
+    tabs.forEach(function (t, i) {
+      t.addEventListener("click", function () { select(t, false); });
+      t.addEventListener("keydown", function (e) {
+        var n = e.key === "ArrowRight" || e.key === "ArrowDown" ? i + 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : null;
+        if (n === null) return;
+        e.preventDefault();
+        select(tabs[(n + tabs.length) % tabs.length], true);
+      });
+    });
+  });
+})();

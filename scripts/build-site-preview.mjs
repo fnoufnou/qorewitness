@@ -7,7 +7,8 @@
 //
 // Shared CSS and JS live in web/site/assets/. Fonts live in web/site/fonts/.
 // Copy and facts are in this file. Edit here, then run the script again.
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,6 +20,8 @@ const UP = live ? "" : "../site/"; // prefix for files that live in web/site/ (v
 mkdirSync(outDir, { recursive: true });
 
 const SITE = "https://qorewitness.fnoufnou.com";
+/** Short content hashes in the asset links, so a browser never keeps an old stylesheet or script after a deploy. */
+const ASSET_V = Object.fromEntries(["css", "js"].map((ext) => [ext, createHash("sha256").update(readFileSync(join(root, "assets", `site.${ext}`))).digest("hex").slice(0, 10)]));
 const GH = "https://github.com/fnoufnou/qorewitness";
 const GHDOC = (f) => `${GH}/blob/main/docs/${f}`;
 const X = "https://x.com/fnoufnou";
@@ -205,7 +208,7 @@ ${robots}<meta name="theme-color" content="#17483A">
 <meta name="twitter:image" content="${SITE}/qorewitness-featured.png">
 <link rel="icon" href="${UP}favicon.svg" type="image/svg+xml">
 <link rel="preload" href="${UP}fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="${UP}assets/site.css">
+<link rel="stylesheet" href="${UP}assets/site.css?v=${ASSET_V.css}">
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -216,7 +219,7 @@ ${header(current)}
 ${body}
 </main>
 ${footer}
-<script src="${UP}assets/site.js" defer></script>
+<script src="${UP}assets/site.js?v=${ASSET_V.js}" defer></script>
 </body>
 </html>
 `;
@@ -457,9 +460,9 @@ const railItems = [
 ];
 const COMPOSE_URL = `https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/docker-compose.yml`;
 const ROUTER_IP = `Find the IP address of that computer in your router app, in the list of connected devices. It looks like <code>192.168.1.42</code>.`;
-/** One choice in "Where will QoreWitness run?". The radio buttons show one install path (CSS :has). */
-const whereOpt = (id, title, sub) => `<label class="where-opt" for="w-${id}"><input type="radio" name="where" id="w-${id}" value="${id}"><span><b>${title}</b><small>${sub}</small></span></label>`;
-const pathLinux = `<div class="path-panel" id="path-linux"><h4>Raspberry Pi or Linux computer</h4><ol class="plain path-steps">
+/** One tab in "Where will QoreWitness run?". site.js turns the paths into tabs. Without it, all paths show one after the other. */
+const whereTab = (id, title, sub, on = false) => `<button type="button" role="tab" id="tab-${id}" aria-controls="path-${id}" aria-selected="${on}"${on ? "" : ' tabindex="-1"'}><b>${title}</b><small>${sub}</small></button>`;
+const pathLinux = `<div class="path-panel" id="path-linux" role="tabpanel" aria-labelledby="tab-linux" tabindex="0"><h4>Raspberry Pi or Linux computer</h4><ol class="plain path-steps">
 <li><b>New Raspberry Pi?</b> Install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>. In its settings, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>. Write the card or SSD, connect it to the Pi and start it. Skip this if your computer already runs Linux.</li>
 <li>${ROUTER_IP}</li>
 <li>Open a terminal on your laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</li>
@@ -476,7 +479,7 @@ ${copybox("env-server", "QW_UI_BIND=0.0.0.0:8080")}</li>
 <li>Open a terminal on the server (on a NAS, connect over SSH), go to that folder and run:` : `<li>Open a terminal in that folder. On a Mac, use <b>Terminal</b>. On Windows, use <b>PowerShell</b>. Go to the folder and run:`}
 ${copybox(`compose-${where}`, "docker compose up -d\ndocker compose run --rm -T ui pair")}
 The second line shows your pairing code.</li>`;
-const pathServer = `<div class="path-panel" id="path-server"><h4>NAS or home server</h4><ol class="plain path-steps">
+const pathServer = `<div class="path-panel" id="path-server" role="tabpanel" aria-labelledby="tab-server" tabindex="0"><h4>NAS or home server</h4><ol class="plain path-steps">
 <li>Make sure Docker with Compose runs on it. On Synology, install <a href="https://www.synology.com/en-global/dsm/packages/ContainerManager">Container Manager</a> from the Package Center. On other systems, see <a href="https://docs.docker.com/engine/install/">Install Docker Engine</a>. On Proxmox, create a Debian container or virtual machine and choose <b>Raspberry Pi or Linux computer</b> above.</li>
 <li>${ROUTER_IP}</li>
 ${composeSteps("server")}
@@ -484,7 +487,7 @@ ${composeSteps("server")}
 </ol>
 <p class="small">More detail: <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</p>
 </div>`;
-const pathDesktop = `<div class="path-panel" id="path-desktop"><h4>Windows or Mac</h4><ol class="plain path-steps">
+const pathDesktop = `<div class="path-panel" id="path-desktop" role="tabpanel" aria-labelledby="tab-desktop" tabindex="0"><h4>Windows or Mac</h4><ol class="plain path-steps">
 <li>Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and start it. Set the computer to never sleep, because QoreWitness only records while it is on.</li>
 ${composeSteps("desktop")}
 <li>On the same computer, open <code>http://localhost:8080/setup</code>.</li>
@@ -529,13 +532,13 @@ ${brandHints}
 </div></li>
 
 <li class="step" id="s3"><h3>Install QoreWitness</h3><p class="time">Pick where it runs</p><div class="body">
-<div class="where">
-<fieldset class="where-pick"><legend>Where will QoreWitness run?</legend>
-${whereOpt("linux", "Raspberry Pi or Linux computer", "Debian, Ubuntu, Raspberry Pi OS")}
-${whereOpt("server", "NAS or home server", "Synology, Unraid, TrueNAS, Proxmox")}
-${whereOpt("desktop", "Windows or Mac", "With Docker Desktop")}
-</fieldset>
-<p class="where-hint small muted">Pick one to see its steps.</p>
+<div class="tabs" data-tabs>
+<p class="tabs-q">Where will QoreWitness run?</p>
+<div class="tablist" role="tablist" aria-label="Where will QoreWitness run?" hidden>
+${whereTab("linux", "Raspberry Pi or Linux", "Debian, Ubuntu, Raspberry Pi OS", true)}
+${whereTab("server", "NAS or home server", "Synology, Unraid, TrueNAS, Proxmox")}
+${whereTab("desktop", "Windows or Mac", "With Docker Desktop")}
+</div>
 ${pathLinux}
 ${pathServer}
 ${pathDesktop}

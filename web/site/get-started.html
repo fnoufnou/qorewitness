@@ -20,7 +20,7 @@
 <meta name="twitter:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/site.css?v=7dfb15784e">
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -96,14 +96,14 @@
 </div></li>
 
 <li class="step" id="s3"><h3>Install QoreWitness</h3><p class="time">Pick where it runs</p><div class="body">
-<div class="where">
-<fieldset class="where-pick"><legend>Where will QoreWitness run?</legend>
-<label class="where-opt" for="w-linux"><input type="radio" name="where" id="w-linux" value="linux"><span><b>Raspberry Pi or Linux computer</b><small>Debian, Ubuntu, Raspberry Pi OS</small></span></label>
-<label class="where-opt" for="w-server"><input type="radio" name="where" id="w-server" value="server"><span><b>NAS or home server</b><small>Synology, Unraid, TrueNAS, Proxmox</small></span></label>
-<label class="where-opt" for="w-desktop"><input type="radio" name="where" id="w-desktop" value="desktop"><span><b>Windows or Mac</b><small>With Docker Desktop</small></span></label>
-</fieldset>
-<p class="where-hint small muted">Pick one to see its steps.</p>
-<div class="path-panel" id="path-linux"><h4>Raspberry Pi or Linux computer</h4><ol class="plain path-steps">
+<div class="tabs" data-tabs>
+<p class="tabs-q">Where will QoreWitness run?</p>
+<div class="tablist" role="tablist" aria-label="Where will QoreWitness run?" hidden>
+<button type="button" role="tab" id="tab-linux" aria-controls="path-linux" aria-selected="true"><b>Raspberry Pi or Linux</b><small>Debian, Ubuntu, Raspberry Pi OS</small></button>
+<button type="button" role="tab" id="tab-server" aria-controls="path-server" aria-selected="false" tabindex="-1"><b>NAS or home server</b><small>Synology, Unraid, TrueNAS, Proxmox</small></button>
+<button type="button" role="tab" id="tab-desktop" aria-controls="path-desktop" aria-selected="false" tabindex="-1"><b>Windows or Mac</b><small>With Docker Desktop</small></button>
+</div>
+<div class="path-panel" id="path-linux" role="tabpanel" aria-labelledby="tab-linux" tabindex="0"><h4>Raspberry Pi or Linux computer</h4><ol class="plain path-steps">
 <li><b>New Raspberry Pi?</b> Install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>. In its settings, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>. Write the card or SSD, connect it to the Pi and start it. Skip this if your computer already runs Linux.</li>
 <li>Find the IP address of that computer in your router app, in the list of connected devices. It looks like <code>192.168.1.42</code>.</li>
 <li>Open a terminal on your laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</li>
@@ -124,7 +124,7 @@ Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div></figure
 </ol>
 <details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-alpha.4/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul></div></details>
 </div>
-<div class="path-panel" id="path-server"><h4>NAS or home server</h4><ol class="plain path-steps">
+<div class="path-panel" id="path-server" role="tabpanel" aria-labelledby="tab-server" tabindex="0"><h4>NAS or home server</h4><ol class="plain path-steps">
 <li>Make sure Docker with Compose runs on it. On Synology, install <a href="https://www.synology.com/en-global/dsm/packages/ContainerManager">Container Manager</a> from the Package Center. On other systems, see <a href="https://docs.docker.com/engine/install/">Install Docker Engine</a>. On Proxmox, create a Debian container or virtual machine and choose <b>Raspberry Pi or Linux computer</b> above.</li>
 <li>Find the IP address of that computer in your router app, in the list of connected devices. It looks like <code>192.168.1.42</code>.</li>
 <li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml">docker-compose.yml</a> in it.</li>
@@ -138,7 +138,7 @@ The second line shows your pairing code.</li>
 </ol>
 <p class="small">More detail: <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/INSTALL.md">INSTALL.md</a>.</p>
 </div>
-<div class="path-panel" id="path-desktop"><h4>Windows or Mac</h4><ol class="plain path-steps">
+<div class="path-panel" id="path-desktop" role="tabpanel" aria-labelledby="tab-desktop" tabindex="0"><h4>Windows or Mac</h4><ol class="plain path-steps">
 <li>Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and start it. Set the computer to never sleep, because QoreWitness only records while it is on.</li>
 <li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml">docker-compose.yml</a> in it.</li>
 <li>Open a terminal in that folder. On a Mac, use <b>Terminal</b>. On Windows, use <b>PowerShell</b>. Go to the folder and run:
@@ -186,6 +186,6 @@ The second line shows your pairing code.</li>
 </div>
 <div class="legal"><p>© 2026 fnoufnou. QoreWitness is open source under the <a href="https://github.com/fnoufnou/qorewitness/blob/main/LICENSE">Apache License 2.0</a>.</p><p>QoreChain, TP-Link, Tapo and other names are trademarks of their respective owners. <a href="trust.html">Trust and limits</a></p></div>
 </div></footer>
-<script src="assets/site.js" defer></script>
+<script src="assets/site.js?v=47361f33fc" defer></script>
 </body>
 </html>
