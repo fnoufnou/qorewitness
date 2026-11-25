@@ -25,7 +25,7 @@ const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
 // TODO lead: pin a release tag instead of main before launch.
 const INSTALL = 'ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes"';
-const VERIFIER_SHA = "47082d47f8ec9929fd9890418bcc9739685580620673676d3ced70a0c02f39a6";
+const VERIFIER_SHA = "a25d483967e0bad97250c60a6e2f1495ac7d529f9aed06d11b177a67752f943f";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 // Sample record for QoreWitness Verify (24 Nov 2026): one clip of our test computer's stand-in camera
 // (a test pattern with "QoreWitness test camera" and a burned-in clock in Amsterdam time, plus a test tone),

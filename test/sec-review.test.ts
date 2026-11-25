@@ -1,4 +1,4 @@
-/** Regression tests for the findings in security review 1 (box code). */
+/** Regression tests for the findings in security reviews 1 (box code) and 3 (verifier). */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, mkdirSync, mkdtempSync, statSync, writeFileSync } from "node:fs";
@@ -7,7 +7,9 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { after, before, describe, it } from "node:test";
-import { dataPaths, ensureDirs } from "../src/setup/steps.js";
+import type { PublicClient } from "viem";
+import { KNOWN_REGISTRIES, verifyReceipt, type ReceiptV3 } from "../src/core/verify.js";
+import { dataPaths, ensureDirs, PUBLIC_REGISTRY_V4 } from "../src/setup/steps.js";
 import { ensurePairing } from "../src/web/auth.js";
 import { createHandler } from "../src/web/server.js";
 import type { Wizard } from "../src/web/wizard.js";
@@ -72,5 +74,43 @@ describe("security review 1: file modes of older installs", () => {
     assert.equal(statSync(join(data, "qorewitness.env")).mode & 0o777, 0o600);
     assert.equal(statSync(data).mode & 0o777, 0o700);
     assert.equal(statSync(join(data, "keys")).mode & 0o777, 0o700);
+  });
+});
+
+describe("security review 3: the verifier trusts only the QoreWitness registries", () => {
+  // A fake contract on the same chain can answer "found" with any block and time.
+  // The stub chain answers every contract read as if the anchor exists.
+  function chain() {
+    const reads: string[] = [];
+    const pub = {
+      getChainId: async () => 9800,
+      readContract: async (a: { address: string }) => {
+        reads.push(a.address);
+        throw new Error("stub: no contract here");
+      },
+      getBlock: async () => ({ hash: "0x" + "00".repeat(32), timestamp: 0n }),
+    } as unknown as PublicClient;
+    return { pub, reads };
+  }
+  const receipt = (registry: string, format = "qorewitness-receipt/v3") =>
+    ({ format, chain: { evmChainId: 9800, registry }, segments: [] }) as unknown as ReceiptV3;
+  const REFUSED = /not the QoreWitness registry/;
+
+  it("refuses a receipt that names another contract on QoreChain, without asking it", async () => {
+    for (const format of ["qorewitness-receipt/v3", "qorewitness-receipt/v2"]) {
+      const { pub, reads } = chain();
+      const r = await verifyReceipt(pub, receipt("0x" + "11".repeat(20), format), new Uint8Array(32), new Uint8Array(32));
+      assert.equal(r.ok, false);
+      assert.match(r.steps[0].text, REFUSED);
+      assert.doesNotMatch(r.steps[0].text, /fingerprint/i); // shown as "not confirmed", never as "changed"
+      assert.deepEqual(reads, []);
+    }
+  });
+
+  it("accepts the live registry, also in lower case", async () => {
+    assert.ok(KNOWN_REGISTRIES[9800].includes(PUBLIC_REGISTRY_V4 as `0x${string}`));
+    const { pub } = chain();
+    const r = await verifyReceipt(pub, receipt(PUBLIC_REGISTRY_V4.toLowerCase()), new Uint8Array(32), new Uint8Array(32));
+    assert.ok(!r.steps.some((s) => REFUSED.test(s.text)));
   });
 });
