@@ -51,10 +51,6 @@
   h1 { margin:0 0 12px; font-size:2.4rem; font-weight:600; line-height:1.15; letter-spacing:-.015em; }
   p.lead { color:var(--muted); font-size:1.1rem; margin:0 0 32px; }
   .card { background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:24px; margin-bottom:20px; box-shadow:0 1px 2px rgba(19,32,28,.05); }
-  label { display:block; font-weight:600; font-size:15px; margin:18px 0 8px; }
-  label:first-child { margin-top:0; }
-  input[type=file] { width:100%; font:inherit; font-size:14px; color:var(--muted); background:var(--surface); border:1px dashed var(--line); border-radius:8px; padding:10px; }
-  input[type=file]::file-selector-button { font:600 14px var(--font); color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px 12px; margin-right:12px; cursor:pointer; }
   .actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:22px; }
   button { font:600 15px var(--font); background:var(--brand); color:#fff; border:1px solid var(--brand); border-radius:8px; padding:11px 20px; cursor:pointer; }
   button:hover { background:var(--brand-dark); }
@@ -79,72 +75,96 @@
   .body h2 { font-size:1.05rem; margin:16px 0 4px; }
   .notes { margin:12px 0 0; padding-left:20px; color:var(--warn); }
   details { margin-top:16px; } summary { cursor:pointer; color:var(--muted); font-size:14.5px; }
-  details label:first-of-type { margin-top:14px; }
   #steps h3 { font:500 13px var(--mono); margin:16px 0 0; word-break:break-all; }
   #steps ol { list-style:none; margin:0; padding:0; }
   #steps li { position:relative; padding:8px 0 8px 28px; border-bottom:1px solid var(--line); font-size:14.5px; }
   #steps li::before { position:absolute; left:0; top:8px; font:600 14px/1.6 var(--mono); }
   li.pass::before { content:"✓"; color:var(--ok); } li.fail::before { content:"✕"; color:var(--bad); } li.info::before { content:"i"; color:var(--muted); } li.warn::before { content:"!"; color:var(--warn); }
-  @media print { header, .inputs, .actions, .top > main > .eyebrow, h1, p.lead { display:none !important; } .card { box-shadow:none; border:1px solid #999; } #tech { display:block; } #tech[open] summary { display:none; } main { padding-top:0; } }
+  @media print { .beta, .site-foot, header, .inputs, .actions, .top > main > .eyebrow, h1, p.lead { display:none !important; } .card { box-shadow:none; border:1px solid #999; } #tech { display:block; } #tech[open] summary { display:none; } main { padding-top:0; } }
   .result { padding:0; overflow:hidden; } .result .bar { display:flex; align-items:flex-start; gap:14px; padding:20px 24px; border-bottom:1px solid var(--line); background:var(--surface); } .result .bar svg { flex:none; color:var(--muted); }
-  footer { color:var(--muted); font-size:13.5px; margin-top:28px; }
+  .fine { color:var(--muted); font-size:13.5px; margin-top:28px; }
+  .beta { background:#0E2F26; color:#D5E6DF; font-size:13.5px; line-height:1.45; }
+  .beta p { max-width:760px; margin:0 auto; padding:8px 20px; } .beta b { color:#fff; } .beta a { color:#fff; }
+  .drop { position:relative; text-align:center; border:2px dashed var(--line); background:var(--surface); padding:28px 20px; transition:border-color .15s, background .15s; }
+  .drop.over { border-color:var(--brand); background:var(--pine-50); }
+  .drop .ico { width:40px; height:40px; color:var(--brand); margin:0 auto 10px; display:block; }
+  @media (prefers-color-scheme: dark) { .drop .ico { color:var(--link); } }
+  .drop-title { font-weight:600; font-size:1.2rem; margin:0 0 6px; }
+  .drop-sub { color:var(--muted); margin:0 auto; max-width:34rem; font-size:15px; }
+  .drop .actions { justify-content:center; }
+  .chosen { list-style:none; margin:16px auto 0; padding:0; max-width:34rem; text-align:left; font-size:14px; }
+  .chosen li { display:flex; justify-content:space-between; gap:12px; padding:6px 10px; border-bottom:1px solid var(--line); }
+  .chosen li span:first-child { font-family:var(--mono); font-size:13px; word-break:break-all; } .chosen li span:last-child { color:var(--muted); white-space:nowrap; }
+  .skip { position:absolute; left:-999px; top:8px; background:var(--brand); color:#fff; padding:10px 14px; border-radius:8px; z-index:20; } .skip:focus { left:8px; }
+  #utc { color:var(--muted); font-size:14px; margin:12px 0 0; }
+  .result:not(.ok):not(.bad):not(.warn) .verdict { font-size:1.15rem; font-weight:500; color:var(--muted); }
+  .result:not(.ok):not(.bad):not(.warn) .bar svg { width:28px; height:28px; }
+  .result:not(.ok):not(.bad):not(.warn) .body { display:none; }
+  .site-foot { background:#0E2F26; color:#CFE0D9; font-size:14px; }
+  .site-foot .in { max-width:760px; margin:0 auto; padding:32px 20px 28px; }
+  .site-foot a { color:#fff; } .site-foot ul { list-style:none; margin:0 0 18px; padding:0; display:flex; flex-wrap:wrap; gap:6px 18px; }
+  .site-foot li a { display:inline-block; padding:2px 0; } .site-foot p { margin:0 0 6px; color:#B6CBC3; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
   @media (max-width:520px) { h1 { font-size:1.9rem; } main { padding-top:32px; } }
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
+<aside class="beta" aria-label="Beta notice"><p><b>QoreWitness is in beta.</b> It runs on the QoreChain test network, which can be reset, and you can use it free of charge while we build out the service. <a href="trust.html#beta">Learn more</a></p></aside>
 <header>
   <div class="in">
     <a class="brand" href="./" aria-label="QoreWitness home">
       <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4.5H12Q7.5 4.5 7.5 9V29C7.5 44.5 17.5 55 32 60.5Z" fill="var(--lg-r,#17483A)" transform="matrix(-1 0 0 1 64 0)"/><path d="M32 4.5H12Q7.5 4.5 7.5 9V29C7.5 44.5 17.5 55 32 60.5Z" fill="var(--lg-l,#2F7D64)"/><path d="M15.5 23V16.5H22" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 35V41.5H22" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 41.5H48.5V35" fill="none" stroke="var(--lg-c,#D9EAE3)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="46" cy="19" r="3.6" fill="var(--lg-d,#E8663D)"/><path d="M24.8 29.4L29.8 34.4L39.4 24.4" fill="none" stroke="#FFFFFF" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       QoreWitness
     </a>
-    <a class="back" href="./">About QoreWitness</a>
+    <a class="back" href="prove.html">How to prove a video</a>
   </div>
 </header>
 <div class="top">
-<main>
+<main id="main">
   <p class="eyebrow">Check a recording</p>
   <h1>QoreWitness Verify</h1>
   <p class="lead">Prove that a camera recording existed before a known time and that nobody changed it. Your video stays in this browser.</p>
-  <div class="card inputs">
-    <label for="zip">Evidence file (ZIP) from your QoreWitness dashboard</label>
-    <input id="zip" type="file" accept=".zip,application/zip">
-    <details>
-      <summary>Or check one clip with its receipt</summary>
-      <label for="video">Video clip</label>
-      <input id="video" type="file" accept="video/*,.mp4,.ts">
-      <label for="receipt">Receipt (.json)</label>
-      <input id="receipt" type="file" accept=".json,application/json">
-    </details>
+  <section class="card inputs drop" id="drop" aria-labelledby="drop-title">
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 14.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5"/></svg>
+    <h2 class="drop-title" id="drop-title">Drop your files anywhere on this page</h2>
+    <p class="drop-sub">An evidence file (ZIP) from a QoreWitness dashboard, or a video clip together with its receipt (.json). You can choose several files at once. Your files stay in this browser.</p>
     <div class="actions">
-      <button id="go">Check</button>
-      <button id="tamper" class="secondary" disabled title="Check the original first">Try it: change one byte and check again</button>
+      <button id="pick" type="button">Choose files</button>
+      <button id="tamper" type="button" class="secondary" disabled title="Check a recording first">Try it: change one byte and check again</button>
     </div>
+    <input id="files" type="file" multiple accept=".zip,.json,.mp4,.ts,application/zip,application/json,video/mp4,video/mp2t" hidden>
+    <ul id="chosen" class="chosen" aria-label="Chosen files" hidden></ul>
     <div id="note"></div>
-  </div>
+  </section>
   <div class="card result" id="result">
     <div class="bar">
       <svg class="i-idle" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       <svg class="i-ok" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <svg class="i-warn" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.5v7M12 16.5v1" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
       <svg class="i-bad" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
-      <div><div id="verdict" class="verdict" role="status">Choose a ZIP, or a clip and its receipt.</div><p id="detail" class="detail"></p></div>
+      <div><div id="verdict" class="verdict" role="status">Choose an evidence file, or a clip with its receipt.</div><p id="detail" class="detail"></p></div>
     </div>
     <div class="body">
       <ul id="notes" class="notes" hidden></ul>
       <div id="explain" hidden>
         <h2>What this proves</h2>
-        <p>The video file is exactly the file the camera's QoreWitness recorded. Not one byte was changed. It existed at the time shown, because its fingerprint was written to a public record (QoreChain test network) and signed by the camera.</p>
+        <p>The file is exactly the one the camera's QoreWitness recorded, down to the last byte. It existed at the time shown, because its fingerprint was written to a public ledger, the QoreChain test network, and signed by the camera.</p>
         <h2>What it cannot prove</h2>
         <p>It does not prove who is in the video or that the scene was real. It does not prove who owns the camera. The camera clock sets the recording time, and the seal time comes from the public record. QoreWitness is in beta on the QoreChain test network, which can be reset, and a seal is not a legal timestamp.</p>
       </div>
       <div id="actions2" class="actions" hidden><button id="print" class="secondary">Print this result</button></div>
-      <details id="tech" hidden><summary>Technical details</summary><div id="steps"></div></details>
+      <details id="tech" hidden><summary>Technical details</summary><p id="utc"></p><div id="steps"></div></details>
     </div>
   </div>
-  <footer>QoreChain testnet (diana, chain ID 9800). A blockchain record is not an eIDAS qualified timestamp. It proves that the file existed at a time. It does not prove who recorded it or that the scene was real.</footer>
+  <p class="fine">Checked against the QoreChain test network. A record on a public ledger is not an eIDAS qualified timestamp. It proves that the file existed at a time. It does not prove who recorded it or that the scene was real.</p>
 </main>
 </div>
+<footer class="site-foot"><div class="in">
+<nav aria-label="QoreWitness"><ul><li><a href="./">Home</a></li><li><a href="how-it-works.html">How it works</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="trust.html">Trust and limits</a></li><li><a href="developers.html">Developers</a></li><li><a href="jury.html">For the jury</a></li></ul></nav>
+<p>© 2026 fnoufnou. QoreWitness is open source under the <a href="https://github.com/fnoufnou/qorewitness/blob/main/LICENSE">Apache License 2.0</a>.</p>
+<p>QoreChain, TP-Link, Tapo and other names are trademarks of their respective owners.</p>
+</div></footer>
 <script>/*BUNDLE*/</script>
 </body>
 </html>

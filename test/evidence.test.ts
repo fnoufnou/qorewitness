@@ -19,7 +19,7 @@ import { csrfToken, issueSession, sessionSecret, setPassword } from "../src/web/
 import { memEntry, parseRange, planEvidence, writeZip, zipLength, type ZipEntry } from "../src/web/evidence.js";
 import { createHandler } from "../src/web/server.js";
 import type { Wizard } from "../src/web/wizard.js";
-import { checkClips, verdictOf, type AnyReceipt } from "../web/verifier/package.js";
+import { checkClips, span, verdictOf, when, type AnyReceipt } from "../web/verifier/package.js";
 import { readZip, safeName } from "../web/verifier/zip.js";
 
 const hex = (b: Uint8Array) => toHex(b);
@@ -237,11 +237,12 @@ describe("verifier: package verdict", () => {
 
   it("is green for an untouched ZIP, with date, time and seal delay", async () => {
     const { clips, receipts } = await load();
-    const v = verdictOf(await checkClips(clips, receipts, verify), "en-GB");
+    const v = verdictOf(await checkClips(clips, receipts, verify), "Europe/Amsterdam");
     assert.equal(v.level, "ok");
     assert.equal(v.headline, "Original");
-    assert.match(v.detail, /unchanged since they were recorded on 21 November 2026/);
+    assert.match(v.detail, /unchanged since they were recorded on 21 Nov 2026, \d\d:\d\d to \d\d:\d\d \(CET, your time\)\./);
     assert.match(v.detail, /Sealed within 5 minutes\./);
+    assert.match(v.utc ?? "", /^21 Nov 2026, \d\d:\d\d to \d\d:\d\d$/);
   });
 
   it("is red when one byte of one clip changed", async () => {
@@ -262,6 +263,14 @@ describe("verifier: package verdict", () => {
     const net = verdictOf(await checkClips(clips, receipts, async () => { throw new Error("fetch failed"); }));
     assert.equal(net.level, "warn");
     assert.equal(net.headline, "Check not finished");
+  });
+
+  it("shows one date style with the time zone of the viewer", () => {
+    const ms = Date.UTC(2026, 10, 24, 7, 8);
+    assert.deepEqual(when(ms, "Europe/Amsterdam"), { date: "24 Nov 2026", time: "08:08", zone: "CET" });
+    assert.deepEqual(when(ms, "UTC"), { date: "24 Nov 2026", time: "07:08", zone: "UTC" });
+    assert.equal(when(ms, "America/New_York").zone, "EST");
+    assert.equal(span(ms, ms + 60_000, "Europe/Amsterdam").text, "24 Nov 2026, 08:08 to 08:09");
   });
 
   it("still accepts one clip with its receipt, under any file name", async () => {
