@@ -226,7 +226,7 @@ ul.checks.no svg{color:var(--bad)}
 .tabs-q{font-weight:600;margin:0 0 10px}
 .tablist{display:grid;grid-template-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
 .tablist[hidden]{display:none}
-.tablist [role=tab]{display:block;width:100%;text-align:left;font:inherit;color:var(--fg);background:transparent;border:0;border-top:1px solid var(--line);padding:12px 16px;min-height:48px;cursor:pointer}
+.tablist [role=tab]{display:flex;flex-direction:column;justify-content:flex-start;width:100%;text-align:left;font:inherit;color:var(--fg);background:transparent;border:0;border-top:1px solid var(--line);padding:12px 16px;min-height:48px;cursor:pointer}
 .tablist [role=tab]:first-child{border-top:0}
 .tablist [role=tab] b{display:block;font-weight:600}
 .tablist [role=tab] small{display:block;color:var(--muted);font-size:13.5px}
