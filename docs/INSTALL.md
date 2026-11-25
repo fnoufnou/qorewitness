@@ -50,7 +50,7 @@ Open a terminal on your laptop:
 Paste this line. Use your Pi user name in place of `mark`. Press Enter.
 
 ```bash
-ssh -t mark@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes"
+ssh -t mark@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes"
 ```
 
 What you will see:
@@ -66,7 +66,7 @@ What you will see:
 
 Do not share the code. Anyone with it can set up QoreWitness until you choose a password.
 
-Already on the computer itself (keyboard and screen, or an SSH session)? Paste the part between the quotes: `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes`.
+Already on the computer itself (keyboard and screen, or an SSH session)? Paste the part between the quotes: `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes`.
 
 You can run the line again at any time. It keeps your camera, keys, account and video.
 

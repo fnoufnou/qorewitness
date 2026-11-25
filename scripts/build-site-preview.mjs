@@ -24,7 +24,7 @@ const GHDOC = (f) => `${GH}/blob/main/docs/${f}`;
 const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
 // TODO lead: pin a release tag instead of main before launch.
-const TAG = "v0.6.0-alpha.3"; // the release the install line runs; the "read the script" link points to the same tag
+const TAG = "v0.6.0-alpha.4"; // the release the install line runs; the "read the script" link points to the same tag
 const INSTALL = `ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/install.sh | bash -s -- --yes"`;
 const VERIFIER_SHA = "01fb584fe02806b7335ebb44c0abc1fd0da48bc1387281707046e859a59bdae8";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
@@ -489,7 +489,7 @@ ${platformTable}
 <p class="small muted">The Linux installer is the path we test from start to finish. On a NAS, a home server, Windows or macOS you run the same software with Docker Compose.</p>
 ${help("Guide: Docker Compose on a NAS, home server, Windows or Mac", `<ol class="plain">
 <li>Install Docker with Compose: Docker Desktop on Windows or macOS, Container Manager on Synology, or the Docker tools of your server.</li>
-<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/docker-compose.yml">docker-compose.yml</a> in it.</li>
+<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml">docker-compose.yml</a> in it.</li>
 <li>To open the setup from another device, add a file named <code>.env</code> to that folder with the line <code>QW_UI_BIND=0.0.0.0:8080</code>.</li>
 <li>In that folder, run <code>docker compose up -d</code>, then <code>docker compose run --rm -T ui pair</code> to see your pairing code.</li>
 <li>Open <code>http://ADDRESS:8080/setup</code>, where ADDRESS is the computer's address (or <code>localhost</code> on the same computer), type the code and continue with step 4.</li>
@@ -978,7 +978,7 @@ verifier (static page or CLI): clip + receipt
 <section id="run"><div class="wrap narrow">
 <p class="eyebrow">Run it yourself</p><h2>Install, update, back up, remove.</h2>
 <ul class="plain" style="margin-top:16px">
-<li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</li>
+<li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</li>
 <li><b>Other platforms:</b> the Linux installer is tested end to end. NAS, home server, Windows and macOS use the same <code>docker-compose.yml</code> (<a href="get-started.html#compose">short guide</a>).</li>
 <li><b>Other camera brands:</b> with <code>--terminal</code> you can give a full stream URL, for example <code>rtsp://user:password@192.168.1.20:554/stream</code>. Compatibility status per brand: <a href="cameras.html">cameras</a>. Research notes: <a href="${GHDOC("CAMERAS.md")}">CAMERAS.md</a>.</li>
 <li><b>Update:</b> set the new version in <code>~/qorewitness/.env</code> (<code>QW_VERSION</code>), then <code>docker compose pull &amp;&amp; docker compose up -d</code>. The version is pinned, and QoreWitness never updates itself.</li>

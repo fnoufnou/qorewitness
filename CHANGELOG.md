@@ -2,7 +2,9 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
-## Unreleased
+## 0.6.0-alpha.4 (25 Nov 2026)
+
+QoreWitness Verify trusts only our registries, one drop zone, times with the time zone, one name per thing in the app (evidence file, receipt, pairing code), CSP on Verify, installer temp file via mktemp. Install line pinned to this tag.
 
 - QoreWitness Verify: the whole upload card is one drop zone, and the whole page accepts dropped files. "Choose files" takes any mix: an evidence file (ZIP), or a clip with its receipt. The clip-and-receipt fold is gone. Times show one date style with the zone ("24 Nov 2026, 08:08 to 08:09 (CET, your time)"), and the UTC time is under Technical details. The page has the beta banner, a skip link, the site footer and a Content-Security-Policy with the hash of its own script (security review 3, item 6). A single changed clip gets a plain red line. Rebuilt (reproducible), SHA-256 `01fb584fe02806b7335ebb44c0abc1fd0da48bc1387281707046e859a59bdae8` on the Developers and jury pages.
 - Words: one name per thing on the site, in Verify, the app, the evidence file texts, README and `docs/INSTALL.md`: "evidence file" for the ZIP, "receipt" for the JSON, "pairing code". No "pilot", "box", "minutes after" or "the moment" left in user-visible text.
