@@ -165,7 +165,7 @@ export function dashboardPage(v: DashboardView): string {
 <div><b>Video kept</b>${esc(v.retentionDays ?? 14)} days, ${esc(gb(s.diskFreeBytes))} free</div>
 </div>
 <div class="card"><h2 style="margin-top:0">Latest seals</h2><div class="scroll"><table><tbody>${rows || `<tr><td>No seals yet.</td></tr>`}</tbody></table></div>
-<p class="muted" style="margin-top:12px">Press Download next to the time you need. You get one file with the original video and its proof. The file is large, so share it with an upload or a link (for example your cloud drive) rather than by e-mail. Send it to an insurer, the police or a lawyer. They check it at <a href="${VERIFIER}" rel="noreferrer" target="_blank">qorewitness.fnoufnou.com</a>.</p>
+<p class="muted" style="margin-top:12px">Press Download next to the time you need. You get one evidence file with the original video and its receipts. It is large, so share it with an upload or a link (for example your cloud drive) rather than by e-mail. Send it to an insurer, the police or a lawyer. They check it with <a href="${VERIFIER}" rel="noreferrer" target="_blank">QoreWitness Verify</a>.</p>
 <details><summary>Details</summary><p class="mono">${tech}${tech ? "<br>" : ""}Receipts ${esc(s.receipts)}, waiting windows ${esc(s.pendingWindows)}, open segments ${esc(s.openSegments)}, clips on disk ${esc(s.segmentFiles)}<br>
 ${v.balanceUqor !== undefined ? `Balance ${esc((v.balanceUqor / 1e6).toFixed(2))} test QOR<br>` : ""}${v.info ? `Account ${esc(v.info.qor1)}<br>Owner ${esc(v.info.owner)}<br>Device id ${esc(v.info.deviceId)}<br>Camera key ${esc(v.info.keyFingerprint)} (ML-DSA-87)<br>Registry <a href="${EXPLORER}/address/${esc(v.info.registry)}" rel="noreferrer" target="_blank">${esc(v.info.registry)}</a>` : ""}</p></details></div>
 ${v.csrf ? `<details class="card"><summary>Pick another time</summary>${evidenceForm(v.csrf)}</details>` : ""}
@@ -432,7 +432,7 @@ if (process.argv[1] && /server\.(ts|js)$/.test(process.argv[1])) {
   });
   createServer({ requestTimeout: 60_000, headersTimeout: 20_000 }, handler).listen(port, host, () => {
     const at = new Date().toISOString();
-    console.log(`${at} QoreWitness box on ${host}:${port}`);
+    console.log(`${at} QoreWitness dashboard on ${host}:${port}`);
     if (!hasPassword(paths.uiDir)) {
       // The pairing link, once per start, in the container log only.
       const { pairing } = ensurePairing(paths.uiDir);

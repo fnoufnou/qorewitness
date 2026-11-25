@@ -96,7 +96,7 @@
 <li class="tile"><h3>Open source</h3><p>All code is open under Apache-2.0. <a href="https://github.com/fnoufnou/qorewitness">Read it on GitHub</a>.</p></li>
 <li class="tile"><h3>Reviewed with the QCAI Contract Auditor</h3><p>Four automated review rounds on QoreChain, with the reports published. <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/AUDIT.md">Read the audit notes</a>.</p></li>
 <li class="tile"><h3>Checked on chain</h3><p>The smart contract checks the ML-DSA-87 signature on QoreChain before it accepts a record. <a href="developers.html#pqc">See how</a>.</p></li>
-<li class="tile"><h3>A live camera since 9 Nov 2026</h3><p>A real home camera has sealed its footage every 10 minutes on the test network since 9 Nov 2026.</p></li>
+<li class="tile"><h3>A live camera since 9 Nov 2026</h3><p>A real home camera has sealed its footage every 10 minutes on the test network since 9 Nov 2026, on registry v4 since 14 Nov.</p></li>
 <li class="tile"><h3>QoreWitness Verify in one file</h3><p>The verification service runs in your browser. It is one HTML file with a published SHA-256 fingerprint. <a href="verifier.html">Open QoreWitness Verify</a>.</p></li>
 <li class="tile"><h3>We publish what we miss</h3><p>Our own attack drills list what the system catches and what it does not. <a href="#threats">Read the results</a>.</p></li>
 </ul>
@@ -106,8 +106,8 @@
 <div class="sec-head"><p class="eyebrow">Threat model, summary</p><h2>Who could attack it, and what happens.</h2>
 <p>We ran these drills on the live system ourselves. No outside firm ran them. The full texts are in the <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/THREAT_MODEL.md">threat model</a> and the <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CUSTODY_DRILL.md">custody drill</a>.</p></div>
 <div class="tablewrap" role="region" aria-label="Table: Attack, Result, Why" tabindex="0"><table><thead><tr><th scope="col">Attack</th><th scope="col">Result</th><th scope="col">Why</th></tr></thead><tbody>
-<tr><td>Change one byte of a sealed clip</td><td><b>Detected</b></td><td>The file fingerprint is no longer in the seal file.</td></tr>
-<tr><td>Remove or reorder a clip in the seal file</td><td><b>Detected</b></td><td>The chain of clips breaks.</td></tr>
+<tr><td>Change one byte of a sealed clip</td><td><b>Detected</b></td><td>The file fingerprint is no longer in the receipt.</td></tr>
+<tr><td>Remove or reorder a clip in the receipt</td><td><b>Detected</b></td><td>The chain of clips breaks.</td></tr>
 <tr><td>Seal a second version of an old window</td><td><b>Refused</b></td><td>The contract refuses overlapping windows.</td></tr>
 <tr><td>Swap in footage from another camera, re-encode, delete or add a clip before sealing</td><td><b>Flagged</b></td><td>The record shows a stream change, a gap or an overlap. In our drill, 4 of 5 such attacks were flagged.</td></tr>
 <tr><td>Swap in footage that uses the camera's own settings, before sealing</td><td><b>Missed</b></td><td>The QoreWitness computer cannot tell. This is the trust boundary.</td></tr>
@@ -148,7 +148,7 @@
 <div><a class="brand" href="index.html"><svg aria-hidden="true" focusable="false"><use href="#logo"/></svg>QoreWitness</a>
 <p>Your camera footage, sealed as it is recorded and ready to prove whenever you need it.</p>
 <p><b>QoreWitness will never ask for your passwords or files.</b></p></div>
-<nav aria-label="Product"><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="cameras.html">Cameras</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></nav>
+<nav aria-label="Product"><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Set up your camera</a></li><li><a href="cameras.html">Cameras</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></nav>
 <nav aria-label="Trust"><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">Developers</a></li><li><a href="jury.html">For the jury</a></li></ul></nav>
 <nav aria-label="Open"><h2>Open</h2><ul><li><a href="verifier.html">QoreWitness Verify</a></li><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></nav>
 </div>

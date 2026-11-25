@@ -66,7 +66,7 @@
 <ol class="plain" style="margin-top:16px">
 <li>Open your dashboard.</li>
 <li>Press <b>Download</b> next to the time you need, or press <b>Save evidence</b> and pick a time range.</li>
-<li>You get one file with the video and its seal. Send it to whoever needs it, such as an insurer or a lawyer.</li>
+<li>You get one evidence file with the video and its receipts. Send it to whoever needs it, such as an insurer or a lawyer.</li>
 </ol>
 <div class="pair"><figure class="shot"><div class="device phone"><img src="assets/screens/dashboard-phone.webp" width="780" height="1688" alt="QoreWitness dashboard on a phone: Sealing OK in green, four short facts and the latest seals, each with a Download button." loading="lazy" decoding="async"></div><figcaption>Download next to a time</figcaption></figure><figure class="shot"><div class="device phone"><img src="assets/screens/evidence-phone.webp" width="780" height="1688" alt="QoreWitness dashboard on a phone: Save evidence, with a date, a start and an end time, and the buttons Check this time and Last hour." loading="lazy" decoding="async"></div><figcaption>Or pick a time range</figcaption></figure></div>
 <p>Do this in good time, because QoreWitness keeps about two weeks of video.</p>
@@ -80,7 +80,7 @@ QoreWitness sealed this footage as it was recorded.
 
 To check it:
 1. Open QoreWitness Verify: https://qorewitness.fnoufnou.com/verifier.html
-2. Drop the file on the page.
+2. Press "Choose files" and pick the evidence file, or drop it on the page.
 3. A green "Original" confirms that the video has not been modified since it was sealed.
 
 The check runs in your own browser, so you do not need to take my word for it, or anyone else's.
@@ -91,11 +91,11 @@ Please note that the video shows people, and handle it with care.</code><button 
 <p>Use our online verification service to check that a video was recorded when it claims to have been, and that it has not been modified since. You need no account and no software, and your file never leaves your computer.</p>
 <ol class="plain">
 <li>Open QoreWitness Verify.</li>
-<li>Drop the file on the page.</li>
+<li>Press <b>Choose files</b> and pick the evidence file, or simply drop it on the page.</li>
 <li>Read the result. A green <b>Original</b> means the video has not been modified since it was sealed.</li>
 </ol>
 <div class="btns"><a class="btn primary" href="verifier.html">Open QoreWitness Verify <svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></a></div>
-<figure class="shot solo"><div class="device phone"><img src="assets/screens/verify-phone.webp" width="780" height="1688" alt="QoreWitness Verify on a phone, after checking a sealed clip with its seal file: the green result Original, with what it proves and what it cannot prove." loading="lazy" decoding="async"></div><figcaption>A green Original in QoreWitness Verify</figcaption></figure>
+<figure class="shot solo"><div class="device phone"><img src="assets/screens/verify-phone.webp" width="780" height="1688" alt="QoreWitness Verify on a phone, after checking a sealed clip with its receipt: the green result Original, with what it proves and what it cannot prove." loading="lazy" decoding="async"></div><figcaption>A green Original in QoreWitness Verify</figcaption></figure>
 </div>
 </div>
 </div><div class="edge t-alt" aria-hidden="true"><svg viewBox="0 0 1440 48" preserveAspectRatio="xMidYMax slice" focusable="false"><use href="#edge-d"/></svg></div></section>
@@ -104,19 +104,19 @@ Please note that the video shows people, and handle it with care.</code><button 
 <div class="split">
 <div class="stack"><h2>What the result looks like</h2>
 <div class="cert" role="group" aria-label="Example result from QoreWitness Verify"><span class="tag">Example result</span>
-<div class="head"><svg aria-hidden="true" focusable="false"><use href="#i-check-circle"/></svg><div><b>Original</b><span>Not modified since it was sealed</span></div></div>
+<div class="head"><svg aria-hidden="true" focusable="false"><use href="#i-check-circle"/></svg><div><b>Original</b><span>This video is unchanged since it was recorded on 24 Nov 2026, 08:08 to 08:09 (CET, your time). Sealed within 1 minute.</span></div></div>
 <ul>
-<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Same file as when it was sealed</span></li>
-<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>The seal is valid</span></li>
-<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Pinned to the time it was recorded</span></li>
-</ul><div class="foot">Existed before 12 Nov 2026, 08:00</div></div>
-<div class="cert bad"><span class="tag">Example result · video changed</span><div class="head"><svg aria-hidden="true" focusable="false"><use href="#i-x-circle"/></svg><div><b>Changed after sealing</b><span>This file does not match its seal</span></div></div></div>
-<p class="small muted">An orange result means the video is unchanged, with notes, and the page explains them. A button prints the result for your records.</p></div>
+<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>The file is exactly the one the camera's QoreWitness recorded, down to the last byte</span></li>
+<li><span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Its fingerprint is on the public ledger, signed by the camera</span></li>
+</ul><div class="foot">Sample record, sealed in block 10,653,907</div></div>
+<div class="cert bad"><span class="tag">After one changed byte</span><div class="head"><svg aria-hidden="true" focusable="false"><use href="#i-x-circle"/></svg><div><b>Changed after sealing</b><span>This video does not match what was sealed. Do not rely on it.</span></div></div></div>
+<p class="small muted">A button under the result prints it for your records.</p></div>
 <div><h3 style="margin-bottom:10px">See it for yourself</h3>
-<p>Download our sealed sample recording, a generated test pattern, together with its seal file, and drop both on QoreWitness Verify. Then use the button there to change a single byte and check again: the result turns red.</p>
-<div class="btns"><a class="btn" href="sample-clip.mp4" download>Sample recording</a><a class="btn" href="sample-receipt.json" download>Its seal file</a></div>
+<p>Download our sealed sample recording, a generated test pattern, together with its receipt, then choose both files in QoreWitness Verify or drop them on the page. Then use the button there to change a single byte and check again: the result turns red.</p>
+<div class="btns"><a class="btn" href="sample-clip.mp4" download>Sample recording</a><a class="btn" href="sample-receipt.json" download>Its receipt</a></div>
 <h3 style="margin:32px 0 10px">What a green result means</h3>
 <ul class="checks"><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>The video existed at the time recorded on the public ledger.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>It has not been modified since it was sealed.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>One known camera made the seal.</span></li></ul>
+<p class="small">An orange <b>Original, with notes</b> means the video is unchanged too, and the page explains the notes, for example a few minutes when the camera was off.</p>
 <h3 style="margin:24px 0 10px">What it does not mean</h3>
 <ul class="checks no"><li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That the scene was real. A staged scene is sealed in exactly the same way.</span></li><li><svg aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>That a court will accept it. A court decides for itself how much weight to give it.</span></li></ul>
 <p class="small"><a href="trust.html">Read Trust and limits</a></p></div>
@@ -134,7 +134,7 @@ Please note that the video shows people, and handle it with care.</code><button 
 <div><a class="brand" href="index.html"><svg aria-hidden="true" focusable="false"><use href="#logo"/></svg>QoreWitness</a>
 <p>Your camera footage, sealed as it is recorded and ready to prove whenever you need it.</p>
 <p><b>QoreWitness will never ask for your passwords or files.</b></p></div>
-<nav aria-label="Product"><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Get started</a></li><li><a href="cameras.html">Cameras</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></nav>
+<nav aria-label="Product"><h2>Product</h2><ul><li><a href="how-it-works.html">How it works</a></li><li><a href="get-started.html">Set up your camera</a></li><li><a href="cameras.html">Cameras</a></li><li><a href="daily-use.html">Daily use</a></li><li><a href="prove.html">Prove a video</a></li><li><a href="plans.html">Plans</a></li></ul></nav>
 <nav aria-label="Trust"><h2>Trust</h2><ul><li><a href="trust.html">Trust and limits</a></li><li><a href="faq.html">FAQ</a></li><li><a href="developers.html">Developers</a></li><li><a href="jury.html">For the jury</a></li></ul></nav>
 <nav aria-label="Open"><h2>Open</h2><ul><li><a href="verifier.html">QoreWitness Verify</a></li><li><a href="https://github.com/fnoufnou/qorewitness">GitHub</a></li><li><a href="https://x.com/fnoufnou">@fnoufnou on X</a></li><li><a href="https://discord.gg/qorechain">QoreChain Discord</a></li></ul></nav>
 </div>

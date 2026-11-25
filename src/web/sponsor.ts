@@ -52,10 +52,10 @@ export const SPONSOR_TEXT: Record<SponsorStatus, string> = {
   pending: "Free beta: we cover the network fees. They are on their way to your account.",
   funded: "Free beta: we added the network fees for you.",
   active: "Free beta: we cover the network fees.",
-  full: "The free beta is full at the moment. You can pay the network fees with your own wallet, or try again later.",
+  full: "The free beta is full right now. You can pay the network fees with your own wallet, or try again later.",
   invalid_code: "The free beta did not accept this camera. You can pay the network fees with your own wallet.",
   used_code: "The free beta did not accept this camera. You can pay the network fees with your own wallet.",
-  paused: "The free beta is paused at the moment. Your camera keeps recording. Try again later.",
+  paused: "The free beta is paused right now. Your camera keeps recording. Try again later.",
   rejected: "The free beta service did not accept this computer.",
   unknown: "The free beta service gave an answer we do not know. Try again later.",
 };

@@ -212,7 +212,7 @@ export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
   if (s.lastAnchorAgeSeconds === undefined) {
     return age > 1800
       ? { level: "bad", title: "No seal yet.", action: "Check the internet connection of the computer that runs QoreWitness. If this stays, restart it.", feeDaysLeft: days }
-      : { level: "warn", title: "Waiting for the first seal.", action: "The first seal comes about 10 to 15 minutes after setup. Nothing to do.", feeDaysLeft: days };
+      : { level: "warn", title: "Waiting for the first seal.", action: "Your first seal arrives within about 15 minutes of the setup. Nothing to do.", feeDaysLeft: days };
   }
   if (s.lastAnchorAgeSeconds > 3 * f.windowSeconds) {
     return { level: "bad", title: `Sealing stopped ${minutesText(lastSealMin!)} ago.`, action: "Check the internet connection of the computer that runs QoreWitness. If this stays, restart it.", feeDaysLeft: days };

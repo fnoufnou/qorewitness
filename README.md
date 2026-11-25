@@ -48,8 +48,8 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 - Audit: QCAI audit stages, each finding with its fix, test or reason, and a map of every PQC precompile call with its tests: `docs/AUDIT.md`.
 - Gas and tx hashes: `docs/TESTNET_FINDINGS.md`. One anchor costs about 0.0457 test QOR (about 406,000 gas). The owner account also opens an EVM window (0.1 test QOR) about every 7 hours. Explorers show about 0.104 QOR per anchor: that is the maximum fee, the chain charges less.
 - Free beta: a sponsor service refills the test QOR that beta cameras use ("Free beta: we cover the network fees"). Test tokens only: `docs/SPONSOR.md`. A paid Hands-off plan (USD 10 or EUR 9 per camera per month) is planned for the QoreChain main network.
-- Save evidence: the dashboard makes one ZIP for a time range (original clips, receipts, a printable `certificate.html`, `HOW-TO-CHECK.txt`). Open `web/verifier/dist/index.html` and drop the ZIP: one plain verdict (green, orange or red), what it proves and cannot prove, and a print button.
-- Verify a segment: open `web/verifier/dist/index.html`, drop the video and its receipt. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`. Without any QoreWitness code: `python3 tools/verify_receipt.py <receipt> <file>` (standard library only). The exact rules, and how to replay a check with third-party tools, are in `docs/SPEC.md`. The page has a tamper demo: it changes one byte in a copy in memory and checks again.
+- Save evidence: the dashboard makes one ZIP for a time range (original clips, receipts, a printable `certificate.html`, `HOW-TO-CHECK.txt`). This ZIP is the "evidence file". Open `web/verifier/dist/index.html`, press Choose files and pick it (or drop it): one plain verdict (green, orange or red), what it proves and cannot prove, and a print button.
+- Verify a segment: open `web/verifier/dist/index.html` and choose (or drop) the video and its receipt together. Or run `pnpm tsx scripts/verify-receipt.ts <receipt> <file>`. Without any QoreWitness code: `python3 tools/verify_receipt.py <receipt> <file>` (standard library only). The exact rules, and how to replay a check with third-party tools, are in `docs/SPEC.md`. The page has a tamper demo: it changes one byte in a copy in memory and checks again.
 
 ## Contract rules
 
@@ -78,15 +78,15 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 | `src/core/` | Merkle tree, signed messages and receipt checks, shared by agent, CLI and browser verifier |
 | `src/agent/` | Agent: segment watcher, windows, device key, ML-DSA signing, scoped EVM window renewal, receipts |
 | `src/setup/` | Setup steps shared by the terminal and the browser setup (idempotent, chain access behind an interface) |
-| `src/web/` | Box web server: pairing and auth, setup wizard, Tapo camera test, pilot sponsor client, dashboard, evidence ZIP (`evidence.ts`, `certificate.ts`) |
-| `services/sponsor/` | Pilot fee sponsor: tops up owner accounts with test QOR (testnet only) |
+| `src/web/` | Web server: pairing and auth, setup wizard, camera test, free beta fee sponsor client, dashboard, evidence file (`evidence.ts`, `certificate.ts`) |
+| `services/sponsor/` | Free beta fee sponsor: tops up owner accounts with test QOR (testnet only) |
 | `web/verifier/` | Browser verifier (single HTML file after `pnpm build:verifier`) |
 | `deploy/` | Recorder (ffmpeg) and agent systemd units, per-camera config |
 | `scripts/` | Device CLI, EVM window helper, anchor and verify CLIs, live precompile probes |
 | `test/` | Contract and Merkle tests (Hardhat 3, node:test, viem) |
 | `docs/` | Architecture, threat model, testnet findings |
 
-## Install (Docker, early alpha)
+## Install (Docker, beta)
 
 On a 64-bit Linux machine (Raspberry Pi OS Lite 64-bit, Debian, Ubuntu) on your home network:
 
@@ -94,7 +94,7 @@ On a 64-bit Linux machine (Raspberry Pi OS Lite 64-bit, Debian, Ubuntu) on your 
 curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.3/install.sh | bash
 ```
 
-The installer installs Docker when it is missing (Enter or `--yes` means yes), pulls the published image `ghcr.io/fnoufnou/qorewitness:<QW_VERSION>`, starts the box and prints the dashboard address and a pairing code. The rest happens in the browser on your phone or laptop: a password, the camera ("Is this your camera?" with a picture), and one progress bar to "Sealing started". Keys and the owner account are made in the background. The free beta pays the network fees (no code). Self-managed sits under "Advanced". Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
+The installer installs Docker when it is missing (Enter or `--yes` means yes), pulls the published image `ghcr.io/fnoufnou/qorewitness:<QW_VERSION>`, starts QoreWitness and prints the dashboard address and a pairing code. The rest happens in the browser on your phone or laptop: a password, the camera ("Is this your camera?" with a picture), and one progress bar to "Sealing started". Keys and the owner account are made in the background. The free beta pays the network fees (no code). Self-managed sits under "Advanced". Everything lives in `~/qorewitness/data`. Read `install.sh` before you run it.
 
 Step by step, with a Tapo C210 section: `docs/INSTALL.md`. The older terminal setup stays available: `install.sh --terminal` or `docker compose run --rm agent setup`.
 
@@ -107,7 +107,7 @@ Stream types (`QW_STREAM_URL` in `data/camera.env`):
 | `http://` `https://` | Pull an HLS (`.m3u8`) or HTTP-FLV stream. |
 | `rtmp://0.0.0.0:1935/live/<secret>` with `QW_STREAM_LISTEN=1` | The camera or an app pushes to this machine. Open port 1935 in `docker-compose.yml`, on the camera network only: anyone who reaches the port and knows the path can push video. |
 
-The `ui` service serves the browser setup and the dashboard on one port. Before setup it needs the pairing code. After setup it needs the dashboard password. It shows the health of the box in plain words (green, orange, red) with one action per problem, the latest seals with explorer links, and receipt downloads.
+The `ui` service serves the browser setup and the dashboard on one port. Before setup it needs the pairing code. After setup it needs the dashboard password. It shows the health of QoreWitness in plain words (green, orange, red) with one action per problem, the latest seals with explorer links, and receipt downloads.
 - Port: `QW_UI_BIND` in `~/qorewitness/.env`. The installer sets `0.0.0.0:8080` on a home network and `127.0.0.1:8080` on a host with a public IP. Never forward this port on your router.
 - Checks: Host allowlist (private IPs, `localhost`, `*.local`, `QW_UI_HOSTNAME`), same-origin POST with a CSRF token, private clients only, scrypt password, signed sessions.
 - During setup the `ui` writes secrets to `/data` (camera password in `camera.env`, recovery phrase in `qorewitness.env`, camera key), all with mode 600. Its process never loads the recovery phrase into its environment, and it reads the phrase from the file only for the setup steps that sign. After `setup.done` the process locks itself and no longer reads `qorewitness.env` or `keys/`.
