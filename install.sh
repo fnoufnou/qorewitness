@@ -74,9 +74,10 @@ if ! command -v docker >/dev/null 2>&1; then
   say "Docker is not installed"
   echo "QoreWitness runs in Docker. The installer can install it with the official script of Docker (get.docker.com)."
   if ask "Install Docker now?"; then
-    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-    $SUDO sh /tmp/get-docker.sh
-    rm -f /tmp/get-docker.sh
+    GETDOCKER="$(mktemp)"
+    curl -fsSL https://get.docker.com -o "$GETDOCKER"
+    $SUDO sh "$GETDOCKER" </dev/null
+    rm -f "$GETDOCKER"
   else
     die "Install Docker first (https://docs.docker.com/engine/install/), or run the installer with --yes."
   fi
