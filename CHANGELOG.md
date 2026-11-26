@@ -4,6 +4,7 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+- Site: the Daily use status table now matches the dashboard (W8): same colours, 11 lines with since when and the one thing to do, including recording stopped, free beta paused and test network reset.
 - Dashboard (W8): every status line says since when and what to do. New lines for "recording stopped" (camera answers but sends no video), "free beta paused" or "today's limit reached" from the fee service, and a test-network reset. "Some video could not be sealed" stays red for one day. 18 new tests (270).
 - Site: new "The 3-minute story" section on the home page and a video link on the jury page and in the README. The explainer video (2 min 43 s) is on YouTube. The site links to it with a thumbnail and a play button and embeds nothing, so it still loads no third-party script.
 
