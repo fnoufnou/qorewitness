@@ -270,6 +270,7 @@ const terminal = `<figure class="shot"><div class="device term"><div class="chro
 Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div><figcaption>The end of the install. Your address and code will differ.</figcaption></figure>`;
 const help = (title, inner, id = "") => `<details class="help"${id ? ` id="${id}"` : ""}><summary>${title}</summary><div class="in">${inner}</div></details>`;
 const copybox = (id, text, label = "Copy") => `<div class="copybox"><code id="${id}" tabindex="0">${text}</code><button class="btn" type="button" data-copy="${id}" aria-label="${label}: ${id === "install-cmd" ? "the install line" : "the text"}">${ico("copy")}<span>${label}</span></button></div>`;
+const VIDEO_URL = "https://youtu.be/RSHszgfsqm8";
 const head = (eyebrow, h1, lead, meta = []) => `<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">${eyebrow}</p><h1>${h1}</h1><p class="lead">${lead}</p>${meta.length ? `<ul class="meta">${meta.map((m) => `<li>${m}</li>`).join("")}</ul>` : ""}</div>${edge("wave", "bg")}</div>`;
 const closing = (h, p, href, label) => `<div class="band"><div class="wrap"><div><h2>${h}</h2><p>${p}</p></div><a class="btn primary" href="${href}">${label} ${ico("arrow")}</a></div></div>`;
 const VERIFY = `<a href="${UP}verifier.html">QoreWitness Verify</a>`;
@@ -345,7 +346,7 @@ page({
 ${heroVisual}
 </div>${edge("hero", "bg")}</div>
 
-<section class="edged"><div class="wrap">
+<section><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Why it matters</p><h2>When any video can be faked, yours deserves proof.</h2>
 <p>Until recently, video evidence was enough to prove what really happened. With AI video manipulation, that trust is eroding fast. QoreWitness restores it by pinning every video to the time it was recorded and proving that not a single pixel has changed since.</p></div>
 <ul class="grid c3">
@@ -353,6 +354,19 @@ ${heroVisual}
 <li class="tile top"><div class="ic">${ico("lock")}</div><h3>Keep your privacy</h3><p>Your video stays at home. QoreWitness creates a digital fingerprint of your video stream and keeps that, and only that, on a public record.</p></li>
 <li class="tile top"><div class="ic">${ico("eye")}</div><h3>Let anyone check</h3><p>Whoever receives your video can confirm the seal online with ${VERIFY}, in seconds, without an account and without having to take our word for it.</p></li>
 </ul>
+</div></section>
+
+<section class="edged" id="story" aria-labelledby="story-h"><div class="wrap">
+<div class="story">
+<div class="sec-head"><p class="eyebrow">The 3-minute story</p><h2 id="story-h">See how a seal brings the trust back.</h2>
+<p>A short film shows what happens to a home camera clip from the first frame to the final check, and why anyone you share it with can believe what they see.</p>
+<p class="small muted story-meta">Video on YouTube, 2 min 43 s. It opens in a new tab.</p></div>
+<a class="video-card" href="${VIDEO_URL}" target="_blank" rel="noopener">
+<img src="${UP}assets/video-thumb-1280.webp" srcset="${UP}assets/video-thumb-640.webp 640w, ${UP}assets/video-thumb-1280.webp 1280w" sizes="(min-width:860px) 560px, calc(100vw - 32px)" width="1280" height="720" alt="Video thumbnail: a worried man in a suit looks at a camera frame of two cars colliding, next to a green seal with a checkmark. Title: Can you trust video?" loading="lazy" decoding="async">
+<span class="play" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>
+<span class="sr">Watch the video: Can you still trust video? How QoreWitness seals home camera footage (2 minutes 43 seconds, opens YouTube in a new tab)</span>
+</a>
+</div>
 </div>${edge("wave", "alt")}</section>
 
 <section class="alt edged" id="how"><div class="wrap">
@@ -885,7 +899,7 @@ page({
   title: "For the jury | QoreWitness",
   desc: "QoreWitness for the QoreChain Developer Fest judges: what it is, how ML-DSA-87 is checked on chain, the live contracts, audits, drills, tests and where to find each proof.",
   body: `
-${head("For the jury", "QoreWitness at a glance.", "Thank you for judging the QoreChain Developer Fest. QoreWitness is our entry in the Post-Quantum dApp category, under the alias fnoufnou. This page shows what it does, where QoreChain checks the post-quantum signature on chain, and how you can verify every claim yourself.", ["Post-Quantum dApp category", "Testnet: qorechain-diana, EVM chain ID 9800", "Open source, Apache-2.0"])}
+${head("For the jury", "QoreWitness at a glance.", "Thank you for judging the QoreChain Developer Fest. QoreWitness is our entry in the Post-Quantum dApp category, under the alias fnoufnou. This page shows what it does, where QoreChain checks the post-quantum signature on chain, and how you can verify every claim yourself. Prefer to watch first? The <a href=\"" + VIDEO_URL + "\" target=\"_blank\" rel=\"noopener\">2 min 43 s explainer video</a> (YouTube, opens in a new tab) shows the whole flow.", ["Post-Quantum dApp category", "Testnet: qorechain-diana, EVM chain ID 9800", "Open source, Apache-2.0"])}
 <section class="edged"><div class="wrap split">
 <div><p class="eyebrow">What it is</p><h2>Sealed video for home security cameras.</h2>
 <p style="margin-top:16px">A small recorder at home cuts the camera stream into short clips and fingerprints each one with SHA-256 and SHA3-256. Every 10 minutes it builds a Merkle root, signs it with the camera's own ML-DSA-87 key and anchors it in the AnchorRegistry contract on QoreChain. The contract checks that signature with the <code>pqcVerify</code> precompile before it stores anything.</p>
