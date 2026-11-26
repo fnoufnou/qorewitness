@@ -20,7 +20,7 @@
 <meta name="twitter:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/site.css?v=e48fa9ad47">
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -58,7 +58,7 @@
 </div></header>
 <main id="main">
 
-<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Get started</p><h1>Set up your camera.</h1><p class="lead">QoreWitness works with any camera that offers an RTSP or ONVIF video stream on your home network. Plan about an hour from start to finish. You paste one line, and everything after that happens in your browser.</p><ul class="meta"><li>About an hour</li><li>Any RTSP or ONVIF camera</li><li>One line to paste</li></ul></div><div class="edge t-bg" aria-hidden="true"><svg viewBox="0 0 1440 48" preserveAspectRatio="xMidYMax slice" focusable="false"><use href="#edge-c"/></svg></div></div>
+<div class="page-head"><div class="wrap narrow-wrap"><p class="eyebrow">Get started</p><h1>Set up your camera.</h1><p class="lead">QoreWitness works with any camera that offers an RTSP or ONVIF video stream on your home network.</p></div><div class="edge t-bg" aria-hidden="true"><svg viewBox="0 0 1440 48" preserveAspectRatio="xMidYMax slice" focusable="false"><use href="#edge-c"/></svg></div></div>
 <section><div class="wrap">
 <div class="guide">
 <aside class="rail" aria-label="Steps"><h2>On this page</h2><ol><li class="nonum"><a href="#need">What you need</a></li><li><a href="#s1">Check your camera</a></li><li><a href="#s2">Prepare your camera</a></li><li><a href="#s3">Install QoreWitness</a></li><li><a href="#s4">Open the setup</a></li><li><a href="#s5">Done</a></li></ol></aside>
@@ -67,33 +67,17 @@
 <div id="need" class="need">
 <h2>What you need</h2>
 <ul class="checks" style="margin-top:16px">
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>A compatible camera</b> that shares an RTSP or ONVIF stream. Step 1 shows you how to tell.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>A computer that stays on</b>, such as a Raspberry Pi, a mini PC, a home server or a NAS. QoreWitness runs anywhere Docker runs.</span></li>
-<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>One home network</b> that connects the camera, that computer and the laptop or phone you use for the setup.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>A compatible camera</b> that shares an RTSP or ONVIF stream.</span></li>
+<li><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span><b>A computer that stays on</b>, such as a Raspberry Pi, a home server, a NAS, or a Windows or Mac computer.</span></li>
 </ul>
-<h3 style="margin:28px 0 4px">Hardware</h3>
-<div class="tablewrap" role="region" aria-label="Minimum and recommended hardware" tabindex="0"><table class="stack"><caption class="sr">Minimum and recommended hardware</caption><thead><tr><th scope="col"><span class="sr">Part</span></th><th scope="col">Minimum</th><th scope="col">Recommended</th></tr></thead><tbody>
+<details class="help" id="hardware"><summary>Hardware requirements</summary><div class="in"><div class="tablewrap" role="region" aria-label="Minimum and recommended hardware" tabindex="0"><table class="stack"><caption class="sr">Minimum and recommended hardware</caption><thead><tr><th scope="col"><span class="sr">Part</span></th><th scope="col">Minimum</th><th scope="col">Recommended</th></tr></thead><tbody>
 <tr><th scope="row">Processor</th><td data-label="Minimum">2 cores, 64-bit (x86-64 or ARM64)</td><td data-label="Recommended">4 cores</td></tr>
 <tr><th scope="row">Memory</th><td data-label="Minimum">2 GB</td><td data-label="Recommended">4 GB</td></tr>
 <tr><th scope="row">Storage</th><td data-label="Minimum">Enough for the days of video you want to keep</td><td data-label="Recommended">A 500 GB SSD for one or two cameras</td></tr>
 <tr><th scope="row">Raspberry Pi</th><td data-label="Minimum">Raspberry Pi 4 (4 GB) with a USB SSD</td><td data-label="Recommended">Raspberry Pi 5 (4 or 8 GB) with a USB SSD</td></tr>
 <tr><th scope="row">System</th><td colspan="2" data-label="Minimum and recommended">64-bit Linux with Docker, or any system that runs Docker</td></tr>
-</tbody></table></div>
-<div class="callout"><b class="t">How much storage?</b>As a rough guide, a 2K camera streams at about 1.5 to 2 Mbit/s and writes about 15 to 20 GB a day, so two weeks of video for one camera needs roughly 200 to 300 GB. On a Raspberry Pi, use a USB SSD, because SD cards wear out quickly when they record video day and night.</div>
-<h3 style="margin:28px 0 4px">Where it runs</h3>
-<div class="tablewrap" role="region" aria-label="Where QoreWitness runs" tabindex="0"><table class="stack"><caption class="sr">Where QoreWitness runs</caption><thead><tr><th scope="col">Where</th><th scope="col">How you install it</th></tr></thead><tbody>
-<tr><td><b>Linux</b>: Debian, Ubuntu, Raspberry Pi OS</td><td data-label="How you install it">The one-line installer (step 3 below)</td></tr>
-<tr><td><b>Home server or NAS</b>: Synology Container Manager, Unraid, Proxmox, TrueNAS</td><td data-label="How you install it"><a href="#compose">Guide: Docker Compose</a></td></tr>
-<tr><td><b>Windows or macOS</b> with Docker Desktop</td><td data-label="How you install it"><a href="#compose">Guide: Docker Compose</a></td></tr>
-</tbody></table></div>
-<p class="small muted">The Linux installer is the path we test from start to finish. On a NAS, a home server, Windows or macOS you run the same software with Docker Compose.</p>
-<details class="help" id="compose"><summary>Guide: Docker Compose on a NAS, home server, Windows or Mac</summary><div class="in"><ol class="plain">
-<li>Install Docker with Compose: Docker Desktop on Windows or macOS, Container Manager on Synology, or the Docker tools of your server.</li>
-<li>Create a folder named <code>qorewitness</code> and save <a href="https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml">docker-compose.yml</a> in it.</li>
-<li>To open the setup from another device, add a file named <code>.env</code> to that folder with the line <code>QW_UI_BIND=0.0.0.0:8080</code>.</li>
-<li>In that folder, run <code>docker compose up -d</code>, then <code>docker compose run --rm -T ui pair</code> to see your pairing code.</li>
-<li>Open <code>http://ADDRESS:8080/setup</code>, where ADDRESS is the computer's address (or <code>localhost</code> on the same computer), type the code and continue with step 4.</li>
-</ol><p>The details are in <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/INSTALL.md">INSTALL.md</a>.</p></div></details>
+</tbody></table></div></div></details>
+<details class="help"><summary>How much storage?</summary><div class="in"><p>A 2K camera writes about 15 to 20 GB a day, so two weeks of video for one camera needs roughly 200 to 300 GB. On a Raspberry Pi, use a USB SSD, because SD cards wear out quickly when they record video day and night.</p></div></details>
 <div class="callout"><b class="t">Aim your camera at your own property</b>If it films the street or a neighbour's home, privacy law may apply to you. A small sign helps. See <a href="trust.html#privacy">Trust and limits</a>.</div>
 </div>
 
@@ -101,20 +85,32 @@
 
 <li class="step" id="s1"><h3>Check that your camera is compatible</h3><p class="time">Camera app or manual</p><div class="body">
 <p>Look in your camera app, its settings or its manual for any of these words: <b>RTSP</b>, <b>ONVIF</b>, <b>camera account</b>, <b>local stream</b> or <b>NVR</b>. If you find one, your camera can very likely share its video with QoreWitness.</p>
+<p>Not sure? Search the web or ask an AI assistant: "Does my [brand and model] support RTSP?"</p>
 <p>Battery cameras and cameras that only stream to their maker's cloud do not offer that stream, so they cannot work. The <a href="cameras.html">camera list</a> shows what we know brand by brand, and you can <a href="cameras.html#check">check your own camera in two minutes</a> with the free VLC player.</p>
 </div></li>
 
 <li class="step" id="s2"><h3>Prepare your camera</h3><p class="time">Camera app or camera web page</p><div class="body">
 <p>Switch on the camera's local stream and give it its own account name and password. QoreWitness uses that account to read the video on your home network. Pick your brand for the exact steps.</p>
-<details class="help"><summary>TP-Link Tapo (wired models, such as the C210)</summary><div class="in"><div class="hint-grid"><div><ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Advanced Settings</b>, then <b>Camera Account</b>, and agree to the notice.</li><li>Choose a name and a password of 6 to 32 characters each. Letters and digits work best.</li></ol><p>Stream address: <code>rtsp://NAME:PASSWORD@ADDRESS:554/stream1</code>. Tapo Care, a microSD card and a recorder such as QoreWitness can only run two at a time, so switch one off if all three are on.</p></div><figure class="shot path"><div class="device phone neutral"><div class="ill" role="img" aria-label="Illustration: in the Tapo app, go to Your camera, then Settings (gear icon), then Advanced Settings, then Camera Account."><p class="app">Tapo app</p><ol><li><span>Your camera</span><svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></li><li><span>Settings (gear icon)</span><svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></li><li><span>Advanced Settings</span><svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></li><li class="here"><span>Camera Account</span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg></li></ol><p class="note">Illustration. The real app looks different.</p></div></div><figcaption>Where to find the Camera Account in the Tapo app.</figcaption></figure></div></div></details><details class="help"><summary>Reolink (wired and PoE models)</summary><div class="in"><div class="hint-grid"><div><p>In the Reolink app or desktop client, open the camera settings, then <b>Network</b>, <b>Advanced</b> and <b>Server Settings</b> (on some models <b>Port Settings</b>), and switch on <b>RTSP</b>. Use the camera's own login.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/h264Preview_01_main</code>.</p></div><figure class="shot path"><div class="device phone neutral"><div class="ill" role="img" aria-label="Illustration: in the Reolink app, go to Camera settings, then Network, then Advanced, then Server Settings, then RTSP on."><p class="app">Reolink app</p><ol><li><span>Camera settings</span><svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></li><li><span>Network</span><svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></li><li><span>Advanced</span><svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></li><li><span>Server Settings</span><svg aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg></li><li class="here"><span>RTSP on</span><svg aria-hidden="true" focusable="false"><use href="#i-check"/></svg></li></ol><p class="note">Illustration. The real app looks different.</p></div></div><figcaption>Where to switch on RTSP in the Reolink app.</figcaption></figure></div></div></details><details class="help"><summary>Hikvision and Annke</summary><div class="in"><p>RTSP is usually on already. Open the camera in your browser and check <b>Configuration</b>, <b>Network</b>, <b>Advanced Settings</b>. To use ONVIF, switch it on under <b>Integration Protocol</b> and add an ONVIF user.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/Streaming/Channels/101</code>.</p></div></details><details class="help"><summary>Dahua and Amcrest</summary><div class="in"><p>RTSP is usually on already. You can check it in the camera's web page under the network settings, where you can also switch on ONVIF.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/cam/realmonitor?channel=1&amp;subtype=0</code>.</p></div></details><details class="help"><summary>Ubiquiti UniFi Protect</summary><div class="in"><p>In UniFi Protect, open the camera, go to its settings and switch on an <b>RTSP</b> stream under the advanced options. Protect then shows a ready-made stream link. Copy it and keep it for the setup.</p></div></details><details class="help"><summary>Axis</summary><div class="in"><p>Axis cameras offer RTSP as standard. Create a user for QoreWitness in the camera's web page, under the system or account settings.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS/axis-media/media.amp</code>.</p></div></details><details class="help"><summary>Any other ONVIF camera</summary><div class="in"><p>Switch on ONVIF in the camera settings and create an ONVIF user if the camera asks for one. To find the exact stream address, search for your model together with the words "RTSP URL".</p></div></details>
+<details class="help"><summary>TP-Link Tapo (wired models, such as the C210)</summary><div class="in"><div><ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Advanced Settings</b>, then <b>Camera Account</b>, and agree to the notice.</li><li>Choose a name and a password of 6 to 32 characters each. Letters and digits work best.</li></ol><p>Stream address: <code>rtsp://NAME:PASSWORD@ADDRESS:554/stream1</code>. Tapo Care, a microSD card and a recorder such as QoreWitness can only run two at a time, so switch one off if all three are on.</p></div></div></details><details class="help"><summary>Reolink (wired and PoE models)</summary><div class="in"><div><p>In the Reolink app or desktop client, open the camera settings, then <b>Network</b>, <b>Advanced</b> and <b>Server Settings</b> (on some models <b>Port Settings</b>), and switch on <b>RTSP</b>. Use the camera's own login.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/h264Preview_01_main</code>.</p></div></div></details><details class="help"><summary>Hikvision and Annke</summary><div class="in"><p>RTSP is usually on already. Open the camera in your browser and check <b>Configuration</b>, <b>Network</b>, <b>Advanced Settings</b>. To use ONVIF, switch it on under <b>Integration Protocol</b> and add an ONVIF user.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/Streaming/Channels/101</code>.</p></div></details><details class="help"><summary>Dahua and Amcrest</summary><div class="in"><p>RTSP is usually on already. You can check it in the camera's web page under the network settings, where you can also switch on ONVIF.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS:554/cam/realmonitor?channel=1&amp;subtype=0</code>.</p></div></details><details class="help"><summary>Ubiquiti UniFi Protect</summary><div class="in"><p>In UniFi Protect, open the camera, go to its settings and switch on an <b>RTSP</b> stream under the advanced options. Protect then shows a ready-made stream link. Copy it and keep it for the setup.</p></div></details><details class="help"><summary>Axis</summary><div class="in"><p>Axis cameras offer RTSP as standard. Create a user for QoreWitness in the camera's web page, under the system or account settings.</p><p>Stream address on most models: <code>rtsp://NAME:PASSWORD@ADDRESS/axis-media/media.amp</code>.</p></div></details><details class="help"><summary>Any other ONVIF camera</summary><div class="in"><p>Switch on ONVIF in the camera settings and create an ONVIF user if the camera asks for one. To find the exact stream address, search for your model together with the words "RTSP URL".</p></div></details>
 <p style="margin-top:20px">Two good habits for any camera: use a new password that you do not use anywhere else, and give the camera a fixed address in your router (often called a "DHCP reservation"), so QoreWitness always finds it.</p>
 </div></li>
 
-<li class="step" id="s3"><h3>Install QoreWitness on your always-on computer</h3><p class="time">Terminal on your laptop</p><div class="body">
-<p>Open a terminal on your own laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</p>
-<p>Paste this line, replace <code>USER</code> with the user name of that computer, and press Enter. If you did not name the computer <code>qorewitness</code>, also replace <code>qorewitness.local</code> with its name or with its IP address from your router app.</p>
-<div class="copybox"><code id="install-cmd" tabindex="0">ssh -t USER@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes"</code><button class="btn" type="button" data-copy="install-cmd" aria-label="Copy line: the install line"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div>
-<p>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter that computer's password. The installer takes care of the rest, and at the end it shows a <b>link</b> and a <b>pairing code</b> in large text.</p>
+<li class="step" id="s3"><h3>Install QoreWitness</h3><p class="time">Pick where it runs</p><div class="body">
+<div class="tabs" data-tabs>
+<p class="tabs-q">Where will QoreWitness run?</p>
+<div class="tablist" role="tablist" aria-label="Where will QoreWitness run?" hidden>
+<button type="button" role="tab" id="tab-linux" aria-controls="path-linux" aria-selected="true"><b>Raspberry Pi</b><small>Or another Linux computer</small></button>
+<button type="button" role="tab" id="tab-proxmox" aria-controls="path-proxmox" aria-selected="false" tabindex="-1"><b>Proxmox</b><small>Or another home server</small></button>
+<button type="button" role="tab" id="tab-nas" aria-controls="path-nas" aria-selected="false" tabindex="-1"><b>NAS</b><small>Synology, Unraid, TrueNAS</small></button>
+<button type="button" role="tab" id="tab-desktop" aria-controls="path-desktop" aria-selected="false" tabindex="-1"><b>Windows or Mac</b><small>With Docker Desktop</small></button>
+</div>
+<div class="path-panel" id="path-linux" role="tabpanel" aria-labelledby="tab-linux" tabindex="0"><h4>Raspberry Pi or Linux computer</h4><ol class="plain path-steps">
+<li><b>New Raspberry Pi?</b> Install <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a> on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>. In its settings, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>. Write the card or SSD, connect it to the Pi and start it.</li>
+<li>Find the IP address of the computer in your router app.</li>
+<li>Open a terminal on your laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</li>
+<li>Paste this line. Replace <code>USER</code> with the user name of the computer and <code>IP-ADDRESS</code> with its IP address. Press Enter.
+<div class="copybox"><code id="install-cmd" tabindex="0">ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes"</code><button class="btn" type="button" data-copy="install-cmd" aria-label="Copy line: the install line"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div></li>
+<li>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter the computer's password. At the end, the installer shows a <b>link</b> and a <b>pairing code</b>.
 <figure class="shot"><div class="device term"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Terminal</span></div><pre tabindex="0" aria-label="The end of the installer output"><span class="dim">Starting QoreWitness</span>
 <span class="dim"> ✔ Container qorewitness-agent  Started</span>
 <span class="dim"> ✔ Container qorewitness-ui     Started</span>
@@ -125,13 +121,48 @@
 
 <b class="hl">      Pairing code:  482 913</b>
 
-Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div><figcaption>The end of the install. Your address and code will differ.</figcaption></figure>
-<details class="help"><summary>Starting with a new Raspberry Pi</summary><div class="in"><ol class="plain"><li>Install Raspberry Pi Imager on your laptop and choose <b>Raspberry Pi OS Lite (64-bit)</b>.</li><li>In its settings, set the host name to <code>qorewitness</code>, choose a user name and password, enter your Wi-Fi (or use a cable) and switch on <b>SSH</b>.</li><li>Write the card or SSD, connect it to the Pi and start it. Give it a moment to boot, then paste the line above.</li></ol></div></details>
-<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>qorewitness.local not found.</b> Use the computer's IP address from your router app instead of <code>qorewitness.local</code>.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-alpha.4/install.sh">GitHub</a>, exactly the version the line runs, and you can run the line again at any time.</li></ul></div></details>
+Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div></figure></li>
+</ol>
+<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-alpha.4/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul></div></details></div>
+<div class="path-panel" id="path-proxmox" role="tabpanel" aria-labelledby="tab-proxmox" tabindex="0"><h4>Proxmox or another home server</h4><ol class="plain path-steps">
+<li>Create a Debian 12 container: unprivileged, with <b>nesting</b> and <b>keyctl</b> on (Options, Features). 2 cores and 2 GB memory are enough. Size the disk for the video you want to keep. A Debian or Ubuntu VM works too.</li>
+<li>Open a shell in it, as root or as a user with sudo, and run:
+<div class="copybox"><code id="install-here" tabindex="0">curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes</code><button class="btn" type="button" data-copy="install-here" aria-label="Copy line: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div>
+The installer adds Docker when it is missing, installs into <code>~/qorewitness</code> and ends with a <b>link</b> and a <b>pairing code</b>.</li>
+</ol>
+<p class="small">Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-alpha.4/install.sh">GitHub</a>, exactly the version the line runs.</p></div>
+<div class="path-panel" id="path-nas" role="tabpanel" aria-labelledby="tab-nas" tabindex="0"><h4>NAS</h4><ol class="plain path-steps">
+<li>Make sure Docker with Compose runs on it. On Synology, install <a href="https://www.synology.com/en-global/dsm/packages/ContainerManager">Container Manager</a> from the Package Center.</li>
+<li>Connect to the NAS over SSH and go to the folder where you keep your Docker apps, such as <code>/volume1/docker</code> on Synology. Paste:
+<div class="copybox"><code id="install-nas" tabindex="0">mkdir -p qorewitness/data && cd qorewitness
+curl -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
+sudo chown 10001:10001 data && sudo chmod 700 data
+echo "QW_UI_BIND=0.0.0.0:8080" > .env
+sudo docker compose up -d
+sudo docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="install-nas" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+Logged in as root? Leave out <code>sudo</code>. The last line shows your pairing code.</li>
+<li>Open <code>http://IP-ADDRESS:8080/setup</code> with the address of your NAS.</li>
+</ol></div>
+<div class="path-panel" id="path-desktop" role="tabpanel" aria-labelledby="tab-desktop" tabindex="0"><h4>Windows or Mac</h4><ol class="plain path-steps">
+<li>Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and start it. Set the computer to never sleep, because QoreWitness only records while it is on.</li>
+<li>On a Mac, open <b>Terminal</b> and paste:
+<div class="copybox"><code id="install-mac" tabindex="0">mkdir -p qorewitness && cd qorewitness
+curl -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
+docker compose up -d
+docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="install-mac" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+On Windows, open <b>PowerShell</b> and paste:
+<div class="copybox"><code id="install-win" tabindex="0">mkdir qorewitness; cd qorewitness
+curl.exe -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
+docker compose up -d
+docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="install-win" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+The last line shows your pairing code.</li>
+<li>On the same computer, open <code>http://localhost:8080/setup</code>.</li>
+</ol></div>
+</div>
 </div></li>
 
 <li class="step" id="s4"><h3>Open the setup in your browser</h3><p class="time">Browser on your laptop or phone</p><div class="body">
-<p>Open the link from the installer and type the pairing code. Choose a password for your dashboard, and QoreWitness looks for cameras on your network.</p>
+<p>Open the setup link from step 3 and type the pairing code. Choose a password for your dashboard, and QoreWitness looks for cameras on your network.</p>
 <ol class="plain">
 <li><b>Pick your camera</b> from the list, or type its address if it is not there.</li>
 <li><b>Enter the camera account</b> name and password from step 2, tick that the camera films your own property, and press <b>Test camera</b>.</li>
@@ -139,12 +170,12 @@ Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div><figcapt
 </ol>
 <p>A progress bar then connects your camera to the public ledger. You can close the page while it works. During the beta we cover the network fees, so there is no wallet to set up and nothing to pay or top up.</p>
 <div class="screens" role="region" aria-label="The setup in your browser, five screens" tabindex="0"><ol><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-pair.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Set up QoreWitness, with a field for the 6-digit pairing code and a Continue button." loading="lazy" decoding="async"></div><figcaption>1. Type the pairing code</figcaption></figure></li><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-password.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Choose a password for QoreWitness, with a Show password option and a Save password button." loading="lazy" decoding="async"></div><figcaption>2. Choose a password</figcaption></figure></li><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-camera.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Connect your camera. Two cameras found on the network, the brand TP-Link Tapo picked, the camera account filled in and a Test camera button." loading="lazy" decoding="async"></div><figcaption>3. Pick your camera</figcaption></figure></li><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-picture.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Is this your camera?, with a picture of a back garden from the camera and the buttons Yes, this is my camera and Try again." loading="lazy" decoding="async"></div><figcaption>4. Confirm its picture</figcaption></figure></li><li><figure class="shot"><div class="device phone"><img src="assets/screens/setup-progress.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Connecting your camera, with a progress bar and the note that you can close the page." loading="lazy" decoding="async"></div><figcaption>5. Let it connect</figcaption></figure></li></ol></div>
-<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the line from step 3 again with <code>--new-password</code> added after <code>--yes</code>.</li></ul></div></details>
+<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the install line from step 3 again with <code>--new-password</code> added after <code>--yes</code>. Without the install line, run <code>docker compose run --rm -T ui pair --new-password</code> in the <code>qorewitness</code> folder.</li></ul></div></details>
 </div></li>
 
 <li class="step" id="s5"><h3>Done</h3><p class="time">Dashboard</p><div class="body">
 <p>You see <b>Sealing started</b>, and your first seals arrive shortly after. Open your dashboard and bookmark it on your phone and laptop. Its status line turns green as soon as sealing runs.</p>
-<div class="duo"><figure class="shot"><div class="device phone"><img src="assets/screens/setup-done.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Sealing started, with the dashboard address and an Open my dashboard button." loading="lazy" decoding="async"></div><figcaption>Sealing started</figcaption></figure><figure class="shot"><div class="device browser"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>qorewitness.local:8080</span></div><img src="assets/screens/dashboard-desktop.webp" width="2560" height="1600" alt="QoreWitness dashboard in a browser: Sealing OK in green, camera online, network fees covered in the free beta, and the latest seals with a Download button each." loading="lazy" decoding="async"></div><figcaption>Your dashboard, here on a laptop</figcaption></figure></div>
+<div class="duo"><figure class="shot"><div class="device phone"><img src="assets/screens/setup-done.webp" width="780" height="1688" alt="QoreWitness setup on a phone: Sealing started, with the dashboard address and an Open my dashboard button." loading="lazy" decoding="async"></div><figcaption>Sealing started</figcaption></figure><figure class="shot"><div class="device browser"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>192.168.1.42:8080</span></div><img src="assets/screens/dashboard-desktop.webp" width="2560" height="1600" alt="QoreWitness dashboard in a browser: Sealing OK in green, camera online, network fees covered in the free beta, and the latest seals with a Download button each." loading="lazy" decoding="async"></div><figcaption>Your dashboard, here on a laptop</figcaption></figure></div>
 <div class="callout ok"><b class="t">That's it.</b>Keep using your camera app for live view and alerts, just as before. <a href="daily-use.html">Daily use</a> explains the dashboard, and <a href="prove.html">Prove a video</a> shows how to share a sealed clip.</div>
 </div></li>
 </ol>
@@ -164,6 +195,6 @@ Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div><figcapt
 </div>
 <div class="legal"><p>© 2026 fnoufnou. QoreWitness is open source under the <a href="https://github.com/fnoufnou/qorewitness/blob/main/LICENSE">Apache License 2.0</a>.</p><p>QoreChain, TP-Link, Tapo and other names are trademarks of their respective owners. <a href="trust.html">Trust and limits</a></p></div>
 </div></footer>
-<script src="assets/site.js" defer></script>
+<script src="assets/site.js?v=47361f33fc" defer></script>
 </body>
 </html>

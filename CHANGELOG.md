@@ -4,7 +4,13 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+- Dashboard (W8): every status line says since when and what to do. New lines for "recording stopped" (camera answers but sends no video), "free beta paused" or "today's limit reached" from the fee service, and a test-network reset. "Some video could not be sealed" stays red for one day. 18 new tests (270).
 - Site: new "The 3-minute story" section on the home page and a video link on the jury page and in the README. The explainer video (2 min 43 s) is on YouTube. The site links to it with a thumbnail and a play button and embeds nothing, so it still loads no third-party script.
+
+### 2026-11-25: setup guide after the owner's first walkthrough
+- Get started: shorter intro, no time estimate. "What you need" lists the camera and an always-on computer. Hardware and storage sit in two fold-outs. Step 1 suggests a web search or an AI assistant. Step 3 asks where QoreWitness runs (Raspberry Pi or Linux, NAS or home server, Windows or Mac) and shows only that path, top to bottom. The install line uses `USER@IP-ADDRESS`, not `qorewitness.local`. Illustrated camera-app phones and the caption under the terminal are gone. Raspberry Pi Imager, Docker Desktop, Synology Container Manager and Docker Engine link to their own pages.
+- Step 3 is a tab panel (site.js, arrow keys work) with four paths: Raspberry Pi (SSH line from the laptop), Proxmox or another home server (Debian 12 container with nesting and keyctl, install line in its shell), NAS (one paste with Compose, sets the data folder owner to uid 10001 and the bind address), Windows or Mac (one paste with Docker Desktop). Without the script all three paths show. Stylesheet and script links carry a content hash (`?v=`), so browsers load the new files after a deploy.
+- Daily use and the dashboard frame show an IP address instead of `qorewitness.local`. Developers: the Compose link points to step 3.
 
 ## 0.6.0-alpha.4 (25 Nov 2026)
 

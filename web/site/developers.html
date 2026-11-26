@@ -20,7 +20,7 @@
 <meta name="twitter:image" content="https://qorewitness.fnoufnou.com/qorewitness-featured.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/site.css?v=e48fa9ad47">
 <script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -90,7 +90,7 @@ verifier (static page or CLI): clip + receipt
 <p class="eyebrow">Run it yourself</p><h2>Install, update, back up, remove.</h2>
 <ul class="plain" style="margin-top:16px">
 <li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/INSTALL.md">INSTALL.md</a>.</li>
-<li><b>Other platforms:</b> the Linux installer is tested end to end. NAS, home server, Windows and macOS use the same <code>docker-compose.yml</code> (<a href="get-started.html#compose">short guide</a>).</li>
+<li><b>Other platforms:</b> a NAS, a home server, Windows and macOS use the same <code>docker-compose.yml</code> (<a href="get-started.html#s3">guide</a>).</li>
 <li><b>Other camera brands:</b> with <code>--terminal</code> you can give a full stream URL, for example <code>rtsp://user:password@192.168.1.20:554/stream</code>. Compatibility status per brand: <a href="cameras.html">cameras</a>. Research notes: <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CAMERAS.md">CAMERAS.md</a>.</li>
 <li><b>Update:</b> set the new version in <code>~/qorewitness/.env</code> (<code>QW_VERSION</code>), then <code>docker compose pull &amp;&amp; docker compose up -d</code>. The version is pinned, and QoreWitness never updates itself.</li>
 <li><b>Back up:</b> copy <code>~/qorewitness/data</code>, at least <code>qorewitness.env</code> and <code>keys</code>. Anyone with these files can use the test account.</li>
@@ -162,6 +162,6 @@ verifier (static page or CLI): clip + receipt
 </div>
 <div class="legal"><p>© 2026 fnoufnou. QoreWitness is open source under the <a href="https://github.com/fnoufnou/qorewitness/blob/main/LICENSE">Apache License 2.0</a>.</p><p>QoreChain, TP-Link, Tapo and other names are trademarks of their respective owners. <a href="trust.html">Trust and limits</a></p></div>
 </div></footer>
-<script src="assets/site.js" defer></script>
+<script src="assets/site.js?v=47361f33fc" defer></script>
 </body>
 </html>
