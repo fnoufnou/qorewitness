@@ -33,7 +33,7 @@ const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
 // window 08:00 to 08:10 CET.
 // Server-only files: /sample-clip.mp4 and /sample-receipt.json. The old /demo-clip.mp4 links keep working.
 const SAMPLE = { clip: "sample-clip.mp4", receipt: "sample-receipt.json", block: "10,653,907", sealed: "24 Nov 2026, 08:10 CET", recorded: "08:08 to 08:09 CET", within: "1 minute" };
-const TESTS = 252; // automated tests (pnpm test), counted on 25 Nov 2026
+const TESTS = 270; // automated tests (pnpm test), counted on 26 Nov 2026
 
 /* ---------- icons and art ---------- */
 const defs = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
