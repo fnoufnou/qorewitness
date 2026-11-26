@@ -2,6 +2,10 @@
 
 Newest first. Dates in UTC. Dependency updates follow the checks in the "Dependencies" section below.
 
+## Unreleased
+
+- Site: new "The 3-minute story" section on the home page and a video link on the jury page and in the README. The explainer video (2 min 43 s) is on YouTube. The site links to it with a thumbnail and a play button and embeds nothing, so it still loads no third-party script.
+
 ## 0.6.0-alpha.4 (25 Nov 2026)
 
 QoreWitness Verify trusts only our registries, one drop zone, times with the time zone, one name per thing in the app (evidence file, receipt, pairing code), CSP on Verify, installer temp file via mktemp. Install line pinned to this tag.

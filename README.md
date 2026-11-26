@@ -4,7 +4,7 @@ Post-quantum evidence anchor for camera footage on QoreChain.
 
 QoreWitness proves that a video segment existed before a known time. It hashes each recording segment with two independent functions (SHA-256 and SHA3-256), builds a SHA-256 Merkle tree per time window, signs the root with the camera's own ML-DSA-87 key and stores it in the `AnchorRegistry` contract on QoreChain. The contract checks the ML-DSA signature on chain. The block time is the trusted "existed before" time. Since registry v4, every segment and every window is chained to the one before it, and the camera signs a recent block hash, so the time is bounded on both sides.
 
-Status: beta on the QoreChain test network (qorechain-diana), built for the QoreChain Developer Fest (Nov 2026). Website and setup guide: https://qorewitness.fnoufnou.com. For the jury: https://qorewitness.fnoufnou.com/jury.html. The test network can be reset, so do not use QoreWitness as your only evidence yet.
+Status: beta on the QoreChain test network (qorechain-diana), built for the QoreChain Developer Fest (Nov 2026). Website and setup guide: https://qorewitness.fnoufnou.com. For the jury: https://qorewitness.fnoufnou.com/jury.html. Video (2:43): https://youtu.be/RSHszgfsqm8. The test network can be reset, so do not use QoreWitness as your only evidence yet.
 
 ## Why post-quantum
 
