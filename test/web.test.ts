@@ -102,14 +102,14 @@ describe("dashboard: box health in plain words", () => {
   it("red when the camera sends no video, with one action", () => {
     const h = boxHealth({ ...base, newestSegmentAgeSeconds: 600 }, facts);
     assert.equal(h.level, "bad");
-    assert.equal(h.title, "No video from the camera.");
+    assert.equal(h.title, "No video from the camera for 10 minutes.");
     assert.match(h.action!, /power and Wi-Fi/);
   });
 
   it("orange when fees run low on Self-managed, red when they ran out", () => {
     const low = boxHealth(base, { ...facts, balanceUqor: 20_000_000 });
     assert.equal(low.level, "warn");
-    assert.equal(low.title, "Sealing pauses soon: fees are running out.");
+    assert.equal(low.title, "Fees are running low. Sealing pauses in about 2 days.");
     assert.equal(low.action, "Add test tokens to your own account. The address is under Details.");
     assert.ok(!/QOR|qor1/.test(low.title + low.action));
     assert.equal(boxHealth(base, { ...facts, balanceUqor: 100_000 }).level, "bad");

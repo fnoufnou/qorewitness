@@ -11,6 +11,7 @@
  * frame to JPEG. ffmpeg output is redacted before it goes anywhere.
  */
 import { spawn } from "node:child_process";
+import { connect } from "node:net";
 import { redactSecrets } from "../core/redact.js";
 
 export type StreamPath = "stream1" | "stream2";
@@ -216,4 +217,32 @@ export function proposeRetentionDays(freeBytes: number | undefined, path: Stream
   if (!freeBytes || freeBytes <= 0) return 14;
   const perDay = (path === "stream1" ? 20 : 5) * 1e9;
   return Math.max(2, Math.min(30, Math.floor((freeBytes * 0.7) / perDay)));
+}
+
+const DEFAULT_PORTS: Record<string, number> = { rtsp: 554, rtsps: 322, rtmp: 1935, rtmps: 443, http: 80, https: 443 };
+
+/** Host and port of a saved stream URL, without the user name or password. */
+export function streamEndpoint(url: string | undefined): { host: string; port: number } | undefined {
+  if (!url) return undefined;
+  const u = parseStreamUrl(url);
+  const port = u?.port ?? (u ? DEFAULT_PORTS[u.scheme] : undefined);
+  return u?.host && port ? { host: u.host, port } : undefined;
+}
+
+/**
+ * True if the camera accepts a TCP connection on its stream port. The dashboard
+ * asks only while no new video arrives, to tell "camera off" from "recording stopped".
+ * Opens no stream, so it does not take one of the two streams a Tapo camera allows.
+ */
+export function cameraReachable(host: string, port: number, timeoutMs = 3000): Promise<boolean> {
+  return new Promise((done) => {
+    const sock = connect({ host, port });
+    const end = (ok: boolean) => {
+      sock.destroy();
+      done(ok);
+    };
+    sock.setTimeout(timeoutMs, () => end(false));
+    sock.once("connect", () => end(true));
+    sock.once("error", () => end(false));
+  });
 }
