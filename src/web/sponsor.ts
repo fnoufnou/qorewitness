@@ -44,6 +44,10 @@ export interface SponsorAnswer {
   status: SponsorStatus;
   capPerDayUqor?: string;
   message?: string;
+  /** Status only: the service stopped all top-ups for now. */
+  paused?: boolean;
+  /** Status only: what this camera got today. */
+  usedTodayUqor?: string;
 }
 
 /** Plain words for each status. */
@@ -66,7 +70,13 @@ function parseAnswer(body: unknown): SponsorAnswer {
   const b = (body ?? {}) as Record<string, unknown>;
   const s = typeof b.status === "string" && KNOWN.has(b.status as SponsorStatus) ? (b.status as SponsorStatus) : "unknown";
   const cap = typeof b.capPerDayUqor === "string" || typeof b.capPerDayUqor === "number" ? String(b.capPerDayUqor) : undefined;
-  return { status: s, capPerDayUqor: cap && /^\d{1,20}$/.test(cap) ? cap : undefined };
+  const used = typeof b.usedTodayUqor === "string" && /^\d{1,20}$/.test(b.usedTodayUqor) ? b.usedTodayUqor : undefined;
+  return {
+    status: s,
+    capPerDayUqor: cap && /^\d{1,20}$/.test(cap) ? cap : undefined,
+    ...(typeof b.paused === "boolean" ? { paused: b.paused } : {}),
+    ...(used ? { usedTodayUqor: used } : {}),
+  };
 }
 
 export class SponsorClient {

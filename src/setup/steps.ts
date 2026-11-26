@@ -260,7 +260,30 @@ export async function fetchBalanceUqor(qor1: string, rest = TESTNET_WINDOW.rest)
   return BigInt(b.balances?.find((x) => x.denom === "uqor")?.amount ?? "0");
 }
 
-export function liveChain(cfg = TESTNET_WINDOW, evmRpc = "https://evm-testnet.qore.host"): ChainOps {
+export const TESTNET_EVM_RPC = "https://evm-testnet.qore.host";
+
+/**
+ * Read-only check for the dashboard: does the seal contract still hold code, and
+ * how high is the chain. Used to tell the owner about a test network reset.
+ */
+export async function fetchRegistryCheck(registry: string, evmRpc = TESTNET_EVM_RPC): Promise<{ hasCode: boolean; head: bigint }> {
+  if (!/^0x[0-9a-fA-F]{40}$/.test(registry)) throw new Error("bad registry address");
+  const call = async (method: string, params: unknown[]) => {
+    const r = await fetch(evmRpc, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status} from ${new URL(evmRpc).host}`);
+    const j = (await r.json()) as { result?: unknown };
+    if (typeof j.result !== "string" || !/^0x[0-9a-fA-F]*$/.test(j.result)) throw new Error(`${method}: no result`);
+    return j.result;
+  };
+  const [code, head] = await Promise.all([call("eth_getCode", [registry, "latest"]), call("eth_blockNumber", [])]);
+  return { hasCode: code.length > 2, head: BigInt(head) };
+}
+
+export function liveChain(cfg = TESTNET_WINDOW, evmRpc = TESTNET_EVM_RPC): ChainOps {
   const assertTestnet = async () => {
     const r = await fetch(evmRpc, {
       method: "POST", headers: { "content-type": "application/json" },

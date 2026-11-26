@@ -22,18 +22,20 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { safeError } from "../core/redact.js";
 import {
-  EXPLORER, dataPaths, ensureDirs, fetchBalanceUqor, isSetupDone, liveChain, lockSecrets, readAccountInfo, readEnvFile, type AccountInfo, type Paths,
+  EXPLORER, dataPaths, ensureDirs, fetchBalanceUqor, fetchRegistryCheck, isSetupDone, liveChain, lockSecrets, readAccountInfo, readEnvFile, type AccountInfo, type Paths,
 } from "../setup/steps.js";
 import {
   FailureLimiter, checkPassword, clearPairing, csrfOk, csrfToken, ensurePairing, hasPassword, hostAllowed, issueSession, originOk,
   passwordProblem, privateAddress, readPairing, safeEqual, sessionSecret, sessionValid, setPassword, SESSION_SECONDS,
 } from "./auth.js";
-import { snapshot } from "./camera.js";
+import { cameraReachable, snapshot, streamEndpoint } from "./camera.js";
 import { discoverCameras, lanPrefix } from "./discover.js";
 import { evidenceForm, evidencePage, parseRange, planEvidence, writeZip } from "./evidence.js";
 import { CSP, esc, layout } from "./html.js";
-import { SponsorClient } from "./sponsor.js";
-import { boxHealth, collectStatus, daysText, health, RECEIPT_NAME, type BoxHealth, type LocalStatus } from "./status.js";
+import { SponsorClient, type SponsorAnswer } from "./sponsor.js";
+import {
+  boxHealth, cameraStale, collectStatus, daysText, health, RECEIPT_NAME, sealResetSeen, sponsorFacts, type BoxHealth, type LocalStatus,
+} from "./status.js";
 import { Wizard, renderClaimCode, renderClaimPassword, renderDone, renderLogin } from "./wizard.js";
 
 export { esc };
@@ -55,7 +57,27 @@ export interface ServerOptions {
   trustProxy?: boolean;
   appDir?: string;
   balance?: (qor1: string) => Promise<bigint>;
+  /** Dashboard checks. Each one left out stays silent (tests run without network). */
+  sponsorStatus?: (deviceId: string, owner: string) => Promise<SponsorAnswer>;
+  registryCheck?: (registry: string) => Promise<{ hasCode: boolean; head: bigint }>;
+  cameraCheck?: (host: string, port: number) => Promise<boolean>;
   now?: () => number;
+}
+
+/** Remembers one answer per key for a while. A failed ask keeps the last good answer. */
+function cached<K, V>(ms: number, now: () => number, ask: (k: K) => Promise<V>): (key: string, k: K) => Promise<V | undefined> {
+  let last: { at: number; key: string; value?: V } | undefined;
+  return async (key, k) => {
+    if (last && last.key === key && now() - last.at < ms) return last.value;
+    let value: V | undefined;
+    try {
+      value = await ask(k);
+    } catch {
+      value = last?.key === key ? last.value : undefined;
+    }
+    last = { at: now(), key, value };
+    return value;
+  };
 }
 
 function cookie(req: IncomingMessage, name: string): string | undefined {
@@ -203,12 +225,16 @@ export function createHandler(o: ServerOptions) {
     balanceCache = { at: now(), qor1, value };
     return value;
   }
+  // The fee service tops up every 15 minutes. A reset is rare: once an hour is enough.
+  const sponsorCheck = cached(15 * 60_000, now, (a: { deviceId: string; owner: string }) => o.sponsorStatus!(a.deviceId, a.owner));
+  const resetCheck = cached(60 * 60_000, now, (registry: string) => o.registryCheck!(registry));
+  const camCheck = cached(60_000, now, (e: { host: string; port: number }) => o.cameraCheck!(e.host, e.port));
 
   async function dashboard(res: ServerResponse, csrf: string, json: boolean) {
     const info = readAccountInfo(p);
-    const cam = readEnvFile(p.cameraEnv);
-    const device = info?.device ?? cam.QW_DEVICE ?? "camera";
-    const windowSeconds = Number(cam.QW_WINDOW_SECONDS ?? 600);
+    const camEnv = readEnvFile(p.cameraEnv);
+    const device = info?.device ?? camEnv.QW_DEVICE ?? "camera";
+    const windowSeconds = Number(camEnv.QW_WINDOW_SECONDS ?? 600);
     const status = collectStatus({ device, receiptDir: join(p.data, device, "receipts"), segmentDir: join(p.data, device, "segments") });
     let setupAgeSeconds: number | undefined;
     try {
@@ -218,9 +244,18 @@ export function createHandler(o: ServerOptions) {
     }
     if (!Number.isFinite(setupAgeSeconds)) setupAgeSeconds = undefined;
     const bal = info ? await balance(info.qor1) : undefined;
-    const h = boxHealth(status, { windowSeconds, plan: info?.plan, balanceUqor: bal, setupAgeSeconds, qor1: info?.qor1 });
+    const cam = streamEndpoint(camEnv.QW_STREAM_URL);
+    const reachable = o.cameraCheck && cam && cameraStale(status, setupAgeSeconds) ? await camCheck(`${cam.host}:${cam.port}`, cam) : undefined;
+    const sp = o.sponsorStatus && info?.plan === "sponsored" ? await sponsorCheck(`${info.deviceId}|${info.owner}`, info) : undefined;
+    const registry = status.latest[0]?.registry ?? info?.registry;
+    const chk = o.registryCheck && registry ? await resetCheck(registry, registry) : undefined;
+    const h = boxHealth(status, {
+      windowSeconds, plan: info?.plan, balanceUqor: bal, setupAgeSeconds, qor1: info?.qor1, cameraReachable: reachable,
+      sponsor: sp ? sponsorFacts(sp) : undefined,
+      networkReset: chk ? sealResetSeen(chk, status.latest[0]?.blockNumber) : undefined,
+    });
     if (json) return send(res, 200, "application/json", JSON.stringify({ ...status, health: h, plan: info?.plan, balanceUqor: bal }));
-    return html(res, 200, device, dashboardPage({ status, health: h, info, balanceUqor: bal, retentionDays: Number(cam.QW_RETENTION_DAYS ?? 14), csrf }), { refresh: 60, wide: true, evidence: true });
+    return html(res, 200, device, dashboardPage({ status, health: h, info, balanceUqor: bal, retentionDays: Number(camEnv.QW_RETENTION_DAYS ?? 14), csrf }), { refresh: 60, wide: true, evidence: true });
   }
 
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -429,6 +464,9 @@ if (process.argv[1] && /server\.(ts|js)$/.test(process.argv[1])) {
     paths, wizard,
     hostnames: (process.env.QW_UI_HOSTNAME ?? "").split(","),
     trustProxy: process.env.QW_UI_TRUST_PROXY === "1",
+    sponsorStatus: (deviceId, owner) => new SponsorClient().status(deviceId, owner),
+    registryCheck: (registry) => fetchRegistryCheck(registry),
+    cameraCheck: (host, port) => cameraReachable(host, port),
   });
   createServer({ requestTimeout: 60_000, headersTimeout: 20_000 }, handler).listen(port, host, () => {
     const at = new Date().toISOString();
