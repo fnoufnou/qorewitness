@@ -113,11 +113,16 @@ Open your dashboard once in a while. It shows one line in a colour and one thing
 |---|---|---|
 | Green | Sealing OK. Last seal 4 minutes ago. | Nothing |
 | Orange | Waiting for the first seal. | Nothing. It arrives within about 15 minutes of the setup. |
-| Orange | Sealing pauses soon: fees are running out. | Free beta: nothing, we top up the fees. Self-managed: add test tokens (the address is under Details). |
-| Orange | The disk is almost full. | Nothing urgent: QoreWitness deletes the oldest video first. Connect a bigger disk to keep more. |
-| Red | No video from the camera. | Check the power and Wi-Fi of the camera. |
+| Orange | Fees are running low. Sealing pauses in about 2 days. | Self-managed: add test tokens (the address is under Details). |
+| Orange | The free beta paused its fee top-ups. Your fees last about 1 day. | Nothing now. Sealing goes on with the fees you have. |
+| Orange | The disk is almost full: 40 GB free. | Nothing urgent: QoreWitness deletes the oldest video first. Connect a bigger disk to keep more. |
+| Red | No video from the camera for 12 minutes. | Check the power and Wi-Fi of the camera. |
+| Red | Recording stopped 20 minutes ago. The camera is on, but sends no video. | Restart the computer that runs QoreWitness. If this stays, check the camera account in the camera app. |
 | Red | Sealing stopped 40 minutes ago. | Check the internet connection of your QoreWitness computer. Restart it if this stays. |
-| Red | Sealing paused: the fees ran out. | Free beta: we top up the fees. If this stays for a day, the beta service may be paused. Self-managed: add test tokens. |
+| Red | Sealing paused 40 minutes ago: the fees ran out. | Self-managed: add test tokens. Free beta: we top up the fees. If this stays for a day, the beta service may be paused. |
+| Red | Sealing paused: the free beta is paused (or: today's free beta limit is reached). | Nothing. The camera keeps recording. QoreWitness seals the waiting video when fees come back. |
+| Red | Some video from about 3 hours ago could not be sealed. | Make sure QoreWitness runs on one computer only for this camera. The line goes away after a day. |
+| Red | The test network was reset. Your earlier seals can no longer be checked. | Download the evidence files you need now. Their video is still on this computer. |
 
 Video older than about 2 weeks (QoreWitness proposes the days from its free disk) is deleted. Download what you need before then.
 
