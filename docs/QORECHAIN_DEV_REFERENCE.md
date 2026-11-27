@@ -2,7 +2,7 @@
 
 Compiled 2026-11-09 for the QoreChain Developer Fest ("Build Before Q-Day"). Target: category "Post-Quantum dApp", stretch "Encrypted Apps".
 
-Status: PoC project. Shortcuts and gaps are flagged. Hypersolid defaults apply: TypeScript, `pnpm add --ignore-scripts` and `pnpm install --ignore-scripts`, secrets in env vars only.
+Status: research notes from 9 Nov 2026. The README and [SPEC.md](SPEC.md) describe the current product.
 
 Style note: prose has no semicolons. Code blocks keep the semicolons that Solidity and TypeScript need.
 
@@ -356,7 +356,7 @@ Notes [V] same page:
 - Do NOT store the 2,592 byte key in contract storage. That is 81 slots. Read it from the precompile each time (2,500 gas).
 - Message to sign: a domain-separated blob, for example `"QoreWitness-v1" || chainId || registryAddress || deviceId || minuteStartUnix || merkleRoot`. This prevents replay across chains and contracts.
 - Store: `mapping(bytes32 key => Anchor)` with `root`, `minuteStart`, `blockNumber`, `signer`. Emit `Anchored(deviceId, minuteStart, root, signer)`. Storing the 4,627 byte signature in storage is expensive. Emit it in the event instead, or pass it as calldata only and keep a `keccak256(sig)`. The browser verifier then reads the signature from the tx input or the log.
-- Gas guess: calldata about 7.3 KB (about 117k gas at 16 gas/byte) + precompile about 90k + storage and log. Plan for about 300,000 gas per anchor. At 112.5 gwei that is about 0.034 QOR. One anchor per minute is about 49 QOR per day. The faucet gives 100 QOR per 24 h. All numbers are estimates [U].
+- Gas guess: calldata about 7.3 KB (about 117k gas at 16 gas/byte) + precompile about 90k + storage and log. Plan for about 300,000 gas per anchor. At 112.5 gwei that is about 0.034 QOR. One anchor per minute is about 49 QOR per day. The faucet gives 100 QOR per 24 h. All numbers are estimates [U]. Measured later: about 0.0457 test QOR per anchor with 10-minute windows, see [TESTNET_FINDINGS.md](TESTNET_FINDINGS.md).
 - Cadence versus window: one anchor per minute = 360 tx per 17,280-block testnet window (about 6.2 h). That is under the 1,000 tx cap. The window must be re-opened about every 6 h with a hybrid-signed Cosmos tx, so the signer service needs the ML-DSA key. `max-value` for 360 tx at 300k gas and a 250 gwei cap is about 27 QOR (27,000,000 uqor) [U arithmetic].
 - Scoped window: open with `allowedTargets: [AnchorRegistry]`. Deploy first, then scope. This is the "scoped EVM window" required by the category.
 - Batch option to cut cost: anchor every N minutes with a root of minute roots. Trade-off is coarser time proof [U].

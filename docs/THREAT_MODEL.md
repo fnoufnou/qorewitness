@@ -2,17 +2,17 @@
 
 Version of 19 Nov 2026 (first draft 11 Nov), reviewed by fnoufnou. Scope: one home recorder box, its cameras, the agent account, the registry contracts and the browser verifier.
 
-## Two scopes: the pilot now, the product later
+## Two scopes: the beta now, the product later
 
-| | Pilot (alpha, now) | Product (later) |
+| | Beta (testnet, now) | Product (later) |
 |---|---|---|
 | Network | QoreChain testnet (qorechain-diana) | QoreChain mainnet |
 | Purpose | Prove that the mechanism works, end to end, in public | Evidence that must hold for years |
 | How long records must last | Until the end of the evaluation. The team says diana will not reset before 15 Dec 2026. After that, a reset can remove every record. | 5 to 15 years or more |
-| Who pays for anchors | Free test QOR from the faucet | To be decided with the business model. One option: a paid subscription in which the QoreWitness operator arranges the QOR as part of the plan |
-| Evidence value | None promised. A pilot record demonstrates the method. It is not evidence. | The claims below |
+| Who pays for anchors | Free test QOR. The free beta fee sponsor tops up, or the owner uses the faucet (Self-managed) | To be decided with the business model. One option: a paid subscription in which the QoreWitness operator arranges the QOR as part of the plan |
+| Evidence value | None promised. A beta record demonstrates the method. It is not evidence. | The claims below |
 
-The claims in this document describe the product. Where a control works only in the pilot, or only in the product, the tables say so.
+The claims in this document describe the product. Where a control works only in the beta, or only in the product, the tables say so.
 
 ## What QoreWitness claims
 
@@ -74,16 +74,16 @@ From here on, the document is written for technical reviewers.
 | A3 registers a rogue key | `requirePossessionProof = true`. Device register, revoke and key rotation need fresh ML-DSA-87 signatures (rotation needs old and new key). | Done (v2) |
 | A4 anchors fake files from the box | Out of reach for a hash anchor. Limit: keys in files with mode 600, a separate `dev` user, no inbound ports. Revoke the device on chain after a breach. Custody drill S1: a careful swap before hashing is not caught. | Partial (see Chain of custody) |
 | A5 injects a fake stream | A stream with other settings is flagged (custody drill S2, S3). A stream with the camera's own settings is not. Plan: cameras on a separate network, password on RTSP where the camera supports it. The LSC camera has no RTSP password today. | Partial |
-| A6 testnet reset or halt (pilot) | Accepted for the pilot: pilot records carry no evidence value. Receipts keep the transaction and block data, so a demo can be re-run on a new network. | Accepted |
+| A6 testnet reset or halt (beta) | Accepted for the beta: beta records carry no evidence value. Receipts keep the transaction and block data, so a demo can be re-run on a new network. | Accepted |
 | A6 chain fails or disappears (product) | Planned: a portable evidence bundle (receipts, transactions, block data), re-anchoring of old roots on a successor network, and an optional second record on another chain. | Roadmap |
-| A6 validators collude | 8 validators, all likely team-run. Accepted for the pilot. For the product, the security of the mainnet validator set is a dependency, and an optional second record on another chain reduces it. | Pilot: accepted. Product: roadmap |
+| A6 validators collude | 8 validators, all likely team-run. Accepted for the beta. For the product, the security of the mainnet validator set is a dependency, and an optional second record on another chain reduces it. | Beta: accepted. Product: roadmap |
 | A7 changed verifier | Single static HTML file with its SHA-256 on the demo site. Receipts name the release and commit. `docs/SPEC.md` and an independent Python check with only the standard library. Signed releases still open. | Mostly done (T22) |
 | A8 learns activity from anchor timing | Fixed cadence: one anchor per 10 minutes, independent of motion. Leaf count stays constant with 60-second segments. Hashes reveal no content. | Done |
 | A9 another device on the home network, or a web page in the owner's browser, takes over the browser setup or the dashboard | Pairing token or 6-digit code (shown only in the installer terminal), then a scrypt password and signed sessions. Host allowlist against DNS rebinding, Origin must match Host, CSRF token per session, private clients only, no proxy headers. Secrets are never shown back. Camera passwords are masked in logs. | Done (0.6, browser setup) |
 
 ## Post-quantum rationale
 
-- For the product: evidence is often needed years after recording. Insurance claims, disputes and court cases can take 5 to 15 years. The pilot has no such horizon.
+- For the product: evidence is often needed years after recording. Insurance claims, disputes and court cases can take 5 to 15 years. The beta has no such horizon.
 - To our knowledge, a quantum computer that breaks ECDSA within that period is a real possibility. NIST plans to phase out ECDSA and RSA by 2035.
 - A hash commitment (SHA-256, since spec/3 also SHA3-256) likely stays strong against quantum attack. The weak link is the signature that ties a root to a device and owner.
 - ML-DSA-87 (FIPS 204, level 5) keeps that link valid after Q-Day. The on-chain check means nobody has to trust our software for that part.
@@ -108,8 +108,8 @@ Funds affect new anchors only. They never touch existing records.
 
 | Scope | Risk | Control |
 |---|---|---|
-| Pilot | The faucet stops or its limit is too low (about 5 test QOR per day per camera) | Health check sends a Telegram message below 10 test QOR. Top up from the faucet. |
-| Pilot (box) | The owner does not see that fees run low | The dashboard turns orange below 3 days of fees (Self-managed) and red when sealing stops. In the free beta the fee sponsor tops up. |
+| Beta (Self-managed) | The faucet stops or its limit is too low (about 5 test QOR per day per camera) | Health check sends a Telegram message below 10 test QOR. Top up from the faucet. |
+| Beta | The owner does not see that fees run low | The dashboard turns orange below 3 days of fees (Self-managed) and red when sealing stops. In the free beta the fee sponsor tops up. |
 | Product | The QOR budget runs out (the owner's own, or the operator's in a subscription plan) | Balance alert, a budget per camera (about 144 anchors per day), and an option for a longer window at lower cost. |
 
 ## Chain of custody
@@ -124,7 +124,7 @@ Custody drill of 14 Nov (`docs/CUSTODY_DRILL.md` in the repo): 10 attacks on the
 
 Measures that shrink it:
 
-- Cameras on their own network, with a password on the stream (planned for the pilot).
+- Cameras on their own network, with a password on the stream (planned for the beta).
 - Shorter windows: less time to prepare a fake, at a higher gas cost.
 - Camera-side signing: the camera signs its own video.
 
@@ -134,13 +134,13 @@ The key question for hardware work: how much of the capture path sits inside the
 
 | Level | What signs | Inside the boundary | Outside the boundary | Status |
 |---|---|---|---|---|
-| 0 | The recorder (device key in a file) | Hashing, chaining, anchoring | Sensor, camera firmware, network, stream | Today (pilot) |
+| 0 | The recorder (device key in a file) | Hashing, chaining, anchoring | Sensor, camera firmware, network, stream | Today (beta) |
 | 1 | The camera signs its encoded video (for example ONVIF media signing or a vendor's signed video). QoreWitness anchors those signatures. | Encoder output onward | Sensor and image pipeline inside the camera | First hardware step, after the event |
 | 2 | A secure capture path next to the sensor (C2PA-capable devices) | Sensor readout onward, as far as the hardware allows | Physical staging in front of the lens | Depends on hardware |
 
 Decisions:
 
-- Hardware work starts at level 1: the camera's own signature, anchored by QoreWitness. To our knowledge only a few professional cameras support this today, so the home pilot likely stays at level 0 for some time.
+- Hardware work starts at level 1: the camera's own signature, anchored by QoreWitness. To our knowledge only a few professional cameras support this today, so the home beta likely stays at level 0 for some time.
 - A TPM on the recorder does not move the boundary. It proves that the recorder signed and ran unchanged software, not that the frames were real. Later, it can protect the device key. Low priority.
 - No level removes staging in front of the camera. The legal limits section stays.
 

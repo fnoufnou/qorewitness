@@ -40,7 +40,7 @@ S1 is a question of the signing boundary: which part of the capture path sits in
 
 | Measure | Effect on S1 | Status |
 |---|---|---|
-| Cameras on their own network, with a password on the stream | Fewer people can reach the stream. The boundary stays at the recorder. | Planned for the home pilot |
+| Cameras on their own network, with a password on the stream | Fewer people can reach the stream. The boundary stays at the recorder. | Planned |
 | Recorder hardening (separate user, keys mode 600, no inbound ports) | Fewer people can reach the folder. The boundary stays at the recorder. | Done |
 | Shorter windows (a higher anchoring rhythm) | Less time to prepare a fake. Costs more gas. | Configurable (`QW_WINDOW_SECONDS`) |
 | The camera signs its own encoded video (for example ONVIF media signing or a vendor's signed video). QoreWitness anchors those signatures. | Moves the boundary into the camera. A swapped stream no longer carries a valid camera signature. Frames that the camera firmware itself fakes stay outside. | Roadmap, first hardware step |

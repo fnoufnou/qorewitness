@@ -1,6 +1,6 @@
 # QCAI audit
 
-Two-stage audit with the QCAI Contract Auditor on dashboard.qorechain.io, as the organisers describe for the Post-Quantum dApp track: run the auditor, fix the findings, run it again. Stages 3 and 4 audit registry v4, the contract that runs today.
+Four audit rounds with the QCAI Contract Auditor on dashboard.qorechain.io. The organisers ask for a two-stage audit in the Post-Quantum dApp track: run the auditor, fix the findings, run it again. We ran that loop four times. Stages 3 and 4 audit registry v4, the contract that runs today. Which source runs at which address: [contracts/README.md](../contracts/README.md).
 
 | Stage | Date (UTC) | Code | Setting | Score | Report (copy in `docs/audit/`) |
 |---|---|---|---|---|---|

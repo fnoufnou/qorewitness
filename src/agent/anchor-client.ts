@@ -1,5 +1,5 @@
 /**
- * Client for AnchorRegistry v2 (with DeviceRegistry).
+ * Client for AnchorRegistry v4 (with DeviceRegistry, chained windows).
  *
  * - The owner account is the unified (Ethereum path) account from QORE_MNEMONIC.
  *   Its ML-DSA-87 key is the one the chain returns from pqcKeyStatus. It signs

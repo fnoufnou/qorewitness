@@ -2,24 +2,24 @@
 
 Status: beta on the QoreChain test network. Free. The sponsor sends test QOR, which has no value. No payment is collected.
 
-Every answer carries the note "Beta on the QoreChain test network. Test tokens without value. No payment is collected." in the `note` field. Plain messages say "Fees included". Field names (`note`, `pilotCode`) stay as they are for compatibility.
+Every answer carries the note "Beta on the QoreChain test network. Test tokens without value. No payment is collected." in the `note` field. Plain messages say "the free beta". Field names (`note`, `pilotCode`) stay as they are for compatibility.
 
-The sponsor service pays the network fees of Fees included cameras. It sends test QOR to the customer's own owner account, so the customer stays the owner of the camera and of its chain of anchors. The customer can stop Fees included at any time and pay fees from their own wallet. Nothing else changes: same owner, same device, same chain.
+The sponsor service pays the network fees of cameras in the free beta. It sends test QOR to the customer's own owner account, so the customer stays the owner of the camera and of its chain of anchors. The customer can leave the free beta at any time and pay fees from their own wallet. Nothing else changes: same owner, same device, same chain.
 
 Code: `services/sponsor/`. Deploy files: `deploy/sponsor/`. Tests: `test/sponsor.test.ts` (chain and wallet mocked).
 
 ## How it works
 
-The setup wizard of the box (`src/web/sponsor.ts`, `src/web/wizard.ts`) is the client. It enrols the camera before it registers it on chain, because a new owner account has no test QOR yet.
+The setup wizard of QoreWitness (`src/web/sponsor.ts`, `src/web/wizard.ts`) is the client. It enrols the camera before it registers it on chain, because a new owner account has no test QOR yet.
 
-1. **Challenge.** The box asks for a nonce: `POST /sponsor/v1/challenge {"deviceId": "0x.."}`. The answer is `{nonce, expires, expiresAt}` (`expires` in unix seconds, `expiresAt` in ISO 8601). The nonce is 32 random bytes. It is valid for 5 minutes, for this device id, and for one attempt only.
+1. **Challenge.** QoreWitness asks for a nonce: `POST /sponsor/v1/challenge {"deviceId": "0x.."}`. The answer is `{nonce, expires, expiresAt}` (`expires` in unix seconds, `expiresAt` in ISO 8601). The nonce is 32 random bytes. It is valid for 5 minutes, for this device id, and for one attempt only.
 2. **Enrol.** The camera's ML-DSA-87 key signs (empty context) the UTF-8 text
 
    ```
    qorewitness-sponsor-v1|9800|<registry>|<deviceId>|<owner>|<nonce>
    ```
 
-   registry, deviceId and owner are lower-case `0x` hex. The service also accepts EIP-55 spelling for `registry` and `owner`. The box then sends `POST /sponsor/v1/enroll {deviceId, owner, nonce, signature, devicePubkey}`. `signature` (4,627 bytes) and `devicePubkey` (2,592 bytes) are `0x` hex. `devicePubkey` is required (HTTP 400 `bad_pubkey` without it). The box always sends it. No pilot code is needed. A `pilotCode` field is accepted and ignored.
+   registry, deviceId and owner are lower-case `0x` hex. The service also accepts EIP-55 spelling for `registry` and `owner`. QoreWitness then sends `POST /sponsor/v1/enroll {deviceId, owner, nonce, signature, devicePubkey}`. `signature` (4,627 bytes) and `devicePubkey` (2,592 bytes) are `0x` hex. `devicePubkey` is required (HTTP 400 `bad_pubkey` without it). QoreWitness always sends it. No pilot code is needed. A `pilotCode` field is accepted and ignored.
 3. **Checks on enrol.** The service deletes the nonce (single use, also when a later check fails). Then it reads `getDevice(owner, deviceId)` from AnchorRegistry v4 (`0xa1378D6558B32e1f8d37b68cf90e3C93839Da365`). Devices are stored per owner, so an entry under `owner` proves that `owner` is the on-chain owner.
    - **Camera on chain (active).** The key must be the one on chain: `keccak256(devicePubkey)` must equal the key hash in the registry. The service never scans the chain history for a key. The signature must verify. The camera must pass admission (below). It is active at once. Answer: `enrolled`.
    - **Camera not on chain yet (bootstrap).** The signature must verify against `devicePubkey`. The camera must pass admission (below), and today's start grants must not be used up. The service binds owner, device id and `keccak256(devicePubkey)` together, marks the camera `pending` and sends one start grant to `owner` in the background (default 3 test QOR). Answer: `pending`. After the send: `funded`.
@@ -58,7 +58,7 @@ The wizard reads exactly these words in `status`. The service no longer sends `i
 | `pending` | Accepted, start grant not sent yet | 200 |
 | `funded` | Start grant sent, waiting for the camera registration | 200 |
 | `active` | On chain with the enrolled key, refills apply | 200 |
-| `full` | Fees included full, owner has 2 cameras, IP has a new camera today, or today's start grants or budget used up | 409 |
+| `full` | The free beta is full, owner has 2 cameras, IP has a new camera today, or today's start grants or budget used up | 409 |
 | `paused` | Kill switch on (also for a `pending` camera in status) | 423 |
 | `rejected` | Bad signature, wrong key, revoked, or expired | 403 |
 

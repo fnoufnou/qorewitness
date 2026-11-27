@@ -1,6 +1,6 @@
 # Testnet findings
 
-Live checks against `qorechain-diana` (EVM chain ID 9800, `https://evm-testnet.qore.host`) on 9 Nov 2026.
+Live checks against `qorechain-diana` (EVM chain ID 9800, `https://evm-testnet.qore.host`) from 9 to 21 Nov 2026.
 
 ## pqcVerify precompile (`0x...0A01`)
 
@@ -34,7 +34,8 @@ Script: `scripts/probe-keystatus.ts`.
 
 - About 313,000 gas for the verification call alone (calldata of about 7.4 KB plus the precompile).
 - Measured on the first anchor: 340,949 gas in total (3 files).
-- At the 0.1 uqor per gas minimum this is about 0.04 QOR per anchor. One anchor per minute is about 58 QOR per day. The faucet gives 100 QOR per 24 h. A 5-minute window is the default.
+- Early estimate (9 Nov): at the 0.1 uqor per gas minimum this is about 0.04 QOR per anchor. The faucet gives 100 QOR per 24 h.
+- Measured since: about 0.0457 test QOR per anchor, with one anchor per 10-minute window (the default). See the next section.
 
 ### Measured cost on registry v4 (20 to 21 Nov 2026)
 
@@ -99,7 +100,7 @@ Failure paths on testnet (simulated, so no gas was spent):
 Conclusions:
 
 - One on-chain ML-DSA-87 check costs less than we estimated. Register (two checks, about 12 KB calldata) costs about 470,000 gas.
-- An anchor costs about 60,000 gas more than in v1, because the 2,592-byte device key is in the calldata. About 0.04 QOR per anchor at 0.1 uqor per gas.
+- An anchor costs about 60,000 gas more than in v1, because the 2,592-byte device key is in the calldata. Estimate: about 0.04 QOR per anchor at 0.1 uqor per gas. Measured on v4: about 0.0457 test QOR (see above).
 - The contract stores only `keccak256` of the device key. Storage for the full key would cost about 1.7 million gas per device.
 
 ## Finding: ML-DSA key derived from the ECDSA key (Q-Day Drill risk)
