@@ -7,6 +7,9 @@
  * "Try it: change one byte and check again" flips one
  * byte in an in-memory copy of the first clip (the files are not touched) and
  * runs the same checks. The result turns red at once.
+ *
+ * "Try the sample" (or opening the page with ?sample) fetches the public sample
+ * clip and receipt from this site and runs the normal check on them.
  */
 import { createPublicClient, defineChain, http, type PublicClient } from "viem";
 import { verifyReceipt, type Step } from "../../src/core/verify.js";
@@ -145,6 +148,9 @@ async function start(files: File[] | undefined): Promise<void> {
     }
     const v = await run(clips, loaded.receipts);
     tamper.disabled = !(!flip && v.level !== "bad");
+    if (!flip && !tamper.disabled && files?.some((f) => f.name === SAMPLE_FILES[0][0])) {
+      note.textContent = "This is our sample record. Now press \"Try it: change one byte and check again\" and watch the result turn red.";
+    }
   } catch (e) {
     render({ level: "bad", headline: "Could not open the files", detail: (e as Error).message, notes: [], clips: [] });
   }
@@ -174,4 +180,31 @@ document.addEventListener("drop", (e) => {
 });
 tamper.addEventListener("click", () => void start(undefined));
 $("print").addEventListener("click", () => window.print());
+
+/** The public sample record, served next to this page. */
+const SAMPLE_FILES: readonly (readonly [string, string])[] = [
+  ["sample-clip.mp4", "video/mp4"],
+  ["sample-receipt.json", "application/json"],
+];
+const sampleBtn = $<HTMLButtonElement>("sample");
+async function trySample(): Promise<void> {
+  sampleBtn.disabled = true;
+  note.textContent = "";
+  render(undefined, "Loading the sample…");
+  try {
+    const files = await Promise.all(SAMPLE_FILES.map(async ([name, type]) => {
+      const res = await fetch(new URL(name, location.href), { credentials: "omit" });
+      if (!res.ok) throw new Error(`${name}: HTTP ${res.status}`);
+      return new File([await res.blob()], name, { type });
+    }));
+    await start(files);
+  } catch {
+    render({ level: "bad", headline: "Could not load the sample", detail: "Download the clip and the receipt with the links above, then choose both files here.", notes: [], clips: [] });
+  } finally {
+    sampleBtn.disabled = false;
+  }
+}
+sampleBtn.addEventListener("click", () => void trySample());
+
 render(undefined);
+if (new URLSearchParams(location.search).has("sample")) void trySample();
