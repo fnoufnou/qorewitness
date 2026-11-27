@@ -97,6 +97,19 @@ describe("wording: QoreWitness Verify page", () => {
     assert.match(html, />Try it: change one byte and check again</);
     assert.doesNotMatch(html + main, /Tamper demo|demo-clip/i);
   });
+
+  it("a judge can try the public sample in one click, and the page may fetch it from its own site", async () => {
+    const { readFileSync } = await import("node:fs");
+    const html = readFileSync("web/verifier/index.html", "utf8");
+    const main = readFileSync("web/verifier/main.ts", "utf8");
+    const build = readFileSync("scripts/build-verifier.mjs", "utf8");
+    assert.match(html, /<button id="sample" type="button"[^>]*>Try the sample<\/button>/);
+    assert.match(html, /change one byte and watch the result turn red/);
+    assert.match(main, /"sample-clip\.mp4"/);
+    assert.match(main, /"sample-receipt\.json"/);
+    assert.match(main, /URLSearchParams\(location\.search\)\.has\("sample"\)/);
+    assert.match(build, /connect-src 'self' https:\/\/evm-testnet\.qore\.host;/);
+  });
 });
 
 describe("wording: sound in the setup", () => {

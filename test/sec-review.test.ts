@@ -1,7 +1,7 @@
 /** Regression tests for the findings in security reviews 1 (box code) and 3 (verifier). */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createServer, request, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -112,5 +112,25 @@ describe("security review 3: the verifier trusts only the QoreWitness registries
     const { pub } = chain();
     const r = await verifyReceipt(pub, receipt(PUBLIC_REGISTRY_V4.toLowerCase()), new Uint8Array(32), new Uint8Array(32));
     assert.ok(!r.steps.some((s) => REFUSED.test(s.text)));
+  });
+
+  it("accepts a v2-era receipt on registry v2 (the live camera sealed there from 9 to 12 Nov)", async () => {
+    const V2 = "0x1854EeE2A659F4f39A05d5832cceC405E8045336";
+    const { pub, reads } = chain();
+    const zero = `0x${"00".repeat(32)}`;
+    // One segment whose fingerprint matches the file, so the v2 path goes on to ask the contract.
+    const r = { ...receipt(V2, "qorewitness-receipt/v2"), owner: `0x${"22".repeat(20)}`, deviceId: zero, windowStart: "0", root: zero, segments: [{ file: "a.ts", sha256: zero, size: 1, index: 0, proof: [] }] } as unknown as ReceiptV3;
+    const out = await verifyReceipt(pub, r, new Uint8Array(32)).catch((e: Error) => e);
+    if (!(out instanceof Error)) assert.ok(!out.steps.some((s) => REFUSED.test(s.text)));
+    assert.ok(reads.some((a) => a.toLowerCase() === V2.toLowerCase()), "the verifier asks registry v2 itself");
+  });
+
+  it("accepts every registry that the Developers page lists as ours", () => {
+    const html = readFileSync("web/site/developers.html", "utf8");
+    const section = html.slice(html.indexOf('id="contracts"'));
+    const listed = [...section.matchAll(/Registry v\d[^]*?(0x[0-9a-fA-F]{40})/g)].map((m) => m[1].toLowerCase());
+    assert.equal(new Set(listed).size, 4, "the page lists registries v1 to v4");
+    const known = KNOWN_REGISTRIES[9800].map((a) => a.toLowerCase());
+    for (const a of listed) assert.ok(known.includes(a), `${a} is listed on the site but QoreWitness Verify refuses it`);
   });
 });

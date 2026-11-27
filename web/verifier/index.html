@@ -92,6 +92,10 @@
   .drop-title { font-weight:600; font-size:1.2rem; margin:0 0 6px; }
   .drop-sub { color:var(--muted); margin:0 auto; max-width:34rem; font-size:15px; }
   .drop .actions { justify-content:center; }
+  .sample-line { color:var(--muted); font-size:14.5px; margin:16px auto 0; max-width:34rem; }
+  .sample-line b { color:var(--fg); font-weight:600; }
+  button.linkbtn { font:inherit; font-weight:600; background:none; border:0; padding:2px 0; min-height:24px; color:var(--link); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+  button.linkbtn:hover { background:none; color:var(--fg); }
   .chosen { list-style:none; margin:16px auto 0; padding:0; max-width:34rem; text-align:left; font-size:14px; }
   .chosen li { display:flex; justify-content:space-between; gap:12px; padding:6px 10px; border-bottom:1px solid var(--line); }
   .chosen li span:first-child { font-family:var(--mono); font-size:13px; word-break:break-all; } .chosen li span:last-child { color:var(--muted); white-space:nowrap; }
@@ -133,6 +137,7 @@
       <button id="pick" type="button">Choose files</button>
       <button id="tamper" type="button" class="secondary" disabled title="Check a recording first">Try it: change one byte and check again</button>
     </div>
+    <p class="sample-line">No recording at hand? <button id="sample" type="button" class="linkbtn">Try the sample</button>: a real sealed clip from our test camera and its receipt, loaded from this site. When it shows green, press <b>Try it</b> to change one byte and watch the result turn red. You can also download the <a href="sample-clip.mp4" download>clip</a> and the <a href="sample-receipt.json" download>receipt</a>.</p>
     <input id="files" type="file" multiple accept=".zip,.json,.mp4,.ts,application/zip,application/json,video/mp4,video/mp2t" hidden>
     <ul id="chosen" class="chosen" aria-label="Chosen files" hidden></ul>
     <div id="note"></div>

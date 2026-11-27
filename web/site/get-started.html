@@ -109,7 +109,7 @@
 <li>Find the IP address of the computer in your router app.</li>
 <li>Open a terminal on your laptop. On a Mac, press Cmd and Space, type <b>Terminal</b> and press Enter. On Windows, press the Windows key, type <b>PowerShell</b> and press Enter.</li>
 <li>Paste this line. Replace <code>USER</code> with the user name of the computer and <code>IP-ADDRESS</code> with its IP address. Press Enter.
-<div class="copybox"><code id="install-cmd" tabindex="0">ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes"</code><button class="btn" type="button" data-copy="install-cmd" aria-label="Copy line: the install line"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div></li>
+<div class="copybox"><code id="install-cmd" tabindex="0">ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.1/install.sh | bash -s -- --yes"</code><button class="btn" type="button" data-copy="install-cmd" aria-label="Copy line: the install line"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div></li>
 <li>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter the computer's password. At the end, the installer shows a <b>link</b> and a <b>pairing code</b>.
 <figure class="shot"><div class="device term"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>Terminal</span></div><pre tabindex="0" aria-label="The end of the installer output"><span class="dim">Starting QoreWitness</span>
 <span class="dim"> ✔ Container qorewitness-agent  Started</span>
@@ -123,19 +123,19 @@
 
 Or click this link: http://192.168.1.42:8080/setup?token=…</pre></div></figure></li>
 </ol>
-<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-alpha.4/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul></div></details></div>
+<details class="help"><summary>Something not working?</summary><div class="in"><ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-beta.1/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul></div></details></div>
 <div class="path-panel" id="path-proxmox" role="tabpanel" aria-labelledby="tab-proxmox" tabindex="0"><h4>Proxmox or another home server</h4><ol class="plain path-steps">
 <li>Create a Debian 12 container: unprivileged, with <b>nesting</b> and <b>keyctl</b> on (Options, Features). 2 cores and 2 GB memory are enough. Size the disk for the video you want to keep. A Debian or Ubuntu VM works too.</li>
 <li>Open a shell in it, as root or as a user with sudo, and run:
-<div class="copybox"><code id="install-here" tabindex="0">curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes</code><button class="btn" type="button" data-copy="install-here" aria-label="Copy line: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div>
+<div class="copybox"><code id="install-here" tabindex="0">curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.1/install.sh | bash -s -- --yes</code><button class="btn" type="button" data-copy="install-here" aria-label="Copy line: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy line</span></button></div>
 The installer adds Docker when it is missing, installs into <code>~/qorewitness</code> and ends with a <b>link</b> and a <b>pairing code</b>.</li>
 </ol>
-<p class="small">Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-alpha.4/install.sh">GitHub</a>, exactly the version the line runs.</p></div>
+<p class="small">Want to read the script first? It is on <a href="https://github.com/fnoufnou/qorewitness/blob/v0.6.0-beta.1/install.sh">GitHub</a>, exactly the version the line runs.</p></div>
 <div class="path-panel" id="path-nas" role="tabpanel" aria-labelledby="tab-nas" tabindex="0"><h4>NAS</h4><ol class="plain path-steps">
 <li>Make sure Docker with Compose runs on it. On Synology, install <a href="https://www.synology.com/en-global/dsm/packages/ContainerManager">Container Manager</a> from the Package Center.</li>
 <li>Connect to the NAS over SSH and go to the folder where you keep your Docker apps, such as <code>/volume1/docker</code> on Synology. Paste:
 <div class="copybox"><code id="install-nas" tabindex="0">mkdir -p qorewitness/data && cd qorewitness
-curl -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.1/docker-compose.yml
 sudo chown 10001:10001 data && sudo chmod 700 data
 [ -f .env ] || echo "QW_UI_BIND=0.0.0.0:8080" > .env
 sudo docker compose up -d
@@ -147,12 +147,12 @@ Logged in as root? Leave out <code>sudo</code>. The last line shows your pairing
 <li>Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and start it. Set the computer to never sleep, because QoreWitness only records while it is on.</li>
 <li>On a Mac, open <b>Terminal</b> and paste:
 <div class="copybox"><code id="install-mac" tabindex="0">mkdir -p qorewitness && cd qorewitness
-curl -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.1/docker-compose.yml
 docker compose up -d
 docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="install-mac" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
 On Windows, open <b>PowerShell</b> and paste:
 <div class="copybox"><code id="install-win" tabindex="0">mkdir qorewitness; cd qorewitness
-curl.exe -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
+curl.exe -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.1/docker-compose.yml
 docker compose up -d
 docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="install-win" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
 The last line shows your pairing code.</li>

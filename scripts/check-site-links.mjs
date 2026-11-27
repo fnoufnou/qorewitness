@@ -11,8 +11,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "web", "site
 const SITE = "https://qorewitness.fnoufnou.com";
 // Files that live on the server only (not in the repo). demo-* are the old sample links, kept working.
 const SERVER_ONLY = new Set(["sample-clip.mp4", "sample-receipt.json", "demo-clip.mp4", "demo-receipt.json"]);
-// Pages that are meant to be noindex: redirect stubs, the old index copy.
-const NOINDEX_OK = (rel) => rel.startsWith("preview/") || rel.startsWith("legacy/");
+// Pages that are meant to be noindex: the redirect stubs for old shared links.
+const NOINDEX_OK = (rel) => rel.startsWith("preview/");
 const SKIP_DIRS = new Set(["assets", "fonts"]);
 
 const pages = [];

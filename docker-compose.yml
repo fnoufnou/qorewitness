@@ -10,7 +10,7 @@
 #                Default 127.0.0.1:8080 (this machine only). install.sh sets
 #                0.0.0.0:8080 on a home network so a phone can open the setup.
 x-image: &image
-  image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.6.0-alpha.4}
+  image: ghcr.io/fnoufnou/qorewitness:${QW_VERSION:-0.6.0-beta.1}
   restart: unless-stopped
   volumes: ["./data:/data"]
 

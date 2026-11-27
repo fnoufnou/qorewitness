@@ -1,6 +1,7 @@
 // Bundles web/verifier into one self-contained HTML file: web/verifier/dist/index.html
 // The page carries a Content-Security-Policy with the hash of its own script: no other
-// script runs, and it talks only to the QoreChain test network RPC.
+// script runs, and it talks only to the QoreChain test network RPC and its own site
+// (for "Try the sample": /sample-clip.mp4 and /sample-receipt.json).
 import { build } from "esbuild";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
@@ -10,7 +11,7 @@ const out = await build({
 });
 const js = out.outputFiles[0].text.replace(/<\/script/gi, "<\\/script");
 const hash = createHash("sha256").update(js, "utf8").digest("base64");
-const csp = `default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src https://evm-testnet.qore.host; base-uri 'none'; form-action 'none'`;
+const csp = `default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://evm-testnet.qore.host; base-uri 'none'; form-action 'none'`;
 const html = readFileSync("web/verifier/index.html", "utf8")
   .replace("<meta charset=\"utf-8\">", () => `<meta charset="utf-8">\n<meta http-equiv="Content-Security-Policy" content="${csp}">`)
   .replace("<script>/*BUNDLE*/</script>", () => `<script type="module">${js}</script>`);

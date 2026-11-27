@@ -32,7 +32,7 @@ Without a browser: `python3 tools/verify_receipt.py sample-receipt.json sample-c
 | Video (2:43) | https://youtu.be/RSHszgfsqm8 |
 | Project page | https://build.qorechain.io/p/qorewitness |
 | Install on your own camera | [docs/INSTALL.md](docs/INSTALL.md) |
-| Run the tests | `pnpm install --frozen-lockfile --ignore-scripts && pnpm test` (276 tests) |
+| Run the tests | `pnpm install --frozen-lockfile --ignore-scripts && pnpm test` (279 tests) |
 
 ## Why post-quantum
 
@@ -115,7 +115,7 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 On a 64-bit Linux machine (Raspberry Pi OS Lite 64-bit, Debian, Ubuntu) on your home network:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.1/install.sh | bash
 ```
 
 The installer installs Docker when it is missing (Enter or `--yes` means yes), pulls the published image `ghcr.io/fnoufnou/qorewitness:<QW_VERSION>`, starts QoreWitness and prints the dashboard address and a pairing code. The rest happens in the browser on your phone or laptop: a password, the camera ("Is this your camera?" with a picture), and one progress bar to "Sealing started". Keys and the owner account are made in the background. The free beta pays the network fees (no code). Self-managed sits under "Advanced". Everything lives in `~/qorewitness/data`. Read [install.sh](install.sh) before you run it.
@@ -144,7 +144,7 @@ The `retention` service deletes segments older than `QW_RETENTION_DAYS` (default
 
 ```bash
 pnpm install --frozen-lockfile --ignore-scripts
-pnpm test                 # 276 tests, contracts with precompile mocks
+pnpm test                 # 279 tests, contracts with precompile mocks
 pnpm typecheck
 pnpm probe:pqc            # live ML-DSA-87 checks against the testnet precompile, no funds needed
 ```
@@ -183,7 +183,7 @@ Create the account with `scripts/new-account.ts` (mnemonic). Do not use the `PRI
 | [deploy/](deploy/) | Docker entrypoint, recorder (ffmpeg) and agent systemd units, per-camera config, sponsor service |
 | [ignition/](ignition/) | Hardhat Ignition deploy module for the registry |
 | [scripts/](scripts/) | Device CLI, EVM window helper, anchor and verify CLIs, live precompile probes, drills, site and verifier builds |
-| [test/](test/) | 276 tests: contracts with precompile mocks, agent, setup, dashboard, sponsor, installer, verifier (Hardhat 3, node:test, viem) |
+| [test/](test/) | 279 tests: contracts with precompile mocks, agent, setup, dashboard, sponsor, installer, verifier (Hardhat 3, node:test, viem) |
 
 ### Docs
 
