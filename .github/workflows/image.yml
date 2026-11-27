@@ -1,6 +1,7 @@
 # Builds the QoreWitness image and publishes it to GitHub Container Registry:
 #   ghcr.io/fnoufnou/qorewitness:<version> and :latest
 # Runs on a version tag (v0.5.0-alpha.1) or by hand. Uses only GITHUB_TOKEN, no stored secrets.
+# The test workflow runs first. The image is built only when all tests pass.
 # After the first run, set the package to public once: GitHub > Packages > qorewitness > settings.
 name: image
 on:
@@ -11,7 +12,12 @@ permissions:
   contents: read
   packages: write
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    permissions:
+      contents: read
   build:
+    needs: test
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4.2.2
