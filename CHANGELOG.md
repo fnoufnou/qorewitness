@@ -4,6 +4,13 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+- CI: `.github/workflows/test.yml` runs on every push and pull request. It installs with `--frozen-lockfile --ignore-scripts`, compiles the contracts, runs `tsc`, the 276 tests, the reproducible build of QoreWitness Verify and the site link check. The image workflow runs the tests first and builds only when they pass.
+- README: a first screen with badges, the banner and a "Check it in 2 minutes" path (sample clip and receipt, QoreWitness Verify, explorer links). Registry v4 in the live bullet. Explorer links and qor1 forms for every address, plus the sample owner and the fee sponsor. Why not C2PA, Truepic or OpenTimestamps. The test boundary of the pqcVerify mock. Full repository table, clickable docs list and complete credits.
+- Contracts: `contracts/README.md` maps every registry address to its source commit. The v4 flat file gives the same runtime bytecode as the live contract, up to the metadata hash. It also explains the one change on main after v4 and where real ML-DSA-87 is proven on chain.
+- `SECURITY.md`: how to report a vulnerability, scope, testnet only.
+- Docs: four audit rounds in `docs/AUDIT.md`. 0.0457 test QOR per anchor with 10-minute windows in `docs/TESTNET_FINDINGS.md`. The install line uses `USER@IP-ADDRESS` in `docs/INSTALL.md` and `install.sh`. Beta wording in place of "pilot" and "Fees included". Camera research notes moved to `docs/research/`. The dev reference has no internal status line.
+- Sponsor: plain messages say "the free beta", the same words as the setup.
+- Config: Hardhat knows the testnet only (the unused mainnet network is gone). `.env.example` starts with `QORE_MNEMONIC`. The contract tests use `network.create()`, so the deprecation warning is gone.
 - Dashboard (security review 4, M1 and L5): the four outside checks (balance, camera, fee service, test network) run at the same time, each with a 5 s limit. When the internet is down, the page now loads in about 5 s instead of up to about 48 s. Two tabs that open at the same moment share one call per check. Tests show that the checks run in parallel, that a check that hangs stops at its limit, and that two tabs share the calls.
 - Dashboard (security review 4, M2): the red line "The test network was reset" shows only when the seal contract is gone and the chain head is lower than half our newest seal block. A real reset starts again near block 1. One node that lags some days behind now gives no false alarm. 6 new tests (276).
 - Site (security review 4, L1): the NAS one-paste writes `.env` only when it is not there yet. A second paste keeps a `QW_VERSION` pin.
