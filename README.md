@@ -106,7 +106,7 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 ## Drills
 
 - **Q-Day Drill dry run** (9 Nov 2026, self-run): 13 attacks with only the ECDSA key, 0 succeeded. [docs/TESTNET_FINDINGS.md](docs/TESTNET_FINDINGS.md).
-- **Official Q-Day Drill** (18 Nov 2026, run by the organisers): our normal transaction during the drill went through, and the organisers accepted our proof.
+- **Official Q-Day Drill** (18 Nov 2026, run by the organisers): our normal transaction during the drill went through, and the organisers accepted our proof. It is a hybrid-signed (ECDSA + ML-DSA-87) native self-send of 1 uqor from the registered drill account `qor1q6hj6sl4qj9d7udnj47ju6cvgqnl3hqxc3pzh9` (EVM `0x06af2d43F5048AdF71b3957d2e6b0C4027F8dc06`), no EVM window, fee 0.025 QOR: [tx 9C52C39C…7AD16](https://explore.qore.network/tx/9C52C39CDA1BEE42AD4EA5000620C82D2B496BD0D767BB9DFEBACC965837AD16), block 10,301,720, 07:01:28 UTC. Set the explorer to Testnet first.
 - **Custody drill** (input): 10 attacks on the footage itself. All 5 attacks after anchoring are rejected. 4 of 5 substitutions before hashing are flagged. A substitution with the camera's own settings is not caught. That is the trust boundary. [docs/CUSTODY_DRILL.md](docs/CUSTODY_DRILL.md).
 - **Recovery drill** (crash): the agent stops after the anchor tx is mined and before the receipt is written. After a restart, the receipt is rebuilt from public chain data and verifies. Every field equals the lost result (15 Nov 2026, block 10,133,808). [scripts/recovery-drill.ts](scripts/recovery-drill.ts).
 
