@@ -99,20 +99,22 @@ verifier (static page or CLI): clip + receipt
 </div></section>
 
 <section id="contracts"><div class="wrap">
-<div class="sec-head"><p class="eyebrow">Contracts</p><h2>Addresses on qorechain-diana.</h2><p>Explorer: <a href="https://explore.qore.network">explore.qore.network</a> (testnet).</p></div>
+<div class="sec-head"><p class="eyebrow">Contracts</p><h2>Addresses on qorechain-diana.</h2><p>Explorer: <a href="https://explore.qore.network">explore.qore.network</a>. It opens on mainnet, so switch it to <b>Testnet</b> at the top once. Accounts show as qor1 (bech32) and EVM hex: both are the same 20 bytes.</p></div>
 <div class="tablewrap" role="region" aria-label="Table: What, Address" tabindex="0"><table><thead><tr><th scope="col">What</th><th scope="col">Address</th></tr></thead><tbody>
-<tr><td><b>Registry v4</b> (14 Nov, chained windows, time bound on both sides, live)</td><td class="mono"><code>0xa1378D6558B32e1f8d37b68cf90e3C93839Da365</code></td></tr>
-<tr><td>Registry v3 (12 Nov, audit fixes, Q-Day Drill)</td><td class="mono"><code>0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2</code></td></tr>
-<tr><td>Registry v2 (9 to 12 Nov, devices, rotation, <code>verifyAnchor</code>)</td><td class="mono"><code>0x1854EeE2A659F4f39A05d5832cceC405E8045336</code></td></tr>
-<tr><td>Registry v1 (9 Nov, anchors by account key)</td><td class="mono"><code>0xA73d4347b50C2A373533915d698Bf03a01c65aAF</code></td></tr>
-<tr><td>Owner and agent account</td><td class="mono"><code>0xD6C6bDfBE567BcE731907789800205Df0B78ca52</code></td></tr>
+<tr><td><b>Registry v4</b> (14 Nov, chained windows, time bound on both sides, live)</td><td class="mono"><a href="https://explore.qore.network/address/0xa1378D6558B32e1f8d37b68cf90e3C93839Da365"><code>0xa1378D6558B32e1f8d37b68cf90e3C93839Da365</code></a></td></tr>
+<tr><td>Registry v3 (12 Nov, audit fixes, Q-Day Drill)</td><td class="mono"><a href="https://explore.qore.network/address/0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2"><code>0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2</code></a></td></tr>
+<tr><td>Registry v2 (9 to 12 Nov, devices, rotation, <code>verifyAnchor</code>)</td><td class="mono"><a href="https://explore.qore.network/address/0x1854EeE2A659F4f39A05d5832cceC405E8045336"><code>0x1854EeE2A659F4f39A05d5832cceC405E8045336</code></a></td></tr>
+<tr><td>Registry v1 (9 Nov, anchors by account key)</td><td class="mono"><a href="https://explore.qore.network/address/0xA73d4347b50C2A373533915d698Bf03a01c65aAF"><code>0xA73d4347b50C2A373533915d698Bf03a01c65aAF</code></a></td></tr>
+<tr><td>Owner and agent account of the live camera (every seal since 9 Nov)</td><td class="mono"><a href="https://explore.qore.network/address/qor16mrtm7l9v77wwvvsw7ycqqs9mu9h3jjj0785k7"><code>qor16mrtm7l9v77wwvvsw7ycqqs9mu9h3jjj0785k7</code></a><br><code>0xD6C6bDfBE567BcE731907789800205Df0B78ca52</code></td></tr>
+<tr><td>Fee sponsor (pays the network fees during the free beta)</td><td class="mono"><a href="https://explore.qore.network/address/qor10u3hsshqhe0w9sp39p2nar6qrv5dph9uc428gc"><code>qor10u3hsshqhe0w9sp39p2nar6qrv5dph9uc428gc</code></a><br><code>0x7F237842E0BE5eE2C03128553E8F401B28D0DcBc</code></td></tr>
+<tr><td>Owner account of our test computer (the sample record)</td><td class="mono"><a href="https://explore.qore.network/address/qor1j2shg2wadqw3eg8dafw0uh3env49y2qx7en2tl"><code>qor1j2shg2wadqw3eg8dafw0uh3env49y2qx7en2tl</code></a><br><code>0x92a17429Dd681d1CA0EDeA5Cfe5E399B2a522806</code></td></tr>
 </tbody></table></div>
 <dl class="kv" style="margin-top:20px">
-<dt>Sample record</dt><dd>Block 10,653,907 (24 Nov 2026, 08:10 CET), one 60-second clip recorded 08:08 to 08:09 CET by the test camera of our test computer: a test pattern with a burned-in clock and a test tone, both fingerprints (receipt v3), sealed within 1 minute. Files: <a href="sample-clip.mp4">clip</a> and <a href="sample-receipt.json">receipt</a>.</dd>
-<dt>QoreWitness Verify SHA-256</dt><dd><code>01fb584fe02806b7335ebb44c0abc1fd0da48bc1387281707046e859a59bdae8</code><br><span class="small muted">Build it with <code>pnpm build:verifier</code> and compare.</span></dd>
+<dt>Sample record</dt><dd>Block 10,653,907 (24 Nov 2026, 08:10 CET), one 60-second clip recorded 08:08 to 08:09 CET by the test camera of our test computer: a test pattern with a burned-in clock and a test tone, both fingerprints (receipt v3), sealed within 1 minute. <a href="https://explore.qore.network/tx/4E1BE84FC988529DC5A3D6C22AD3094F6724E3C1EC560162330A017B300F7DBD">Anchor transaction</a> (EVM hash <code class="break">0xc144eb064bc87a199711ba178493f13bfdee2f48664aa3946404c8ca594fa482</code>). Files: <a href="sample-clip.mp4">clip</a> and <a href="sample-receipt.json">receipt</a>, or <a href="verifier.html?sample">try it in QoreWitness Verify</a>.</dd>
+<dt>QoreWitness Verify SHA-256</dt><dd><code>0f3c7558c822e04fa3568021e479abd3e6e0b1e8dd0dfd11d4cac8ddbdaf87b2</code><br><span class="small muted">Build it with <code>pnpm build:verifier</code> and compare.</span></dd>
 <dt>Check a receipt in a terminal</dt><dd><code>pnpm tsx scripts/verify-receipt.ts sample-receipt.json sample-clip.mp4</code></dd>
 <dt>Without our code</dt><dd><code>python3 tools/verify_receipt.py &lt;receipt&gt; &lt;file&gt;</code> (standard library only)</dd>
-<dt>Run the tests</dt><dd><code>pnpm test</code> (276 automated tests on 25 Nov 2026)</dd>
+<dt>Run the tests</dt><dd><code>pnpm test</code> (276 automated tests on 27 Nov 2026). Contract tests mock the precompiles. <code>pnpm probe:pqc</code> checks real ML-DSA-87 signatures against the live <code>pqcVerify</code>.</dd>
 </dl>
 </div></section>
 
@@ -138,9 +140,9 @@ verifier (static page or CLI): clip + receipt
 <section class="alt"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Drills</p><h2>We attack our own system and publish the result.</h2></div>
 <ul class="grid c3">
-<li class="tile"><h3>Q-Day Drill, dry run</h3><p>13 attacks with only the ECDSA key. 0 succeeded. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/TESTNET_FINDINGS.md">testnet findings</a>.</p></li>
-<li class="tile"><h3>Custody drill</h3><p>10 attacks on the footage. All 5 attacks after sealing were rejected. 4 of 5 swaps before hashing were flagged. A swap with the camera's own settings was missed. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CUSTODY_DRILL.md">the drill</a>.</p></li>
-<li class="tile"><h3>Recovery drill</h3><p>The agent stops after the transaction is mined and before the receipt is written. After a restart, the receipt is rebuilt from public data and verifies (block 10,133,808).</p></li>
+<li class="tile"><h3>Q-Day Drill</h3><p>Our own dry run (9 Nov 2026, self-run): 13 attacks with only the ECDSA key, 0 succeeded. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/TESTNET_FINDINGS.md#q-day-drill-dry-run-9-nov-2026-2345-utc">testnet findings</a>. In the official drill run by the organisers (18 Nov 2026), our normal transaction went through and our proof was accepted.</p></li>
+<li class="tile"><h3>Custody drill</h3><p>Our own drill (14 Nov 2026): 10 attacks on the footage. All 5 attacks after sealing were rejected. 4 of 5 swaps before hashing were flagged. A swap with the camera's own settings was missed. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CUSTODY_DRILL.md">the drill</a>.</p></li>
+<li class="tile"><h3>Recovery drill</h3><p>Our own drill (15 Nov 2026): the agent stops after the transaction is mined and before the receipt is written. After a restart, the receipt is rebuilt from public data and verifies (block 10,133,808).</p></li>
 </ul>
 <h3 style="margin:32px 0 10px">Known limits for the jury</h3>
 <ul class="limits">

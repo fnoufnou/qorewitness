@@ -104,7 +104,7 @@
 
 <section class="alt" id="threats"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Threat model, summary</p><h2>Who could attack it, and what happens.</h2>
-<p>We ran these drills on the live system ourselves. No outside firm ran them. The full texts are in the <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/THREAT_MODEL.md">threat model</a> and the <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CUSTODY_DRILL.md">custody drill</a>.</p></div>
+<p>We ran these drills on the live system ourselves (custody drill on 14 Nov 2026). No outside firm ran them. The full texts are in the <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/THREAT_MODEL.md">threat model</a> and the <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CUSTODY_DRILL.md">custody drill</a>.</p></div>
 <div class="tablewrap" role="region" aria-label="Table: Attack, Result, Why" tabindex="0"><table><thead><tr><th scope="col">Attack</th><th scope="col">Result</th><th scope="col">Why</th></tr></thead><tbody>
 <tr><td>Change one byte of a sealed clip</td><td><b>Detected</b></td><td>The file fingerprint is no longer in the receipt.</td></tr>
 <tr><td>Remove or reorder a clip in the receipt</td><td><b>Detected</b></td><td>The chain of clips breaks.</td></tr>
@@ -112,7 +112,7 @@
 <tr><td>Swap in footage from another camera, re-encode, delete or add a clip before sealing</td><td><b>Flagged</b></td><td>The record shows a stream change, a gap or an overlap. In our drill, 4 of 5 such attacks were flagged.</td></tr>
 <tr><td>Swap in footage that uses the camera's own settings, before sealing</td><td><b>Missed</b></td><td>The QoreWitness computer cannot tell. This is the trust boundary.</td></tr>
 <tr><td>Steal the QoreWitness computer</td><td>Risk</td><td>It holds your camera key and, today, the keys of your account on the test network. Keep it safe. A mode that keeps the main key offline is planned.</td></tr>
-<tr><td>An attacker with only the classic (ECDSA) key of the account</td><td><b>Failed</b></td><td>In a dry run of the Q-Day Drill, 13 attacks failed and 0 succeeded. Every change needs a fresh post-quantum signature.</td></tr>
+<tr><td>An attacker with only the classic (ECDSA) key of the account</td><td><b>Failed</b></td><td>In our own dry run of the Q-Day Drill on 9 Nov 2026, 13 attacks failed and 0 succeeded. Every change needs a fresh post-quantum signature.</td></tr>
 </tbody></table></div>
 </div></section>
 

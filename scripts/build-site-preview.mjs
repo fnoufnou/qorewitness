@@ -26,17 +26,37 @@ const GH = "https://github.com/fnoufnou/qorewitness";
 const GHDOC = (f) => `${GH}/blob/main/docs/${f}`;
 const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
-// TODO lead: pin a release tag instead of main before launch.
 const TAG = "v0.6.0-alpha.4"; // the release the install line runs; the "read the script" link points to the same tag
 const INSTALL = `ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/install.sh | bash -s -- --yes"`;
-const VERIFIER_SHA = "01fb584fe02806b7335ebb44c0abc1fd0da48bc1387281707046e859a59bdae8";
+const VERIFIER_SHA = "0f3c7558c822e04fa3568021e479abd3e6e0b1e8dd0dfd11d4cac8ddbdaf87b2";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
+// The explorer opens on mainnet. Readers must switch it to Testnet once (a cookie), so every page that links it says so.
+const EXPLORER = "https://explore.qore.network";
+const exAddr = (a) => `${EXPLORER}/address/${a}`;
+const exTx = (h) => `${EXPLORER}/tx/${h}`;
+/** Testnet accounts, EVM hex and the same 20 bytes as a qor1 (bech32) address. Checked with @scure/base on 27 Nov 2026. */
+const ACCOUNTS = {
+  camera: { hex: "0xD6C6bDfBE567BcE731907789800205Df0B78ca52", qor: "qor16mrtm7l9v77wwvvsw7ycqqs9mu9h3jjj0785k7" },
+  sponsor: { hex: "0x7F237842E0BE5eE2C03128553E8F401B28D0DcBc", qor: "qor10u3hsshqhe0w9sp39p2nar6qrv5dph9uc428gc" },
+  test: { hex: "0x92a17429Dd681d1CA0EDeA5Cfe5E399B2a522806", qor: "qor1j2shg2wadqw3eg8dafw0uh3env49y2qx7en2tl" },
+};
+/** The official jury rubric (Builder FAQ, "Is the jury rubric the same for every category?"). */
+const RUBRIC_URL = "https://build.qorechain.io/faq";
 // Sample record for QoreWitness Verify (24 Nov 2026): one clip of our test computer's stand-in camera
 // (a test pattern with "QoreWitness test camera" and a burned-in clock in Amsterdam time, plus a test tone),
 // window 08:00 to 08:10 CET.
 // Server-only files: /sample-clip.mp4 and /sample-receipt.json. The old /demo-clip.mp4 links keep working.
-const SAMPLE = { clip: "sample-clip.mp4", receipt: "sample-receipt.json", block: "10,653,907", sealed: "24 Nov 2026, 08:10 CET", recorded: "08:08 to 08:09 CET", within: "1 minute" };
-const TESTS = 276; // automated tests (pnpm test), counted on 27 Nov 2026
+// tx: the anchor transaction of the sample window (registry v4, sent by the test computer's owner account ACCOUNTS.test).
+// The explorer finds a transaction only by its Cosmos hash (tx); evmTx is the same transaction on the EVM RPC.
+const SAMPLE = { clip: "sample-clip.mp4", receipt: "sample-receipt.json", block: "10,653,907", sealed: "24 Nov 2026, 08:10 CET", recorded: "08:08 to 08:09 CET", within: "1 minute", tx: "4E1BE84FC988529DC5A3D6C22AD3094F6724E3C1EC560162330A017B300F7DBD", evmTx: "0xc144eb064bc87a199711ba178493f13bfdee2f48664aa3946404c8ca594fa482" };
+const TESTS = 276; // automated tests (pnpm test)
+const TESTS_DATE = "27 Nov 2026"; // the day TESTS was counted
+const DRILLS = {
+  qdayDry: "9 Nov 2026", // our own dry run of the Q-Day Drill (docs/TESTNET_FINDINGS.md)
+  qdayOfficial: "18 Nov 2026", // the organisers' Q-Day Drill (CHANGELOG 2026-11-18)
+  custody: "14 Nov 2026", // docs/CUSTODY_DRILL.md
+  recovery: "15 Nov 2026", // block 10,133,808
+};
 
 /* ---------- icons and art ---------- */
 const defs = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -789,8 +809,8 @@ ${cert("Example result")}
 <div class="cert bad"><span class="tag">After one changed byte</span><div class="head">${ico("x-circle")}<div><b>Changed after sealing</b><span>This video does not match what was sealed. Do not rely on it.</span></div></div></div>
 <p class="small muted">A button under the result prints it for your records.</p></div>
 <div><h3 style="margin-bottom:10px">See it for yourself</h3>
-<p>Download our sealed sample recording, a generated test pattern, together with its receipt, then choose both files in QoreWitness Verify or drop them on the page. Then use the button there to change a single byte and check again: the result turns red.</p>
-<div class="btns"><a class="btn" href="${UP}${SAMPLE.clip}" download>Sample recording</a><a class="btn" href="${UP}${SAMPLE.receipt}" download>Its receipt</a></div>
+<p>Open QoreWitness Verify with our sealed sample recording, a generated test pattern, already loaded together with its receipt. In seconds you will see the green result for yourself. Then press the button there to change a single byte and check again, and watch the result turn red.</p>
+<div class="btns"><a class="btn primary" href="${UP}verifier.html?sample">Try the sample ${ico("arrow")}</a><a class="btn" href="${UP}${SAMPLE.clip}" download>Sample recording</a><a class="btn" href="${UP}${SAMPLE.receipt}" download>Its receipt</a></div>
 <h3 style="margin:32px 0 10px">What a green result means</h3>
 <ul class="checks"><li>${ico("check")}<span>The video existed at the time recorded on the public ledger.</span></li><li>${ico("check")}<span>It has not been modified since it was sealed.</span></li><li>${ico("check")}<span>One known camera made the seal.</span></li></ul>
 <p class="small">An orange <b>Original, with notes</b> means the video is unchanged too, and the page explains the notes, for example a few minutes when the camera was off.</p>
@@ -902,7 +922,7 @@ ${head("Trust and limits", "What it proves, and what it cannot.", "A proof is on
 
 <section class="alt" id="threats"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Threat model, summary</p><h2>Who could attack it, and what happens.</h2>
-<p>We ran these drills on the live system ourselves. No outside firm ran them. The full texts are in the <a href="${GHDOC("THREAT_MODEL.md")}">threat model</a> and the <a href="${GHDOC("CUSTODY_DRILL.md")}">custody drill</a>.</p></div>
+<p>We ran these drills on the live system ourselves (custody drill on ${DRILLS.custody}). No outside firm ran them. The full texts are in the <a href="${GHDOC("THREAT_MODEL.md")}">threat model</a> and the <a href="${GHDOC("CUSTODY_DRILL.md")}">custody drill</a>.</p></div>
 <div class="tablewrap"><table><thead><tr><th scope="col">Attack</th><th scope="col">Result</th><th scope="col">Why</th></tr></thead><tbody>
 <tr><td>Change one byte of a sealed clip</td><td><b>Detected</b></td><td>The file fingerprint is no longer in the receipt.</td></tr>
 <tr><td>Remove or reorder a clip in the receipt</td><td><b>Detected</b></td><td>The chain of clips breaks.</td></tr>
@@ -910,7 +930,7 @@ ${head("Trust and limits", "What it proves, and what it cannot.", "A proof is on
 <tr><td>Swap in footage from another camera, re-encode, delete or add a clip before sealing</td><td><b>Flagged</b></td><td>The record shows a stream change, a gap or an overlap. In our drill, 4 of 5 such attacks were flagged.</td></tr>
 <tr><td>Swap in footage that uses the camera's own settings, before sealing</td><td><b>Missed</b></td><td>The QoreWitness computer cannot tell. This is the trust boundary.</td></tr>
 <tr><td>Steal the QoreWitness computer</td><td>Risk</td><td>It holds your camera key and, today, the keys of your account on the test network. Keep it safe. A mode that keeps the main key offline is planned.</td></tr>
-<tr><td>An attacker with only the classic (ECDSA) key of the account</td><td><b>Failed</b></td><td>In a dry run of the Q-Day Drill, 13 attacks failed and 0 succeeded. Every change needs a fresh post-quantum signature.</td></tr>
+<tr><td>An attacker with only the classic (ECDSA) key of the account</td><td><b>Failed</b></td><td>In our own dry run of the Q-Day Drill on ${DRILLS.qdayDry}, 13 attacks failed and 0 succeeded. Every change needs a fresh post-quantum signature.</td></tr>
 </tbody></table></div>
 </div></section>
 
@@ -954,28 +974,29 @@ ${head("For the jury", "QoreWitness at a glance.", "Thank you for judging the Qo
 <div><p class="eyebrow">What it is</p><h2>Sealed video for home security cameras.</h2>
 <p style="margin-top:16px">A small recorder at home cuts the camera stream into short clips and fingerprints each one with SHA-256 and SHA3-256 as it is recorded. Every minute of video becomes one clip with its own fingerprints, chained to the clip before it. Every 10 minutes it builds a Merkle root over those clips, signs it with the camera's own ML-DSA-87 key and anchors it in the AnchorRegistry contract on QoreChain. The contract checks that signature with the <code>pqcVerify</code> precompile before it stores anything.</p>
 <p>The owner keeps the video at home and gets a receipt per window. Anyone can check a clip with its receipt in QoreWitness Verify, a single HTML file that runs in the browser and reads the chain directly.</p>
-<div class="btns" style="margin-top:20px"><a class="btn primary" href="${UP}verifier.html">Open QoreWitness Verify ${ico("arrow")}</a><a class="btn" href="${GH}">Source on GitHub</a></div></div>
+<div class="btns" style="margin-top:20px"><a class="btn primary" href="${UP}verifier.html?sample">Try the sample in QoreWitness Verify ${ico("arrow")}</a><a class="btn" href="#rubric">The rubric, with proof</a><a class="btn" href="${GH}">Source on GitHub</a></div></div>
 <div>${browser("verify-desktop", ALT.verifyDesk, "qorewitness.fnoufnou.com/verifier.html", "The published sample record, checked against the live contract: Original.")}</div>
 </div>${edge("wave", "alt")}</section>
 
 <section class="alt edged" id="try"><div class="wrap narrow">
 <p class="eyebrow">Try it yourself</p><h2>Four checks you can run in a few minutes.</h2>
 <ol class="steps compact" style="margin-top:24px">
-<li class="step"><h3>Check the sample record</h3><div class="body"><p>Download the <a href="${UP}${SAMPLE.clip}" download>sample clip</a> and its <a href="${UP}${SAMPLE.receipt}" download>receipt</a>, open ${VERIFY}, press <b>Choose files</b> and pick both, or drop them on the page. The result is a green <b>Original</b>, sealed within ${SAMPLE.within}, read from the chain in your own browser. Verify measures from the end of the clip to the anchor. The sample is the last clip of its 10-minute window, so it reads 1 minute. A clip from the start of a window reads up to about 11 minutes.</p><p class="small">QoreWitness Verify is one self-contained HTML file. Its SHA-256 is <code class="break">${VERIFIER_SHA}</code>. Rebuild it with <code>pnpm build:verifier</code> and compare.</p></div></li>
-<li class="step"><h3>Break it on purpose</h3><div class="body"><p>Press <b>Try it: change one byte and check again</b>. The verifier flips one bit of the clip in memory and the result turns red.</p></div></li>
-<li class="step"><h3>Find the anchor on chain</h3><div class="body"><p>Open the registry on the <a href="${"https://explore.qore.network"}/address/${REGISTRY}">testnet explorer</a> and look up the sample record in block ${SAMPLE.block} (${SAMPLE.sealed}).</p></div></li>
-<li class="step"><h3>Run the tests</h3><div class="body"><p>Clone the repository and run <code>pnpm install --ignore-scripts</code> and <code>pnpm test</code>. The contract tests run against a mock of the precompiles, and the app tests use a mocked chain.</p></div></li>
+<li class="step"><h3>Check the sample record in one click</h3><div class="body"><p><a class="btn primary" href="${UP}verifier.html?sample">Try the sample in QoreWitness Verify ${ico("arrow")}</a></p><p>This opens ${VERIFY} with our public sample clip and its receipt loaded from this site. It checks them against the live contract in your own browser, usually in seconds. The result is a green <b>Original</b>, sealed within ${SAMPLE.within}. Verify measures from the end of the clip to the anchor. The sample is the last clip of its 10-minute window, so it reads 1 minute. A clip from the start of a window reads up to about 11 minutes.</p><p class="small">Prefer to do it by hand? Download the <a href="${UP}${SAMPLE.clip}" download>sample clip</a> and its <a href="${UP}${SAMPLE.receipt}" download>receipt</a> and drop both on QoreWitness Verify. It is one self-contained HTML file with SHA-256 <code class="break">${VERIFIER_SHA}</code>. Rebuild it with <code>pnpm build:verifier</code> and compare.</p></div></li>
+<li class="step"><h3>Change one byte and see red</h3><div class="body"><p>Press <b>Try it: change one byte and check again</b>. Verify flips one bit in an in-memory copy of the clip and runs the same checks. The result turns red at once.</p></div></li>
+<li class="step"><h3>Find the anchor on chain</h3><div class="body"><p>The QoreChain explorer opens on mainnet, so first switch it to <b>Testnet</b> at the top of <a href="${EXPLORER}">explore.qore.network</a>. It remembers the choice. Then open the <a href="${exTx(SAMPLE.tx)}">sample anchor transaction</a>: block ${SAMPLE.block}, ${SAMPLE.sealed}, EVM hash <code class="break">${SAMPLE.evmTx}</code>. It is a call to <a href="${exAddr(REGISTRY)}">registry v4</a>, which reverts unless <code>pqcVerify</code> accepts the camera's ML-DSA-87 signature over the window root. Every seal of the live camera is listed on its account, <a href="${exAddr(ACCOUNTS.camera.qor)}"><code class="break">${ACCOUNTS.camera.qor}</code></a> (EVM <code class="break">${ACCOUNTS.camera.hex}</code>), next to the <code>MsgOpenEVMWindow</code> transactions that open its scoped window.</p></div></li>
+<li class="step"><h3>Run the tests</h3><div class="body"><p>Clone the repository and run <code>pnpm install --ignore-scripts</code> and <code>pnpm test</code>: ${TESTS} tests on ${TESTS_DATE}. The contract tests use a mock of the precompiles, so they check our logic and the exact signed bytes. Real ML-DSA-87 checks run against the live precompile with <code>pnpm probe:pqc</code> (valid signatures pass, a changed, short or wrong-message signature fails) and in every live seal.</p></div></li>
 </ol>
 </div>${edge("wave", "bg")}</section>
 
 <section><div class="wrap">
-<div class="sec-head"><p class="eyebrow">Your criteria</p><h2>Where to find the proof for each one.</h2></div>
-<div class="tablewrap"><table class="stack"><caption class="sr">Judging criteria and where to find the evidence</caption><thead><tr><th scope="col">Criterion</th><th scope="col">Where to see it</th></tr></thead><tbody>
-<tr><th scope="row">Works as described</th><td data-label="Where to see it">One real home camera has anchored a window every 10 minutes on qorechain-diana since 9 Nov 2026, on registry v4 since 14 Nov. The <a href="${UP}verifier.html">verifier</a> checks any clip against the live contract. The <a href="get-started.html">setup guide</a> shows every screen of the app.</td></tr>
-<tr><th scope="row">Real use of QoreChain</th><td data-label="Where to see it">AnchorRegistry v4 at <code>${REGISTRY}</code>, the hybrid (ECDSA plus ML-DSA-87) account flow with an EVM authorisation window, and the <code>pqcVerify</code> and <code>pqcKeyStatus</code> precompiles. See <a href="developers.html#contracts">contracts</a>.</td></tr>
-<tr><th scope="row">PQC checked on chain</th><td data-label="Where to see it">Every state change in the registry needs a fresh ML-DSA-87 signature that the contract checks itself. The Q-Day Drill tried 13 attacks with only the ECDSA key, and none succeeded. See <a href="#pqc">below</a>.</td></tr>
-<tr><th scope="row">Quality</th><td data-label="Where to see it">Four review rounds with the QCAI Contract Auditor, a threat model, a custody drill and a recovery drill, all published. See <a href="${GHDOC("AUDIT.md")}">AUDIT.md</a> and <a href="${GHDOC("THREAT_MODEL.md")}">THREAT_MODEL.md</a>.</td></tr>
-<tr><th scope="row">User experience</th><td data-label="Where to see it">One line to install, then four short screens in the browser and a progress bar. No wallet, no keys and no jargon for the owner. See <a href="get-started.html#s4">the setup</a> and <a href="daily-use.html">daily use</a>.</td></tr>
+<div class="sec-head" id="rubric"><p class="eyebrow">The official rubric</p><h2>Our evidence for each criterion.</h2>
+<p>The five criteria and weights below are quoted from the <a href="${RUBRIC_URL}">Builder FAQ</a> ("Is the jury rubric the same for every category?"). Each row links straight to the proof. Explorer links need the explorer set to Testnet, as in step 3 above.</p></div>
+<div class="tablewrap"><table class="stack"><caption class="sr">The official jury rubric with its weights, and where to find our evidence</caption><thead><tr><th scope="col">Criterion and weight</th><th scope="col">Evidence you can click</th></tr></thead><tbody>
+<tr><th scope="row">Works as described <span class="muted">25%</span></th><td data-label="Evidence">One real home camera has sealed a window every 10 minutes since 9 Nov 2026, on registry v4 since 14 Nov, with more than 2,300 seals on v4 so far. Check one yourself in your browser in seconds.<br><a href="${UP}verifier.html?sample">Try the sample</a> · <a href="${exAddr(ACCOUNTS.camera.qor)}">Every seal of the live camera</a> · <a href="${exAddr(REGISTRY)}">Registry v4 contract</a></td></tr>
+<tr><th scope="row">QoreChain tech usage, verified in the repo and on chain <span class="muted">25%</span></th><td data-label="Evidence">AnchorRegistry v4 calls the <code>pqcVerify</code> and <code>pqcKeyStatus</code> precompiles. The recorder opens an EVM window scoped to the registry only, with a hybrid ECDSA plus ML-DSA-87 transaction. The owner key is registered with proof of possession, and the fee sponsor tops up accounts with hybrid ML-DSA-87 transfers.<br><a href="${exAddr(REGISTRY)}">Registry v4 contract</a> · <a href="${exTx(SAMPLE.tx)}">Sample anchor transaction</a> · <a href="${exAddr(ACCOUNTS.sponsor.qor)}">Fee sponsor account</a> · <a href="${GH}/tree/main/contracts">Contract source</a></td></tr>
+<tr><th scope="row">Post-quantum correctness and security <span class="muted">20%</span></th><td data-label="Evidence">Every state change in the registry needs a fresh ML-DSA-87 signature that the contract checks itself, over a domain-separated message. Our own Q-Day Drill dry run on ${DRILLS.qdayDry}: 13 attacks with only the ECDSA key, 0 succeeded. In the official Q-Day Drill on ${DRILLS.qdayOfficial}, our normal transaction went through and the organisers accepted our proof. Four QCAI audit rounds with every finding mapped.<br><a href="${GHDOC("TESTNET_FINDINGS.md")}#q-day-drill-dry-run-9-nov-2026-2345-utc">Dry run results</a> · <a href="${GHDOC("AUDIT.md")}">Audit map</a> · <a href="${GHDOC("THREAT_MODEL.md")}">Threat model</a> · <a href="#pqc">How it works</a></td></tr>
+<tr><th scope="row">Originality <span class="muted">15%</span></th><td data-label="Evidence">QoreWitness seals camera footage as it is recorded, on the cameras people already own. C2PA and Truepic sign at capture, but need a camera or app built for it. OpenTimestamps proves that one file existed. QoreWitness also chains every clip to the one before, so a missing or swapped clip shows, and the camera signs with a post-quantum key that the chain itself checks.<br><a href="how-it-works.html">How it works</a> · <a href="${GHDOC("SPEC.md")}">Spec</a></td></tr>
+<tr><th scope="row">Clarity, UX and documentation <span class="muted">15%</span></th><td data-label="Evidence">One install line, then four short screens in the browser. No wallet, no keys and no jargon for the owner. Plain-language limits on every page, and a spec, threat model, audit map and AI usage log in the repo.<br><a href="get-started.html">Setup guide</a> · <a href="daily-use.html">Daily use</a> · <a href="${GH}#readme">README</a> · <a href="${GH}/blob/main/AI_USAGE.md">AI_USAGE.md</a></td></tr>
 </tbody></table></div>
 </div></section>
 
@@ -988,14 +1009,14 @@ ${head("For the jury", "QoreWitness at a glance.", "Thank you for judging the Qo
 <section><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Evidence</p><h2>Contracts, audits, drills and tests.</h2></div>
 <ul class="grid c2" style="list-style:none;padding:0;margin:0">
-<li class="tile"><h3>Live contract</h3><p>Registry v4, deployed 14 Nov 2026: <code class="break">${REGISTRY}</code>. Earlier versions are listed on the <a href="developers.html#contracts">Developers</a> page.</p></li>
+<li class="tile"><h3>Live contract and accounts</h3><p>Registry v4, deployed 14 Nov 2026: <a href="${exAddr(REGISTRY)}"><code class="break">${REGISTRY}</code></a>. Live camera account: <a href="${exAddr(ACCOUNTS.camera.qor)}"><code class="break">${ACCOUNTS.camera.qor}</code></a> (EVM <code class="break">${ACCOUNTS.camera.hex}</code>). Fee sponsor: <a href="${exAddr(ACCOUNTS.sponsor.qor)}"><code class="break">${ACCOUNTS.sponsor.qor}</code></a>. Earlier registries are on the <a href="developers.html#contracts">Developers</a> page.</p></li>
 <li class="tile"><h3>Audit rounds</h3><p>Four rounds with the QCAI Contract Auditor from 12 to 17 Nov 2026, scores 82, 72, 78 and 85. These are automated reviews, and no accredited firm has audited QoreWitness. <a href="developers.html#audit">Details</a>.</p></li>
-<li class="tile"><h3>Drills</h3><p>Q-Day Drill dry run: 13 attacks with only the ECDSA key, 0 succeeded. Custody drill: all 5 attacks after sealing rejected, 4 of 5 swaps before hashing flagged, 1 missed. Recovery drill: the receipt is rebuilt from public data.</p></li>
-<li class="tile"><h3>Tests</h3><p>${TESTS} automated tests on 25 Nov 2026, for the contract, the recorder, the setup, the dashboard, the fee sponsor and the verifier. Run them with <code>pnpm test</code>.</p></li>
+<li class="tile"><h3>Drills</h3><p>Official Q-Day Drill (${DRILLS.qdayOfficial}, run by the organisers): our normal transaction went through and our proof was accepted. Our own Q-Day Drill dry run (${DRILLS.qdayDry}, self-run): 13 attacks with only the ECDSA key, 0 succeeded. Our own custody drill (${DRILLS.custody}): all 5 attacks after sealing rejected, 4 of 5 swaps before hashing flagged, 1 missed. Recovery drill (${DRILLS.recovery}): the receipt is rebuilt from public data.</p></li>
+<li class="tile"><h3>Tests</h3><p>${TESTS} automated tests on ${TESTS_DATE}, for the contract, the recorder, the setup, the dashboard, the fee sponsor and the verifier. Run them with <code>pnpm test</code>. Contract tests mock the precompiles, and <code>pnpm probe:pqc</code> checks real ML-DSA-87 signatures against the live <code>pqcVerify</code>. <a href="${GH}/tree/main/test">Browse the tests</a>.</p></li>
 </ul>
 <h3 style="margin:40px 0 10px">Known limits, stated openly</h3>
 <ul class="limits">
-<li>Testnet only. The PQC precompiles are not active on the QoreChain main network yet, so the public site presents QoreWitness as a beta.</li>
+<li>Testnet only. The PQC precompiles are not active on the QoreChain main network yet, so the public site presents QoreWitness as a beta. Version tags say alpha because the code is before 1.0.</li>
 <li>The keys of the owner account sit on the recorder today. An agent-key mode is designed and a spike passed on the testnet, but relayed calls emit no EVM logs, so it waits until after the submission (<a href="${GHDOC("AGENT_KEY.md")}">notes</a>).</li>
 <li>The Linux installer is tested end to end. Docker Compose on a NAS, Windows and macOS is documented and still has to be tested on each platform.</li>
 <li>A seal proves that a file has not changed since it was sealed. It cannot prove that the scene was real.</li>
@@ -1042,7 +1063,7 @@ verifier (static page or CLI): clip + receipt
 <section id="run"><div class="wrap narrow">
 <p class="eyebrow">Run it yourself</p><h2>Install, update, back up, remove.</h2>
 <ul class="plain" style="margin-top:16px">
-<li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</li>
+<li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="${GHDOC("INSTALL.md")}">INSTALL.md</a>.</li>
 <li><b>Other platforms:</b> a NAS, a home server, Windows and macOS use the same <code>docker-compose.yml</code> (<a href="get-started.html#s3">guide</a>).</li>
 <li><b>Other camera brands:</b> with <code>--terminal</code> you can give a full stream URL, for example <code>rtsp://user:password@192.168.1.20:554/stream</code>. Compatibility status per brand: <a href="cameras.html">cameras</a>. Research notes: <a href="${GHDOC("CAMERAS.md")}">CAMERAS.md</a>.</li>
 <li><b>Update:</b> set the new version in <code>~/qorewitness/.env</code> (<code>QW_VERSION</code>), then <code>docker compose pull &amp;&amp; docker compose up -d</code>. The version is pinned, and QoreWitness never updates itself.</li>
@@ -1052,20 +1073,22 @@ verifier (static page or CLI): clip + receipt
 </div></section>
 
 <section id="contracts"><div class="wrap">
-<div class="sec-head"><p class="eyebrow">Contracts</p><h2>Addresses on qorechain-diana.</h2><p>Explorer: <a href="https://explore.qore.network">explore.qore.network</a> (testnet).</p></div>
+<div class="sec-head"><p class="eyebrow">Contracts</p><h2>Addresses on qorechain-diana.</h2><p>Explorer: <a href="${EXPLORER}">explore.qore.network</a>. It opens on mainnet, so switch it to <b>Testnet</b> at the top once. Accounts show as qor1 (bech32) and EVM hex: both are the same 20 bytes.</p></div>
 <div class="tablewrap"><table><thead><tr><th scope="col">What</th><th scope="col">Address</th></tr></thead><tbody>
-<tr><td><b>Registry v4</b> (14 Nov, chained windows, time bound on both sides, live)</td><td class="mono"><code>${REGISTRY}</code></td></tr>
-<tr><td>Registry v3 (12 Nov, audit fixes, Q-Day Drill)</td><td class="mono"><code>0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2</code></td></tr>
-<tr><td>Registry v2 (9 to 12 Nov, devices, rotation, <code>verifyAnchor</code>)</td><td class="mono"><code>0x1854EeE2A659F4f39A05d5832cceC405E8045336</code></td></tr>
-<tr><td>Registry v1 (9 Nov, anchors by account key)</td><td class="mono"><code>0xA73d4347b50C2A373533915d698Bf03a01c65aAF</code></td></tr>
-<tr><td>Owner and agent account</td><td class="mono"><code>0xD6C6bDfBE567BcE731907789800205Df0B78ca52</code></td></tr>
+<tr><td><b>Registry v4</b> (14 Nov, chained windows, time bound on both sides, live)</td><td class="mono"><a href="${exAddr(REGISTRY)}"><code>${REGISTRY}</code></a></td></tr>
+<tr><td>Registry v3 (12 Nov, audit fixes, Q-Day Drill)</td><td class="mono"><a href="${exAddr("0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2")}"><code>0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2</code></a></td></tr>
+<tr><td>Registry v2 (9 to 12 Nov, devices, rotation, <code>verifyAnchor</code>)</td><td class="mono"><a href="${exAddr("0x1854EeE2A659F4f39A05d5832cceC405E8045336")}"><code>0x1854EeE2A659F4f39A05d5832cceC405E8045336</code></a></td></tr>
+<tr><td>Registry v1 (9 Nov, anchors by account key)</td><td class="mono"><a href="${exAddr("0xA73d4347b50C2A373533915d698Bf03a01c65aAF")}"><code>0xA73d4347b50C2A373533915d698Bf03a01c65aAF</code></a></td></tr>
+<tr><td>Owner and agent account of the live camera (every seal since 9 Nov)</td><td class="mono"><a href="${exAddr(ACCOUNTS.camera.qor)}"><code>${ACCOUNTS.camera.qor}</code></a><br><code>${ACCOUNTS.camera.hex}</code></td></tr>
+<tr><td>Fee sponsor (pays the network fees during the free beta)</td><td class="mono"><a href="${exAddr(ACCOUNTS.sponsor.qor)}"><code>${ACCOUNTS.sponsor.qor}</code></a><br><code>${ACCOUNTS.sponsor.hex}</code></td></tr>
+<tr><td>Owner account of our test computer (the sample record)</td><td class="mono"><a href="${exAddr(ACCOUNTS.test.qor)}"><code>${ACCOUNTS.test.qor}</code></a><br><code>${ACCOUNTS.test.hex}</code></td></tr>
 </tbody></table></div>
 <dl class="kv" style="margin-top:20px">
-<dt>Sample record</dt><dd>Block ${SAMPLE.block} (${SAMPLE.sealed}), one 60-second clip recorded ${SAMPLE.recorded} by the test camera of our test computer: a test pattern with a burned-in clock and a test tone, both fingerprints (receipt v3), sealed within ${SAMPLE.within}. Files: <a href="${UP}${SAMPLE.clip}">clip</a> and <a href="${UP}${SAMPLE.receipt}">receipt</a>.</dd>
+<dt>Sample record</dt><dd>Block ${SAMPLE.block} (${SAMPLE.sealed}), one 60-second clip recorded ${SAMPLE.recorded} by the test camera of our test computer: a test pattern with a burned-in clock and a test tone, both fingerprints (receipt v3), sealed within ${SAMPLE.within}. <a href="${exTx(SAMPLE.tx)}">Anchor transaction</a> (EVM hash <code class="break">${SAMPLE.evmTx}</code>). Files: <a href="${UP}${SAMPLE.clip}">clip</a> and <a href="${UP}${SAMPLE.receipt}">receipt</a>, or <a href="${UP}verifier.html?sample">try it in QoreWitness Verify</a>.</dd>
 <dt>QoreWitness Verify SHA-256</dt><dd><code>${VERIFIER_SHA}</code><br><span class="small muted">Build it with <code>pnpm build:verifier</code> and compare.</span></dd>
 <dt>Check a receipt in a terminal</dt><dd><code>pnpm tsx scripts/verify-receipt.ts ${SAMPLE.receipt} ${SAMPLE.clip}</code></dd>
 <dt>Without our code</dt><dd><code>python3 tools/verify_receipt.py &lt;receipt&gt; &lt;file&gt;</code> (standard library only)</dd>
-<dt>Run the tests</dt><dd><code>pnpm test</code> (${TESTS} automated tests on 25 Nov 2026)</dd>
+<dt>Run the tests</dt><dd><code>pnpm test</code> (${TESTS} automated tests on ${TESTS_DATE}). Contract tests mock the precompiles. <code>pnpm probe:pqc</code> checks real ML-DSA-87 signatures against the live <code>pqcVerify</code>.</dd>
 </dl>
 </div></section>
 
@@ -1091,9 +1114,9 @@ verifier (static page or CLI): clip + receipt
 <section class="alt"><div class="wrap">
 <div class="sec-head"><p class="eyebrow">Drills</p><h2>We attack our own system and publish the result.</h2></div>
 <ul class="grid c3">
-<li class="tile"><h3>Q-Day Drill, dry run</h3><p>13 attacks with only the ECDSA key. 0 succeeded. See <a href="${GHDOC("TESTNET_FINDINGS.md")}">testnet findings</a>.</p></li>
-<li class="tile"><h3>Custody drill</h3><p>10 attacks on the footage. All 5 attacks after sealing were rejected. 4 of 5 swaps before hashing were flagged. A swap with the camera's own settings was missed. See <a href="${GHDOC("CUSTODY_DRILL.md")}">the drill</a>.</p></li>
-<li class="tile"><h3>Recovery drill</h3><p>The agent stops after the transaction is mined and before the receipt is written. After a restart, the receipt is rebuilt from public data and verifies (block 10,133,808).</p></li>
+<li class="tile"><h3>Q-Day Drill</h3><p>Our own dry run (${DRILLS.qdayDry}, self-run): 13 attacks with only the ECDSA key, 0 succeeded. See <a href="${GHDOC("TESTNET_FINDINGS.md")}#q-day-drill-dry-run-9-nov-2026-2345-utc">testnet findings</a>. In the official drill run by the organisers (${DRILLS.qdayOfficial}), our normal transaction went through and our proof was accepted.</p></li>
+<li class="tile"><h3>Custody drill</h3><p>Our own drill (${DRILLS.custody}): 10 attacks on the footage. All 5 attacks after sealing were rejected. 4 of 5 swaps before hashing were flagged. A swap with the camera's own settings was missed. See <a href="${GHDOC("CUSTODY_DRILL.md")}">the drill</a>.</p></li>
+<li class="tile"><h3>Recovery drill</h3><p>Our own drill (${DRILLS.recovery}): the agent stops after the transaction is mined and before the receipt is written. After a restart, the receipt is rebuilt from public data and verifies (block 10,133,808).</p></li>
 </ul>
 <h3 style="margin:32px 0 10px">Known limits for the jury</h3>
 <ul class="limits">
