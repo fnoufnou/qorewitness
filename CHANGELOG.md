@@ -4,6 +4,9 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+- Live evidence: `pnpm probe:pqc:fuzz` runs a seeded mutation fuzz (about 300 cases, bit flips over the whole signature, the key and the message, other key, other message, wrong lengths, empty and swapped input) against the real `pqcVerify` precompile with `eth_call`. Positive controls run first and stop the run when they fail, an RPC error counts as "not run", never as a pass. `pnpm probe:registry` simulates forged, replayed and attacker-made signatures against the live registry v4 from the real owner address and expects `BadSignature()`, `BadOwnerSignature()` and `BrokenChain`. Both write a dated report (`--report`) and the first runs are in `docs/evidence/`. `docs/LIVE_PROBES.md` says what each check shows and what it does not. A separate workflow `live-probe.yml` runs them daily and does not gate `test`. 29 new unit tests (308).
+- Finding: `eth_call` with a state override runs without the PQC precompile (empty return, `PqcPrecompileInactive` inside the registry). Details in `docs/LIVE_PROBES.md`.
+
 ## 0.6.0-beta.1 (27 Nov 2026)
 
 First beta of the Customer Edition. Dashboard status lines in plain words (W8), security review 4 fixes, owner and judge review fixes on the site, QoreWitness Verify with a one-click sample and registry v2 accepted, CI that runs all tests before an image is built, SECURITY.md. Install line pinned to this tag.
