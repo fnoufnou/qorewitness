@@ -21,6 +21,23 @@ export default defineConfig({
       },
     },
   },
+  // Solidity tests in test/solidity (fuzz and invariant). Run counts are fixed here and listed in
+  // docs/TESTING.md. The fuzz seed is Hardhat's fixed default, so runs repeat. "deep" is for
+  // `pnpm test:fuzz` and CI. Coverage uses the default profile.
+  test: {
+    solidity: {
+      profiles: {
+        default: {
+          fuzz: { runs: 256 },
+          invariant: { runs: 32, depth: 64 },
+        },
+        deep: {
+          fuzz: { runs: 4096 },
+          invariant: { runs: 256, depth: 100 },
+        },
+      },
+    },
+  },
   networks: {
     hardhatMainnet: { type: "edr-simulated", chainType: "l1" },
     qorechainTestnet: {

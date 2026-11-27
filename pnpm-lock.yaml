@@ -44,7 +44,7 @@ importers:
         version: 3.1.2(hardhat@3.21.2)
       '@nomicfoundation/hardhat-toolbox-viem':
         specifier: ^5.0.7
-        version: 5.0.7(7a8538b57d22445ea2aecee078e5d15f)
+        version: 5.0.7(jlq7iimvwyrg6xettn67zs2ccq)
       '@nomicfoundation/hardhat-verify':
         specifier: ^3.1.4
         version: 3.1.4(hardhat@3.21.2)
@@ -63,6 +63,9 @@ importers:
       esbuild:
         specifier: 0.25.12
         version: 0.25.12
+      forge-std:
+        specifier: github:foundry-rs/forge-std#bf647bd6046f2f7da30d0c2bf435e5c76a780c1b
+        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/bf647bd6046f2f7da30d0c2bf435e5c76a780c1b
       hardhat:
         specifier: ^3.21.1
         version: 3.21.2
@@ -907,6 +910,10 @@ packages:
     resolution: {integrity: sha512-n+XqoarWCgcar0O3om3DeNYx6xTuLWGTUF1bRZ9iuO00tsPepzP1L4V7rqtxxZ4PEya34UCESReimFvxmEVwIA==}
     engines: {node: '>=6.0.0'}
 
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/bf647bd6046f2f7da30d0c2bf435e5c76a780c1b:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/bf647bd6046f2f7da30d0c2bf435e5c76a780c1b}
+    version: 1.16.2
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -1711,7 +1718,7 @@ snapshots:
       hardhat: 3.21.2
       zod: 3.25.76
 
-  '@nomicfoundation/hardhat-toolbox-viem@5.0.7(7a8538b57d22445ea2aecee078e5d15f)':
+  '@nomicfoundation/hardhat-toolbox-viem@5.0.7(jlq7iimvwyrg6xettn67zs2ccq)':
     dependencies:
       '@nomicfoundation/hardhat-ignition': 3.1.9(@nomicfoundation/hardhat-verify@3.1.4(hardhat@3.21.2))(hardhat@3.21.2)
       '@nomicfoundation/hardhat-ignition-viem': 3.1.6(@nomicfoundation/hardhat-ignition@3.1.9(@nomicfoundation/hardhat-verify@3.1.4(hardhat@3.21.2))(hardhat@3.21.2))(@nomicfoundation/hardhat-verify@3.1.4(hardhat@3.21.2))(@nomicfoundation/hardhat-viem@3.1.0(hardhat@3.21.2)(viem@2.57.17(typescript@5.9.3)(zod@3.25.76)))(@nomicfoundation/ignition-core@3.1.11)(hardhat@3.21.2)(viem@2.57.17(typescript@5.9.3)(zod@3.25.76))
@@ -2041,6 +2048,8 @@ snapshots:
   eventemitter3@5.0.1: {}
 
   fast-equals@6.2.2: {}
+
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/bf647bd6046f2f7da30d0c2bf435e5c76a780c1b: {}
 
   fsevents@2.3.3:
     optional: true
