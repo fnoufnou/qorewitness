@@ -4,6 +4,8 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+- Tests: Solidity fuzz and invariant tests for the contracts in `test/solidity`, run by the test runner built into Hardhat 3. 45 fuzz tests (signature binding, domain separation, replay, every field of a signed window, window and refBlock rules, fail-closed precompiles, `pqcKeyStatus` forms, Merkle proofs against an RFC 6962 reference), 6 invariants with a handler and ghost state (hash chain, stored anchors never change, windows and gaps, devices, nonces, no forgery or replay) and 6 unit tests. 336 tests in total (279 node, 57 Solidity). Fuzz 256 runs per test and invariants 32 x 64 in `pnpm test`, 4,096 runs and 256 x 100 in `pnpm test:fuzz`. Line and statement coverage of the four contracts: 100 % (`pnpm test:coverage`). A mutation check with 12 mutants: all caught. The precompiles are mocks, real ML-DSA-87 stays covered by `pnpm probe:pqc` and the live anchors. CI runs all three commands. Details: `docs/TESTING.md`. Dev dependency `forge-std` v1.16.2, pinned to commit `bf647bd` (MIT or Apache-2.0).
+
 ## 0.6.0-beta.1 (27 Nov 2026)
 
 First beta of the Customer Edition. Dashboard status lines in plain words (W8), security review 4 fixes, owner and judge review fixes on the site, QoreWitness Verify with a one-click sample and registry v2 accepted, CI that runs all tests before an image is built, SECURITY.md. Install line pinned to this tag.
