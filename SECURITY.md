@@ -24,7 +24,7 @@ We aim to answer within a few days. We fix confirmed issues in the next release.
 Out of scope:
 
 - The QoreChain network, its precompiles, SDK and explorer. Report those to the QoreChain team.
-- Attacks that need the owner's recovery phrase or physical access to the recorder. The threat model lists these as known limits.
+- Attacks that need control of the recorder itself, for example its files or the owner's recovery phrase on it. The threat model lists this as a known limit (A4).
 - Denial of service against the test network.
 
 ## What we already know
