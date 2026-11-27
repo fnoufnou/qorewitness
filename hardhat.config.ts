@@ -1,15 +1,15 @@
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
 
-// Load .env (PRIVATE_KEY) when present. Hardhat resolves configuration
-// variables from the environment or from `npx hardhat keystore set PRIVATE_KEY`.
+// Load .env (QORE_MNEMONIC) when present. Hardhat resolves configuration
+// variables from the environment or from `npx hardhat keystore set QORE_MNEMONIC`.
 try {
   process.loadEnvFile();
 } catch {
   // No .env: rely on the environment or the keystore.
 }
 
-// Public QoreChain EVM endpoints.
+// Public QoreChain testnet endpoint. Testnet only: no mainnet network is configured.
 export default defineConfig({
   plugins: [hardhatToolboxViemPlugin],
   solidity: {
@@ -28,13 +28,6 @@ export default defineConfig({
       chainType: "l1",
       chainId: 9800,
       url: "https://evm-testnet.qore.host",
-      accounts: { mnemonic: configVariable("QORE_MNEMONIC") },
-    },
-    qorechain: {
-      type: "http",
-      chainType: "l1",
-      chainId: 9801,
-      url: "https://evm.qore.host",
       accounts: { mnemonic: configVariable("QORE_MNEMONIC") },
     },
   },
