@@ -47,10 +47,12 @@ Open a terminal on your laptop:
 - **Mac:** press Cmd and Space, type `Terminal`, press Enter.
 - **Windows:** press the Windows key, type `PowerShell`, press Enter.
 
-Paste this line. Use your Pi user name in place of `mark`. Press Enter.
+Find the IP address of your Pi in your router app.
+
+Paste this line. Replace `USER` with your Pi user name and `IP-ADDRESS` with its IP address. Press Enter.
 
 ```bash
-ssh -t mark@qorewitness.local "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes"
+ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/install.sh | bash -s -- --yes"
 ```
 
 What you will see:
@@ -156,7 +158,7 @@ The image version is pinned on purpose. QoreWitness never updates itself.
 | The camera answered, but it has no video at this link. | Check the brand, or check the link with VLC (`docs/CAMERAS.md`) and pick Other camera. |
 | Unknown host name. | Open QoreWitness by its IP address, as the installer showed. For your own name, set `QW_UI_HOSTNAME` in `~/qorewitness/.env`. |
 | The page does not open at all. | Your QoreWitness computer and your phone must be on the same network. Guest Wi-Fi often blocks this. Run the line again to see the address. |
-| `qorewitness.local` not found (step 3) | Your network does not know the name. Open your router app, find the IP address of your QoreWitness computer, and use it in place of `qorewitness.local`. |
+| `Connection refused` or `timed out` (step 3) | Check the IP address in your router app and that SSH is on (Imager setting **Enable SSH**). |
 | `Permission denied` (step 3) | Wrong user name or Pi password. Use the ones you set in the Imager. |
 
 Logs: `cd ~/qorewitness && docker compose logs --tail 50 recorder agent ui`. Camera passwords are masked in the logs.
@@ -181,7 +183,7 @@ Security notes:
 
 ## Privacy
 
-If the camera films the street or a neighbour's property, privacy law (GDPR) likely applies to you as the owner. Point the camera at your own property, put up a sign, and read the guidance of your data protection authority (in the Netherlands: Autoriteit Persoonsgegevens). Your video stays on the box. Only fingerprints (hashes) and times go on chain, and these cannot be deleted.
+If the camera films the street or a neighbour's property, privacy law (GDPR) likely applies to you as the owner. Point the camera at your own property, put up a sign, and read the guidance of your data protection authority (in the Netherlands: Autoriteit Persoonsgegevens). Your video stays on your QoreWitness computer. Only fingerprints (hashes) and times go on chain, and these cannot be deleted.
 
 ## Remove QoreWitness
 
