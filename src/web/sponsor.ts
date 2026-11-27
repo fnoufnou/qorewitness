@@ -1,6 +1,6 @@
 /**
  * Client for the fee sponsor of the free beta ("Free beta: we cover the network fees"). The sponsor service
- * sends test QOR to the owner account of a box with a valid pilot code.
+ * sends test QOR to the owner account of a QoreWitness computer.
  *
  * Contract (implemented by the sponsor service):
  *   POST {SPONSOR_URL}/v1/challenge {deviceId}                 -> {nonce, expires}
@@ -8,7 +8,8 @@
  *                                                              -> {status, capPerDayUqor}
  *   GET  {SPONSOR_URL}/v1/status/<deviceId>?owner=<owner>      -> {status, ...}
  *
- * The pilot is open within its cap: the box sends no pilot code. Every box uses the
+ * The free beta is open within its cap: the client sends no code. The optional
+ * pilotCode field is kept for compatibility. Every installation uses the
  * same camera name, so device ids repeat across owners and status needs the owner.
  *
  * signature: the camera's ML-DSA-87 signature (0x hex) over the UTF-8 text
@@ -16,8 +17,8 @@
  * with registry, deviceId and owner as lower-case 0x hex. devicePubkey (0x hex)
  * is extra: it lets the service check the signature before the camera is on chain.
  *
- * Only the pilot code, device id, owner address, nonce, signature and public key
- * leave the box. Never the recovery phrase, a private key or the camera password.
+ * Only the device id, owner address, nonce, signature and public key (and an
+ * optional code) leave the computer. Never the recovery phrase, a private key or the camera password.
  */
 import { signChecked, type DeviceKey } from "../agent/device-key.js";
 import { TESTNET_EVM_CHAIN_ID } from "../setup/steps.js";
