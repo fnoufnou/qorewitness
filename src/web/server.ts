@@ -61,24 +61,48 @@ export interface ServerOptions {
   sponsorStatus?: (deviceId: string, owner: string) => Promise<SponsorAnswer>;
   registryCheck?: (registry: string) => Promise<{ hasCode: boolean; head: bigint }>;
   cameraCheck?: (host: string, port: number) => Promise<boolean>;
+  /** Longest wait for each outside check (default DASHBOARD_CHECK_MS). */
+  checkTimeoutMs?: number;
   now?: () => number;
 }
 
-/** Remembers one answer per key for a while. A failed ask keeps the last good answer. */
+/**
+ * Remembers one answer per key for a while. A failed ask keeps the last good answer.
+ * Callers that ask while an answer is on its way share that ask (two tabs, one call).
+ */
 function cached<K, V>(ms: number, now: () => number, ask: (k: K) => Promise<V>): (key: string, k: K) => Promise<V | undefined> {
   let last: { at: number; key: string; value?: V } | undefined;
-  return async (key, k) => {
-    if (last && last.key === key && now() - last.at < ms) return last.value;
-    let value: V | undefined;
-    try {
-      value = await ask(k);
-    } catch {
-      value = last?.key === key ? last.value : undefined;
-    }
-    last = { at: now(), key, value };
-    return value;
+  let inFlight: { key: string; answer: Promise<V | undefined> } | undefined;
+  return (key, k) => {
+    if (last && last.key === key && now() - last.at < ms) return Promise.resolve(last.value);
+    if (inFlight && inFlight.key === key) return inFlight.answer;
+    const answer = (async () => {
+      let value: V | undefined;
+      try {
+        value = await ask(k);
+      } catch {
+        value = last?.key === key ? last.value : undefined;
+      }
+      last = { at: now(), key, value };
+      if (inFlight?.key === key) inFlight = undefined; // same key means this ask
+      return value;
+    })();
+    inFlight = { key, answer };
+    return answer;
   };
 }
+
+/** Rejects when the check takes longer than ms. The check itself may still finish later. */
+function within<T>(ms: number, check: Promise<T>): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const late = new Promise<never>((_, fail) => {
+    timer = setTimeout(() => fail(new Error("check timed out")), ms);
+  });
+  return Promise.race([check, late]).finally(() => clearTimeout(timer));
+}
+
+/** Longest wait for one outside check on a dashboard load. All checks run at the same time. */
+export const DASHBOARD_CHECK_MS = 5_000;
 
 function cookie(req: IncomingMessage, name: string): string | undefined {
   for (const part of (req.headers.cookie ?? "").split(";")) {
@@ -212,23 +236,14 @@ export function createHandler(o: ServerOptions) {
   const pairFails = new FailureLimiter(10, 24 * 3600_000); // then: run "pair" again or restart the ui
   const loginFails = new FailureLimiter(5, 60_000);
   let exporting = false;
-  let balanceCache: { at: number; qor1: string; value?: number } | undefined;
+  const checkMs = o.checkTimeoutMs ?? DASHBOARD_CHECK_MS;
+  const ask = <T>(check: () => Promise<T>) => within(checkMs, check());
 
-  async function balance(qor1: string): Promise<number | undefined> {
-    if (balanceCache && balanceCache.qor1 === qor1 && now() - balanceCache.at < 60_000) return balanceCache.value;
-    let value: number | undefined;
-    try {
-      value = Number(await (o.balance ?? fetchBalanceUqor)(qor1));
-    } catch {
-      value = balanceCache?.qor1 === qor1 ? balanceCache.value : undefined;
-    }
-    balanceCache = { at: now(), qor1, value };
-    return value;
-  }
+  const balanceCheck = cached(60_000, now, (qor1: string) => ask(async () => Number(await (o.balance ?? ((a: string) => fetchBalanceUqor(a, undefined, checkMs)))(qor1))));
   // The fee service tops up every 15 minutes. A reset is rare: once an hour is enough.
-  const sponsorCheck = cached(15 * 60_000, now, (a: { deviceId: string; owner: string }) => o.sponsorStatus!(a.deviceId, a.owner));
-  const resetCheck = cached(60 * 60_000, now, (registry: string) => o.registryCheck!(registry));
-  const camCheck = cached(60_000, now, (e: { host: string; port: number }) => o.cameraCheck!(e.host, e.port));
+  const sponsorCheck = cached(15 * 60_000, now, (a: { deviceId: string; owner: string }) => ask(() => o.sponsorStatus!(a.deviceId, a.owner)));
+  const resetCheck = cached(60 * 60_000, now, (registry: string) => ask(() => o.registryCheck!(registry)));
+  const camCheck = cached(60_000, now, (e: { host: string; port: number }) => ask(() => o.cameraCheck!(e.host, e.port)));
 
   async function dashboard(res: ServerResponse, csrf: string, json: boolean) {
     const info = readAccountInfo(p);
@@ -243,12 +258,15 @@ export function createHandler(o: ServerOptions) {
       setupAgeSeconds = undefined;
     }
     if (!Number.isFinite(setupAgeSeconds)) setupAgeSeconds = undefined;
-    const bal = info ? await balance(info.qor1) : undefined;
     const cam = streamEndpoint(camEnv.QW_STREAM_URL);
-    const reachable = o.cameraCheck && cam && cameraStale(status, setupAgeSeconds) ? await camCheck(`${cam.host}:${cam.port}`, cam) : undefined;
-    const sp = o.sponsorStatus && info?.plan === "sponsored" ? await sponsorCheck(`${info.deviceId}|${info.owner}`, info) : undefined;
     const registry = status.latest[0]?.registry ?? info?.registry;
-    const chk = o.registryCheck && registry ? await resetCheck(registry, registry) : undefined;
+    // All outside checks at the same time, each with a short limit: the page stays fast when the internet is down.
+    const [bal, reachable, sp, chk] = await Promise.all([
+      info ? balanceCheck(info.qor1, info.qor1) : undefined,
+      o.cameraCheck && cam && cameraStale(status, setupAgeSeconds) ? camCheck(`${cam.host}:${cam.port}`, cam) : undefined,
+      o.sponsorStatus && info?.plan === "sponsored" ? sponsorCheck(`${info.deviceId}|${info.owner}`, info) : undefined,
+      o.registryCheck && registry ? resetCheck(registry, registry) : undefined,
+    ]);
     const h = boxHealth(status, {
       windowSeconds, plan: info?.plan, balanceUqor: bal, setupAgeSeconds, qor1: info?.qor1, cameraReachable: reachable,
       sponsor: sp ? sponsorFacts(sp) : undefined,
@@ -464,8 +482,8 @@ if (process.argv[1] && /server\.(ts|js)$/.test(process.argv[1])) {
     paths, wizard,
     hostnames: (process.env.QW_UI_HOSTNAME ?? "").split(","),
     trustProxy: process.env.QW_UI_TRUST_PROXY === "1",
-    sponsorStatus: (deviceId, owner) => new SponsorClient().status(deviceId, owner),
-    registryCheck: (registry) => fetchRegistryCheck(registry),
+    sponsorStatus: (deviceId, owner) => new SponsorClient(undefined, fetch, DASHBOARD_CHECK_MS).status(deviceId, owner),
+    registryCheck: (registry) => fetchRegistryCheck(registry, undefined, DASHBOARD_CHECK_MS),
     cameraCheck: (host, port) => cameraReachable(host, port),
   });
   createServer({ requestTimeout: 60_000, headersTimeout: 20_000 }, handler).listen(port, host, () => {
