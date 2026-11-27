@@ -12,7 +12,7 @@ const PQC_KEY_STATUS: Address = "0x0000000000000000000000000000000000000a02";
 const ACTIVE = 1;
 const REVOKED = 2;
 
-const { viem, networkHelpers } = await network.connect();
+const { viem, networkHelpers } = await network.create();
 
 /** Fake "signature" accepted by MockPqcVerify. */
 function fakeSign(pubkey: Hex, message: Uint8Array): Hex {
@@ -48,7 +48,7 @@ async function deploy(keyStatusMock: "MockPqcKeyStatus3" | "MockPqcKeyStatus4" |
 
 type Ctx = Awaited<ReturnType<typeof deploy>>;
 
-describe("AnchorRegistry v2 with DeviceRegistry", () => {
+describe("AnchorRegistry with DeviceRegistry", () => {
   let ctx: Ctx;
   const deviceId = deviceIdOf("front-door");
   const deviceKey = fakeKey(1);
