@@ -13,6 +13,8 @@
     "typecheck": "hardhat build --quiet && tsc --noEmit",
     "window": "tsx --env-file=.env scripts/window.ts",
     "probe:pqc": "tsx scripts/probe-pqc.ts",
+    "probe:pqc:fuzz": "tsx scripts/probe-pqc-fuzz.ts",
+    "probe:registry": "tsx scripts/probe-registry-live.ts",
     "probe:keystatus": "tsx scripts/probe-keystatus.ts",
     "deploy:testnet": "hardhat ignition deploy ignition/modules/AnchorRegistry.ts --network qorechainTestnet --deployment-id qorewitness-v4b",
     "build:verifier": "node scripts/build-verifier.mjs",
