@@ -137,7 +137,7 @@ The installer adds Docker when it is missing, installs into <code>~/qorewitness<
 <div class="copybox"><code id="install-nas" tabindex="0">mkdir -p qorewitness/data && cd qorewitness
 curl -fsSLO https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-alpha.4/docker-compose.yml
 sudo chown 10001:10001 data && sudo chmod 700 data
-echo "QW_UI_BIND=0.0.0.0:8080" > .env
+[ -f .env ] || echo "QW_UI_BIND=0.0.0.0:8080" > .env
 sudo docker compose up -d
 sudo docker compose run --rm -T ui pair</code><button class="btn" type="button" data-copy="install-nas" aria-label="Copy: the text"><svg aria-hidden="true" focusable="false"><use href="#i-copy"/></svg><span>Copy</span></button></div>
 Logged in as root? Leave out <code>sudo</code>. The last line shows your pairing code.</li>

@@ -497,7 +497,7 @@ The installer adds Docker when it is missing, installs into <code>~/qorewitness<
 const nasCmd = `mkdir -p qorewitness/data && cd qorewitness
 curl -fsSLO ${COMPOSE_URL}
 sudo chown 10001:10001 data && sudo chmod 700 data
-echo "QW_UI_BIND=0.0.0.0:8080" > .env
+[ -f .env ] || echo "QW_UI_BIND=0.0.0.0:8080" > .env
 sudo docker compose up -d
 sudo docker compose run --rm -T ui pair`;
 const pathNas = panel("nas", "NAS", `<ol class="plain path-steps">
