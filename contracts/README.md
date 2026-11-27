@@ -32,7 +32,7 @@ One change: commit `bb89a0f` (21 Nov 2026) in `QorePqc.keyStatus`.
 - Live v4 reads `pqcKeyStatus` only when the answer has exactly 3 or 4 values.
 - Main also reads a longer answer by position, if the chain appends fields later (QoreChain team guidance, 21 Nov 2026).
 - Impact on the live v4 if the chain appends a field: register and revoke fail closed. Anchoring and `verifyAnchor` do not call `pqcKeyStatus`, so they keep working.
-- The change ships with the next registry deployment. We do not redeploy during judging.
+- The change ships with the next registry deployment.
 
 Details: [docs/AUDIT.md](../docs/AUDIT.md).
 

@@ -40,4 +40,4 @@ The setup checks the ports 554, 8554 (RTSP) and 2020 (ONVIF on Tapo) on every ad
 
 ## Research notes
 
-Our notes from 9 Nov 2026 on the LSC camera and a Tapo doorbell (firmware, RTSP, fallbacks): [research/2026-11-09-camera-notes.md](research/2026-11-09-camera-notes.md). They are research notes, not a support statement.
+Our notes from 9 Nov 2026 on the LSC camera and a Tapo doorbell (firmware, RTSP, fallbacks): [research/2026-11-09-camera-notes.md](research/2026-11-09-camera-notes.md). Treat them as background only.
