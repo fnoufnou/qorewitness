@@ -168,7 +168,7 @@ export interface BoxFacts {
   cameraReachable?: boolean;
   /** Free beta only: what the fee service says about this camera. */
   sponsor?: SponsorFacts;
-  /** True only when the seal contract is gone and the chain is lower than our newest seal (sealResetSeen). */
+  /** True only when the seal contract is gone and the chain is lower than half our newest seal block (sealResetSeen). */
   networkReset?: boolean;
 }
 
@@ -227,12 +227,13 @@ export function sponsorFacts(a: { status?: string; paused?: boolean; usedTodayUq
 }
 
 /**
- * A test network reset removes every contract and starts again at block 1. Both
- * must be true, so a node that is behind or a short network fault gives no alarm.
+ * A test network reset removes every contract and starts again at block 1. So the
+ * contract must be gone and the chain must be lower than half our newest seal block.
+ * A node that is some days behind (no contract yet, head a little lower) gives no alarm.
  */
 export function sealResetSeen(check: { hasCode: boolean; head: bigint }, newestSealBlock: string | undefined): boolean {
   if (check.hasCode || !newestSealBlock || !/^\d{1,20}$/.test(newestSealBlock)) return false;
-  return check.head < BigInt(newestSealBlock);
+  return check.head * 2n < BigInt(newestSealBlock);
 }
 
 /** Video that could not be sealed stays red for a day. After that the files stay on disk, listed under Details. */

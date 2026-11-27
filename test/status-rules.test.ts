@@ -131,11 +131,18 @@ describe("status rules: disk and network reset", () => {
     plain(h);
   });
 
-  it("reset only when the contract is gone and the chain is lower than our newest seal", () => {
+  it("reset only when the contract is gone and the chain is lower than half our newest seal", () => {
     assert.equal(sealResetSeen({ hasCode: false, head: 1200n }, "10600000"), true);
     assert.equal(sealResetSeen({ hasCode: true, head: 1200n }, "10600000"), false);
     assert.equal(sealResetSeen({ hasCode: false, head: 10_700_000n }, "10600000"), false);
     assert.equal(sealResetSeen({ hasCode: false, head: 1n }, undefined), false);
+  });
+
+  it("a lagging node (no contract yet, head some days behind) gives no reset alarm (review 4, M2)", () => {
+    assert.equal(sealResetSeen({ hasCode: false, head: 10_550_000n }, "10600000"), false); // 50,000 blocks behind
+    assert.equal(sealResetSeen({ hasCode: false, head: 5_300_000n }, "10600000"), false); // exactly half: still no alarm
+    assert.equal(sealResetSeen({ hasCode: false, head: 5_299_999n }, "10600000"), true);
+    assert.equal(sealResetSeen({ hasCode: false, head: 0n }, "10600000"), true); // a real reset starts near block 1
   });
 
   it("reset comes first, says to download now", () => {

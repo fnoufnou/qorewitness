@@ -247,14 +247,14 @@ export interface ChainOps {
   registerDevice(mnemonic: string, registry: Address, deviceId: Hex, key: DeviceKey): Promise<{ txHash: Hex }>;
 }
 
-async function getJson(url: string): Promise<unknown> {
-  const r = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+async function getJson(url: string, timeoutMs = 15_000): Promise<unknown> {
+  const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
   if (!r.ok) throw new Error(`HTTP ${r.status} from ${new URL(url).host}`);
   return r.json();
 }
 
-export async function fetchBalanceUqor(qor1: string, rest = TESTNET_WINDOW.rest): Promise<bigint> {
-  const b = (await getJson(`${rest}/cosmos/bank/v1beta1/balances/${encodeURIComponent(qor1)}`)) as {
+export async function fetchBalanceUqor(qor1: string, rest = TESTNET_WINDOW.rest, timeoutMs = 15_000): Promise<bigint> {
+  const b = (await getJson(`${rest}/cosmos/bank/v1beta1/balances/${encodeURIComponent(qor1)}`, timeoutMs)) as {
     balances?: { denom: string; amount: string }[];
   };
   return BigInt(b.balances?.find((x) => x.denom === "uqor")?.amount ?? "0");
@@ -266,13 +266,13 @@ export const TESTNET_EVM_RPC = "https://evm-testnet.qore.host";
  * Read-only check for the dashboard: does the seal contract still hold code, and
  * how high is the chain. Used to tell the owner about a test network reset.
  */
-export async function fetchRegistryCheck(registry: string, evmRpc = TESTNET_EVM_RPC): Promise<{ hasCode: boolean; head: bigint }> {
+export async function fetchRegistryCheck(registry: string, evmRpc = TESTNET_EVM_RPC, timeoutMs = 15_000): Promise<{ hasCode: boolean; head: bigint }> {
   if (!/^0x[0-9a-fA-F]{40}$/.test(registry)) throw new Error("bad registry address");
   const call = async (method: string, params: unknown[]) => {
     const r = await fetch(evmRpc, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (!r.ok) throw new Error(`HTTP ${r.status} from ${new URL(evmRpc).host}`);
     const j = (await r.json()) as { result?: unknown };
