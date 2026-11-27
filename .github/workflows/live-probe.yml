@@ -1,0 +1,34 @@
+# Live read-only checks against the public QoreChain testnet: the real pqcVerify precompile and the
+# deployed AnchorRegistry. eth_call only: no secrets, no keys, no funds, no transactions.
+# This workflow is separate from `test` on purpose. A public testnet can be down, and that must never
+# block a merge, a release or the image build. A red run here means "look at the testnet", not "the code is broken".
+name: live-probe
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: pnpm/action-setup@v4.1.0
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 22.21.1
+          cache: pnpm
+      - name: Install (no install scripts)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Live pqcVerify, valid and tampered signatures
+        run: pnpm probe:pqc
+      - name: Live pqcVerify mutation fuzz (100 cases, seed from the run number)
+        run: pnpm probe:pqc:fuzz --cases 100 --seed ${{ github.run_number }}
+      - name: Live AnchorRegistry negative simulations
+        run: pnpm probe:registry
