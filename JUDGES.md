@@ -16,9 +16,9 @@ Steps 1 to 3 need a browser only. Steps 4 and 5 need Node 22 and pnpm. Run once:
 |---|---|---|---|
 | 1 | 1 min | Open [the one-click sample check](https://qorewitness.fnoufnou.com/verifier.html?sample). It loads a public clip and its receipt and checks them against the live contract in your browser. | A green "Original". |
 | 2 | 1 min | Press "Try it: change one byte and check again". The page flips one bit in an in-memory copy and runs the same checks. | The result turns red. |
-| 3 | 1 min | Open the [sample anchor transaction](https://explore.qore.network/tx/0xc144eb064bc87a199711ba178493f13bfdee2f48664aa3946404c8ca594fa482). The explorer opens on mainnet, so switch it to Testnet once at the top of the page. | Block 10,653,907, a call to registry v4. The call reverts unless `pqcVerify` accepts the camera signature. |
+| 3 | 1 min | Open the [sample anchor transaction](https://explore.qore.network/tx/4E1BE84FC988529DC5A3D6C22AD3094F6724E3C1EC560162330A017B300F7DBD). The explorer opens on mainnet, so switch it to Testnet once at the top of the page. It finds a transaction by its Cosmos hash only. The EVM hash of this transaction is `0xc144eb064bc87a199711ba178493f13bfdee2f48664aa3946404c8ca594fa482`. | Block 10,653,907, a call to registry v4. The call reverts unless `pqcVerify` accepts the camera signature. |
 | 4 | 1 min | Run `pnpm probe:pqc:fuzz` and `pnpm probe:registry`. Both only read the testnet, need no key and send no transaction. About 20 s in total. | Fuzz: 6 positive controls true, 300 mutated inputs, 0 accepted. Registry: 14 of 14 checks as expected, including `BadSignature()` from the live contract. |
-| 5 | 1 min to start | Run `pnpm test`. It takes about 35 s. | 365 tests pass (308 node tests and 57 Solidity tests). |
+| 5 | 1 min | Run `pnpm test`. It takes about 35 s. | 365 tests pass (308 node tests and 57 Solidity tests). |
 
 Saved runs of step 4 from 27 Nov 2026: [docs/evidence/2026-11-27-live-pqc-fuzz.md](docs/evidence/2026-11-27-live-pqc-fuzz.md) and [docs/evidence/2026-11-27-live-registry.md](docs/evidence/2026-11-27-live-registry.md). What each probe shows and does not show: [docs/LIVE_PROBES.md](docs/LIVE_PROBES.md).
 
@@ -28,7 +28,7 @@ Saved runs of step 4 from 27 Nov 2026: [docs/evidence/2026-11-27-live-pqc-fuzz.m
 |---|---|---|
 | Works as described (25) | One real home camera has anchored a window every 10 minutes since 9 Nov 2026, on registry v4 since 14 Nov. On 28 Nov 2026 (block 10,876,582) it had more than 1,900 anchors on v4, and v4 held 2,400 anchors from all our devices. The sample in step 1 comes from the test computer, on the same contract. | [camera account](https://explore.qore.network/address/0xD6C6bDfBE567BcE731907789800205Df0B78ca52), [registry v4](https://explore.qore.network/address/0xa1378D6558B32e1f8d37b68cf90e3C93839Da365), [README](README.md) |
 | QoreChain tech usage, verified in the repo and on chain (25) | The contract calls `pqcVerify` (`0x...0A01`) and `pqcKeyStatus` (`0x...0A02`). The agent opens an EVM window scoped to the registry with a hybrid ECDSA + ML-DSA-87 transaction. The SDK kits `@qorechain/pqc`, `@qorechain/sdk` and `@qorechain/evm` are used. | [contracts/QorePqc.sol](contracts/QorePqc.sol), [src/agent/evm-window.ts](src/agent/evm-window.ts), [contracts/README.md](contracts/README.md) |
-| Post-quantum correctness and security (20) | Every state change needs a fresh ML-DSA-87 signature over a domain-separated message. 45 fuzz tests and 6 invariants. 12 hand-made mutants, all caught. Live probes on 27 Nov 2026. Four QCAI audit rounds with every finding mapped. | [docs/TESTING.md](docs/TESTING.md), [docs/AUDIT.md](docs/AUDIT.md), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), [docs/LIVE_PROBES.md](docs/LIVE_PROBES.md) |
+| Post-quantum correctness and security (20) | Every state change needs a fresh ML-DSA-87 signature over a domain-separated message. 45 fuzz tests and 6 invariants. 12 hand-made mutants, all caught. Live probes on 27 Nov 2026: 300 mutated inputs, 0 accepted. Official Q-Day Drill, 18 Nov 2026: our proof transaction was accepted, and the official attack log is not published yet. Our own dry run, 9 Nov 2026: 13 attacks with only the ECDSA key, 0 succeeded. Four QCAI audit rounds with every finding mapped. | [docs/TESTING.md](docs/TESTING.md), [docs/AUDIT.md](docs/AUDIT.md), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), [docs/LIVE_PROBES.md](docs/LIVE_PROBES.md) |
 | Originality (15) | C2PA and Truepic sign at capture but need a camera or app built for it. OpenTimestamps proves that one file existed. QoreWitness works with cameras people already own, chains every clip to the one before it, and the chain checks the camera's post-quantum signature. | [README: why not C2PA](README.md#why-not-c2pa-truepic-or-opentimestamps), [docs/SPEC.md](docs/SPEC.md) |
 | Clarity, UX and documentation (15) | One install line, then four short screens in the browser. A spec, a threat model, an audit map, a testing report and an AI usage log. | [docs/INSTALL.md](docs/INSTALL.md), [docs/SPEC.md](docs/SPEC.md), [AI_USAGE.md](AI_USAGE.md) |
 
@@ -46,9 +46,18 @@ Saved runs of step 4 from 27 Nov 2026: [docs/evidence/2026-11-27-live-pqc-fuzz.m
 
 ## Declared and Verified on the project page
 
-The two Solidity PQC items show as Declared for every team, because the checker cannot see precompile calls inside a contract. Check them by hand in `QorePqc.verify` and `QorePqc.keyStatus`, then in the `pqcVerify` calls listed above, then on chain with any anchor transaction. The item `create-qorechain-dapp` can never turn Verified on its own, so the credit for it is the README line below.
+The two Solidity PQC items show as Declared for every team, because the checker cannot see precompile calls inside a contract. Check them by hand in `QorePqc.verify` and `QorePqc.keyStatus`, then in the `pqcVerify` calls listed above, then on chain with any anchor transaction. The item `create-qorechain-dapp` cannot turn Verified automatically. The project started from its Hardhat template, version 0.12.0. The Hardhat setup and the EVM window helper [scripts/window.ts](scripts/window.ts) come from that template ([README: Credits](README.md#credits)).
 
-TODO (builder to confirm): the README credits say the project started from the `create-qorechain-dapp` Hardhat template, version 0.12.0 ([README: Credits](README.md#credits)). The first commit is not a pristine scaffold, so the repo has no commit that shows the template output. The template parts we name are the Hardhat setup and `scripts/window.ts`.
+## What we found on the testnet
+
+Each finding is written up with the evidence. The first one is fixed upstream since `@qorechain/sdk` 0.13.0, as the QoreChain team confirmed.
+
+| Finding | Where |
+|---|---|
+| The SDK derived the ML-DSA key from the ECDSA key, so a stolen ECDSA key gave the post-quantum key too. Accounts must come from a mnemonic. | [docs/TESTNET_FINDINGS.md](docs/TESTNET_FINDINGS.md#finding-ml-dsa-key-derived-from-the-ecdsa-key-q-day-drill-risk) |
+| `BLOCKHASH` returns 0 on qorechain-diana. Verifiers compare the signed block hash with the chain themselves. | [docs/TESTNET_FINDINGS.md](docs/TESTNET_FINDINGS.md#finding-blockhash-returns-0-on-qorechain-diana) |
+| Calls relayed through a smart account emit no EVM logs and have no EVM transaction hash. | [docs/TESTNET_FINDINGS.md](docs/TESTNET_FINDINGS.md#follow-up-21-nov-no-evm-logs-for-relayed-calls) |
+| An `eth_call` with a state override runs without the PQC precompiles. `pqcVerify` returns empty data, and the registry fails closed with `PqcPrecompileInactive`. | [docs/LIVE_PROBES.md](docs/LIVE_PROBES.md#what-we-learned-about-eth_call-on-qorechain-diana-27-nov-2026) |
 
 ## What is real and what is mocked
 
@@ -59,18 +68,17 @@ TODO (builder to confirm): the README credits say the project started from the `
 
 ## Known limits
 
-- Testnet only. The test network can be reset, so the beta is a demonstration and not evidence yet ([docs/THREAT_MODEL.md](docs/THREAT_MODEL.md#two-scopes-the-beta-now-the-product-later)).
+- Testnet only. The test network can be reset, and a reset removes the seals made in the beta ([docs/THREAT_MODEL.md](docs/THREAT_MODEL.md#two-scopes-the-beta-now-the-product-later)).
 - The owner keys sit on the recorder today. An offline owner key with an anchor-only agent key is designed and a spike passed, but relayed calls emit no EVM logs, so it is not used ([docs/AGENT_KEY.md](docs/AGENT_KEY.md)).
 - An attacker with only the ECDSA key can still send calls to the scoped target. They revert but use window slots and fees. They cannot take value or change state ([docs/TESTNET_FINDINGS.md](docs/TESTNET_FINDINGS.md#q-day-drill-dry-run-9-nov-2026-2345-utc)).
 - The installer is tested end to end on Linux only. Docker Compose on a NAS, Windows and macOS is documented and still has to be tested there.
 - A seal proves that a file has not changed since it was sealed. It does not prove that the scene was real.
 - Custody drill: 10 attacks on the footage. All 5 attacks after anchoring were rejected. 4 of 5 swaps before hashing were flagged and 1 was missed, a swap with footage from the same camera settings ([docs/CUSTODY_DRILL.md](docs/CUSTODY_DRILL.md)).
-- Q-Day Drill. Official, 18 Nov 2026, run by the organisers: our proof transaction was accepted, and the official attack log is not published yet. Our own dry run, 9 Nov 2026: 13 attacks with only the ECDSA key, 0 succeeded. These are two separate results.
 - The two live probes are samples. They are not a proof of ML-DSA conformance and not an audit of the chain.
 
 ## Built during the fest
 
-- First commit: 9 Nov 2026 (`feat: AnchorRegistry with on-chain ML-DSA-87 verification, Merkle core, tests`). Check with `git log --reverse --format='%ad %s' --date=short | head -3`. [AI_USAGE.md](AI_USAGE.md) says the history was rebuilt under the alias.
+- First commit: 9 Nov 2026 (`feat: AnchorRegistry with on-chain ML-DSA-87 verification, Merkle core, tests`). Check with `git log --reverse --format='%ad %s' --date=short | head -3`. On that day the history was rebuilt once to publish under the alias ([AI_USAGE.md](AI_USAGE.md)). Every commit dates from the fest.
 - Licence: Apache-2.0 ([LICENSE](LICENSE)).
 - Credits and third-party software: [README: Credits](README.md#credits).
 - AI use, who did what: [AI_USAGE.md](AI_USAGE.md). Changes: [CHANGELOG.md](CHANGELOG.md). Security reports: [SECURITY.md](SECURITY.md).

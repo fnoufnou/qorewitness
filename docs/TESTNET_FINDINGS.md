@@ -13,13 +13,14 @@ Script: `scripts/probe-pqc.ts` (eth_call, no account needed).
 | One bit changed in the signature | false | 313,150 |
 | Signature over a different message | false | 311,720 |
 | Short signature (100 bytes) | false | 132,940 |
-| Valid signature over an empty message | false | 310,740 |
+| Valid signature over an empty message | false on 9 Nov 2026, true since at least 27 Nov 2026 (see the note below) | 310,740 |
 
 Conclusions:
 
 - `@qorechain/pqc` `mldsa.sign(secretKey, message)` output verifies on chain as is.
 - Bad input returns false. It does not revert.
-- Empty messages are refused. QoreWitness messages are always 184 bytes.
+- Empty messages: on 9 Nov 2026 the precompile returned false for a valid signature over an empty message. On 27 Nov 2026 it returns true, which is the correct answer for a valid signature. QoreWitness never signs an empty message: the window message is always 256 bytes (`signingMessage` in `contracts/AnchorRegistry.sol`), and the owner messages are fixed-length too.
+- Since 27 Nov 2026 the wider live checks are `pnpm probe:pqc:fuzz` and `pnpm probe:registry` (`docs/LIVE_PROBES.md`).
 - The address must be written lower case in viem and Solidity (checksum rules).
 
 ## pqcKeyStatus precompile (`0x...0A02`)

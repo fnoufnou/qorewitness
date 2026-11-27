@@ -6,7 +6,7 @@ How the contracts are tested, what the tests show and what they do not show.
 
 | Place | Runner | What it covers |
 |---|---|---|
-| `test/*.test.ts` | Hardhat node test runner with viem | 279 tests. Contracts (54 in `test/AnchorRegistry.test.ts`), agent, setup, dashboard, fee sponsor, installer, verifier |
+| `test/*.test.ts` | Hardhat node test runner with viem | 308 tests. Contracts (54 in `test/AnchorRegistry.test.ts`), agent, setup, dashboard, fee sponsor, installer, verifier, live probe logic |
 | `test/solidity/Signatures.t.sol` | Hardhat Solidity tests | Signature binding, domain separation, replay, key format, key status forms |
 | `test/solidity/AnchorWindows.t.sol` | Hardhat Solidity tests | Stored anchor record, changed claim fields, window rules, refBlock rules, revoke and rotate effects, segment proofs on a stored window |
 | `test/solidity/QorePqcFailClosed.t.sol` | Hardhat Solidity tests | Missing, broken and hostile precompiles, the 3, 4 and 5 value forms of `pqcKeyStatus` |
@@ -22,7 +22,8 @@ The simulated chain has no QoreChain precompiles. The Solidity tests put `contra
 
 These tests do not check real ML-DSA-87. Real ML-DSA-87 is checked on the live testnet:
 
-- `pnpm probe:pqc` calls the live `pqcVerify`. Valid signatures pass. A changed bit, a short signature, a wrong message and an empty message fail. Results are in `docs/TESTNET_FINDINGS.md`.
+- `pnpm probe:pqc` calls the live `pqcVerify`. Valid signatures pass. A changed bit, a short signature and a wrong message fail.
+- `pnpm probe:pqc:fuzz` sends about 300 seeded mutations of valid inputs to the live `pqcVerify`. `pnpm probe:registry` simulates forged, replayed and attacker-signed calls against the live registry v4. Both are read-only. See `docs/LIVE_PROBES.md` and the dated runs in `docs/evidence/`.
 - Every live anchor on registry v4 goes through `pqcVerify` on chain.
 
 ## Properties (stateless fuzz tests)
@@ -86,7 +87,7 @@ Reach, measured on 27 Nov 2026 with a temporary logging patch (averages per run)
 
 The profiles are in `hardhat.config.ts`. The fuzz seed is Hardhat's fixed default. CI runs all three commands.
 
-Counts on 27 Nov 2026: 279 node tests and 57 Solidity tests (45 fuzz tests, 6 invariants, 6 unit tests), 336 in total.
+Counts on 28 Nov 2026: 308 node tests and 57 Solidity tests (45 fuzz tests, 6 invariants, 6 unit tests), 365 in total.
 
 ## Coverage
 
@@ -144,7 +145,7 @@ pnpm test:coverage
 
 ## Limits
 
-- The precompiles are mocks. Real ML-DSA-87 signing and verification are not part of these tests. `pnpm probe:pqc` and the live anchors on registry v4 cover them.
+- The precompiles are mocks. Real ML-DSA-87 signing and verification are not part of these tests. The live probes (`docs/LIVE_PROBES.md`) and the live anchors on registry v4 cover them.
 - The mock accepts a keyed hash, not a signature. A flaw that only shows with real ML-DSA-87 (for example a signature malleability in the precompile) cannot show here.
 - The simulator gives block hashes for recent blocks. qorechain-diana returns 0 for `BLOCKHASH`. Both cases are tested with `vm.setBlockhash`, but the chain itself is not.
 - Hardhat 3.21 has no branch coverage. The mutation check covers 12 hand-picked mutants, not every possible change.

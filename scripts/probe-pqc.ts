@@ -55,4 +55,4 @@ await probe("hedged valid", publicKey, hed, msg);
 await probe("tampered signature", publicKey, bad, msg);
 await probe("other message", publicKey, det, new TextEncoder().encode("other"));
 await probe("short signature", publicKey, det.slice(0, 100), msg);
-await probe("empty message", publicKey, mldsa.sign(secretKey, new Uint8Array()), new Uint8Array());
+await probe("valid signature, empty message", publicKey, mldsa.sign(secretKey, new Uint8Array()), new Uint8Array());

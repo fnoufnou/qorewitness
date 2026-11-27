@@ -5,6 +5,7 @@ Post-quantum proof that your home camera footage is original, and of when it was
 [![test](https://github.com/fnoufnou/qorewitness/actions/workflows/test.yml/badge.svg)](https://github.com/fnoufnou/qorewitness/actions/workflows/test.yml)
 [![release](https://img.shields.io/github/v/tag/fnoufnou/qorewitness?sort=semver&label=release)](https://github.com/fnoufnou/qorewitness/tags)
 [![image](https://img.shields.io/badge/image-ghcr.io%2Ffnoufnou%2Fqorewitness-2496ED?logo=docker&logoColor=white)](https://github.com/fnoufnou/qorewitness/pkgs/container/qorewitness)
+[![live probe](https://github.com/fnoufnou/qorewitness/actions/workflows/live-probe.yml/badge.svg)](https://github.com/fnoufnou/qorewitness/actions/workflows/live-probe.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![Built on QoreChain](https://build.qorechain.io/badge/qorewitness.svg)](https://build.qorechain.io/p/qorewitness)
 ![network](https://img.shields.io/badge/QoreChain-testnet%20diana-orange)
@@ -17,11 +18,11 @@ Post-quantum proof that your home camera footage is original, and of when it was
 
 ## Check it in 2 minutes
 
-1. Download the [sample clip](https://qorewitness.fnoufnou.com/sample-clip.mp4) and its [receipt](https://qorewitness.fnoufnou.com/sample-receipt.json). The live camera sealed them on 24 Nov 2026.
+1. Download the [sample clip](https://qorewitness.fnoufnou.com/sample-clip.mp4) and its [receipt](https://qorewitness.fnoufnou.com/sample-receipt.json). Our test camera sealed them on 24 Nov 2026.
 2. Open [QoreWitness Verify](https://qorewitness.fnoufnou.com/verifier.html) and drop both files on it. Result: green "Original".
 3. Press "Try it: change one byte and check again". Result: red.
-4. See the [sample seal on chain](https://explore.qore.network/tx/0xc144eb064bc87a199711ba178493f13bfdee2f48664aa3946404c8ca594fa482) (block 10,653,907).
-5. See [every seal of the live camera](https://explore.qore.network/address/0xa1378D6558B32e1f8d37b68cf90e3C93839Da365) on registry v4, for example [this one from 27 Nov 2026, 20:50 UTC](https://explore.qore.network/tx/0xaf4a05d351beaed050762927969c33c1cf6f7ac7d0ee28220bf3d1e23f99aaf0).
+4. See the [sample seal on chain](https://explore.qore.network/tx/4E1BE84FC988529DC5A3D6C22AD3094F6724E3C1EC560162330A017B300F7DBD) (block 10,653,907). The explorer opens on mainnet, so switch it to **Testnet** at the top first. It remembers the choice.
+5. See [every seal of the live camera](https://explore.qore.network/address/0xa1378D6558B32e1f8d37b68cf90e3C93839Da365) on registry v4, for example [this one from 27 Nov 2026, 20:50 UTC](https://explore.qore.network/tx/25B9FB63C58A349F58756F0E010281453D63FB1B16ECF38754C08D484C68B5AC).
 
 Without a browser: `python3 tools/verify_receipt.py sample-receipt.json sample-clip.mp4` (standard library only).
 
@@ -32,7 +33,9 @@ Without a browser: `python3 tools/verify_receipt.py sample-receipt.json sample-c
 | Video (2:43) | https://youtu.be/RSHszgfsqm8 |
 | Project page | https://build.qorechain.io/p/qorewitness |
 | Install on your own camera | [docs/INSTALL.md](docs/INSTALL.md) |
-| Run the tests | `pnpm install --frozen-lockfile --ignore-scripts && pnpm test` (279 tests) |
+| Guide for jurors | [JUDGES.md](JUDGES.md): score it in 5 minutes, the rubric with evidence |
+| Run the tests | `pnpm install --frozen-lockfile --ignore-scripts && pnpm test` (365 tests, with fuzz and invariant tests for the contracts) |
+| Check the live precompile, no key needed | `pnpm probe:pqc:fuzz && pnpm probe:registry` ([what they show](docs/LIVE_PROBES.md)) |
 
 ## Why post-quantum
 
@@ -144,7 +147,11 @@ The `retention` service deletes segments older than `QW_RETENTION_DAYS` (default
 
 ```bash
 pnpm install --frozen-lockfile --ignore-scripts
-pnpm test                 # 279 tests, contracts with precompile mocks
+pnpm test                 # 365 tests: 308 node tests and 57 Solidity fuzz, invariant and unit tests (precompile mocks)
+pnpm test:fuzz            # deep profile: 4,096 runs per fuzz test, invariants 256 runs x depth 100
+pnpm test:coverage        # line and statement coverage of the contracts
+pnpm probe:pqc:fuzz       # 300 mutated inputs against the live pqcVerify, no key, no transaction
+pnpm probe:registry       # forged and replayed seals simulated against the live registry v4
 pnpm typecheck
 pnpm probe:pqc            # live ML-DSA-87 checks against the testnet precompile, no funds needed
 ```
@@ -183,13 +190,16 @@ Create the account with `scripts/new-account.ts` (mnemonic). Do not use the `PRI
 | [deploy/](deploy/) | Docker entrypoint, recorder (ffmpeg) and agent systemd units, per-camera config, sponsor service |
 | [ignition/](ignition/) | Hardhat Ignition deploy module for the registry |
 | [scripts/](scripts/) | Device CLI, EVM window helper, anchor and verify CLIs, live precompile probes, drills, site and verifier builds |
-| [test/](test/) | 279 tests: contracts with precompile mocks, agent, setup, dashboard, sponsor, installer, verifier (Hardhat 3, node:test, viem) |
+| [test/](test/) | 365 tests. 308 node tests: contracts with precompile mocks, agent, setup, dashboard, sponsor, installer, verifier, live probe logic (Hardhat 3, node:test, viem). 57 Solidity tests in [test/solidity/](test/solidity/): 45 fuzz tests, 6 invariants, 6 unit tests |
 
 ### Docs
 
 - [docs/SPEC.md](docs/SPEC.md): receipt format, signed messages and verification rules.
 - [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md): claims, attackers, controls and residual risks.
 - [docs/AUDIT.md](docs/AUDIT.md): four QCAI audit rounds, each finding mapped to a fix, test or reason. Reports in [docs/audit/](docs/audit/).
+- [JUDGES.md](JUDGES.md): guide for jurors, the rubric with evidence and a 5-minute route.
+- [docs/TESTING.md](docs/TESTING.md): fuzz properties, invariants, run counts, coverage and the mutation check.
+- [docs/LIVE_PROBES.md](docs/LIVE_PROBES.md): read-only checks against the live precompile and the live registry. Dated runs in [docs/evidence/](docs/evidence/).
 - [docs/TESTNET_FINDINGS.md](docs/TESTNET_FINDINGS.md): live precompile probes, gas, costs, tx hashes and the Q-Day Drill dry run.
 - [docs/CUSTODY_DRILL.md](docs/CUSTODY_DRILL.md): attacks on the footage itself and where the trust boundary is.
 - [docs/INSTALL.md](docs/INSTALL.md): install step by step, with a Tapo C210 section.
@@ -207,7 +217,7 @@ A blockchain anchor is not an eIDAS qualified timestamp. A court weighs it as or
 ## Credits
 
 - QoreChain kits: `@qorechain/pqc`, `@qorechain/sdk`, `@qorechain/evm`. The project started from the `create-qorechain-dapp` Hardhat template (0.12.0, `npx create-qorechain-dapp`). The Hardhat setup and the EVM window helper (`scripts/window.ts`, `pnpm window`) come from that template. The QCAI Contract Auditor ran the audit rounds.
-- Open source in the code: viem, Hardhat 3 and its Nomic Foundation plugins, `@noble/hashes`, `@noble/post-quantum` (through `@qorechain/pqc`), `@scure/base`, `@cosmjs/stargate`, esbuild (builds QoreWitness Verify), tsx and TypeScript.
+- Open source in the code: viem, Hardhat 3 and its Nomic Foundation plugins, forge-std 1.16.2 (Solidity test helpers, MIT or Apache-2.0, tests only), `@noble/hashes`, `@noble/post-quantum` (through `@qorechain/pqc`), `@scure/base`, `@cosmjs/stargate`, esbuild (builds QoreWitness Verify), tsx and TypeScript.
 - Open source in the Docker image: Node.js 22 (`node:22.21.1-bookworm-slim`, Debian bookworm), ffmpeg (the recorder), tini.
 - Fonts: IBM Plex Sans and IBM Plex Mono (SIL Open Font License, [web/site/fonts/LICENSE-IBM-Plex.txt](web/site/fonts/LICENSE-IBM-Plex.txt)).
 - Optional for the Python verifier: pycryptodome.
