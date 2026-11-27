@@ -38,6 +38,7 @@
     "@nomicfoundation/ignition-core": "^3.1.11",
     "@types/node": "^22.7.5",
     "esbuild": "0.25.12",
+    "forge-std": "github:foundry-rs/forge-std#bf647bd6046f2f7da30d0c2bf435e5c76a780c1b",
     "hardhat": "^3.21.1",
     "tsx": "^4.19.0",
     "typescript": "^5.6.3",
