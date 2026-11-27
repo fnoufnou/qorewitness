@@ -174,15 +174,15 @@ export class Sponsor {
 
   /** Admission for a new camera. Throws "full" with a plain message. */
   private admit(owner: string, ip: string): void {
-    if (this.liveCount() >= this.cfg.maxCameras) throw refuse("full", "Fees included is full at the moment. Try again later, or use your own wallet.");
+    if (this.liveCount() >= this.cfg.maxCameras) throw refuse("full", "The free beta is full at the moment. Try again later, or use your own wallet.");
     if (this.liveCount(owner) >= this.cfg.maxCamerasPerOwner) {
-      throw refuse("full", `Fees included covers at most ${this.cfg.maxCamerasPerOwner} cameras per account.`);
+      throw refuse("full", `The free beta covers at most ${this.cfg.maxCamerasPerOwner} cameras per account.`);
     }
     if (this.ipUsed(ip) >= this.cfg.maxEnrolPerIpDay) throw refuse("full", "One new camera per internet connection per day. Try again tomorrow.");
   }
 
   async enroll(body: unknown, ip = "unknown"): Promise<EnrollAnswer> {
-    if (this.paused()) throw refuse("paused", "Fees included is paused at the moment. Try again later.");
+    if (this.paused()) throw refuse("paused", "The free beta is paused at the moment. Try again later.");
     const b = (body ?? {}) as Record<string, unknown>;
     const { deviceId, owner, nonce, signature, devicePubkey } = b;
     if (typeof deviceId !== "string" || !HEX32.test(deviceId)) throw new ApiError(400, "bad_device", "deviceId must be 0x + 64 hex");
@@ -247,7 +247,7 @@ export class Sponsor {
     const now = this.clock.now();
     const day = this.dayUsage(utcDay(now));
     if ((day.grants ?? 0) >= this.cfg.maxGrantsPerDay || this.cfg.capGlobalDayUqor - BigInt(day.globalUqor) < this.cfg.grantUqor) {
-      throw refuse("full", "Fees included has started enough new cameras today. Try again tomorrow.");
+      throw refuse("full", "The free beta has started enough new cameras today. Try again tomorrow.");
     }
     day.grants = (day.grants ?? 0) + 1;
     this.ipCount.set(ip, this.ipUsed(ip) + 1);

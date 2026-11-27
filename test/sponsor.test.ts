@@ -562,7 +562,7 @@ describe("sponsor: bootstrap (camera not on chain yet)", () => {
     );
   });
 
-  it("answers full when Fees included has its maximum number of cameras", async () => {
+  it("answers full when the free beta has its maximum number of cameras", async () => {
     const { sponsor } = setup({ maxCameras: 1 });
     await sponsor.enroll(bootBody(sponsor, camKey));
     await assert.rejects(
