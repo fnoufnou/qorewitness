@@ -30,7 +30,14 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit -p .
       - name: Tests (contracts with precompile mocks, agent, setup, dashboard, sponsor, installer, verifier)
+        # Node tests plus the Solidity tests in test/solidity at the default profile:
+        # fuzz 256 runs per test, invariants 32 runs x depth 64 (hardhat.config.ts, docs/TESTING.md).
         run: npx hardhat test
+      - name: Solidity fuzz and invariant tests, deep profile
+        # fuzz 4096 runs per test, invariants 256 runs x depth 100. About 4 to 5 minutes on 2 cores.
+        run: npx hardhat test solidity --test-profile deep
+      - name: Coverage of the contracts (line and statement)
+        run: npx hardhat test --coverage
       - name: Verifier build is reproducible
         run: node scripts/build-verifier.mjs && git diff --exit-code web/verifier/dist/index.html
       - name: Site links resolve
