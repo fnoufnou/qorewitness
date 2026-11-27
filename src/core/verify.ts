@@ -71,6 +71,7 @@ export const KNOWN_REGISTRIES: Readonly<Record<number, readonly Address[]>> = {
   9800: [
     "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365", // v4 (live)
     "0x238A1D989c1f0561d4DD51d4B322C491A5cb1CD2", // v3
+    "0x1854EeE2A659F4f39A05d5832cceC405E8045336", // v2 (9 to 12 Nov 2026, receipt v2)
     "0xA73d4347b50C2A373533915d698Bf03a01c65aAF", // first deployment (receipt v2)
   ],
 };
