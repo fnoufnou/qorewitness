@@ -7,6 +7,9 @@
   "scripts": {
     "build": "hardhat build",
     "test": "hardhat test",
+    "test:sol": "hardhat test solidity",
+    "test:fuzz": "hardhat test solidity --test-profile deep",
+    "test:coverage": "hardhat test --coverage",
     "typecheck": "hardhat build --quiet && tsc --noEmit",
     "window": "tsx --env-file=.env scripts/window.ts",
     "probe:pqc": "tsx scripts/probe-pqc.ts",
