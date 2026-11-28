@@ -153,7 +153,7 @@ const NAV2 = [
 ];
 
 // The only beta wording outside Trust, Developers, the jury page, Plans and one FAQ line.
-const betaBar = `<aside class="beta-bar" aria-label="Beta notice"><div class="wrap"><p><b>QoreWitness is in beta.</b> It runs on the QoreChain test network, which can be reset, and you can use it free of charge while we build out the service. <a href="trust.html#beta">Learn more</a></p></div></aside>`;
+const betaBar = `<aside class="beta-bar" aria-label="Beta notice"><div class="wrap"><p><b>Free beta</b> on the QoreChain test network. <a href="trust.html#beta">Learn more</a></p></div></aside>`;
 
 function header(current) {
   const link = ([h, t], cls = "") => `<li${cls ? ` class="${cls}"` : ""}><a href="${h}"${h === current ? ' aria-current="page"' : ""}>${t}</a></li>`;
@@ -328,25 +328,25 @@ const BRANDS = [
   ["Ubiquiti UniFi Protect", `<p>In UniFi Protect, open the camera, go to its settings and switch on an <b>RTSP</b> stream under the advanced options. Protect then shows a ready-made stream link. Copy it and keep it for the setup.</p>`],
   ["Axis", `<p>Axis cameras offer RTSP as standard. Create a user for QoreWitness in the camera's web page, under the system or account settings.</p>`],
   ["Any other ONVIF camera", `<p>Switch on ONVIF in the camera settings and create an ONVIF user if the camera asks for one. To find the exact stream address, search for your model together with the words "RTSP URL".</p>`],
-  ["Any other RTSP camera", `<p>Many low-cost cameras can send a video stream on your home network. Look in the camera app for a switch called <b>RTSP</b>, <b>ONVIF</b> or <b>local stream</b> and switch it on. The setup finds cameras that listen on port 554 or 8554. To find the stream address, search for your model together with the words "RTSP URL". Common endings are <code>/stream1</code>, <code>/main</code> and <code>/Streaming/Channels/101</code>. Test the full address in <a href="${UP}cameras.html">VLC</a> first. Some cameras have no local stream and cannot work.</p>`],
+  ["Any other RTSP camera", `<p>Many low-cost cameras can send a video stream on your home network. Look in the camera app for a switch called <b>RTSP</b>, <b>ONVIF</b> or <b>local stream</b> and switch it on. The setup finds cameras that listen on port 554 or 8554. To find the stream address, search for your model together with the words "RTSP URL". Common endings are <code>/stream1</code>, <code>/main</code> and <code>/Streaming/Channels/101</code>. Test the full address in <a href="${UP}cameras.html">VLC</a> first.</p>`],
 ];
 const brandHints = BRANDS.map(([b, inner]) => help(b, inner)).join("");
 
 /* ---------- FAQ ---------- */
 const FAQ = [
   ["Does my video leave my home?", `<p>No. Your recordings stay on your own computer at home. QoreWitness creates a digital fingerprint of your video stream and keeps that, and only that, on a public record. A fingerprint reveals nothing about what is in the picture or the sound.</p>`],
-  ["Which cameras work?", `<p>Any camera that can share its video stream on your home network over RTSP or ONVIF, which many wired home cameras can. Battery cameras and cameras that only stream to their maker's cloud cannot, because they never offer that stream. See the <a href="cameras.html">camera list</a>, and learn how to check your own camera in two minutes.</p><p>We have no partnership with any camera maker.</p>`],
+  ["Which cameras work?", `<p>Any camera that can share its video stream on your home network over RTSP or ONVIF, which many wired home cameras can. See the <a href="cameras.html">camera list</a>, and learn how to check your own camera in two minutes.</p><p>We have no partnership with any camera maker.</p>`],
   ["What does QoreWitness run on?", `<p>On an always-on computer at home: a Raspberry Pi 4 or 5, a mini PC, a home server or a NAS. It runs anywhere Docker runs. See <a href="get-started.html#need">What you need</a> for the minimum and recommended hardware.</p>`],
   ["Do I need to know anything about crypto?", `<p>Not at all. QoreWitness uses a public ledger as an independent notary, and that is the only part it plays. You never buy, hold or trade anything: during the beta we cover the network fees for you, and after launch the Hands-off plan does the same.</p>`],
   ["What does it cost?", `<p>Nothing during the beta. QoreWitness is free, and we cover the network fees on the test network, so you need no wallet at all.</p><p>When QoreWitness launches on the QoreChain main network, the Free plan has no subscription, and the small network fees come from your own wallet. If you would rather not think about fees, you can choose Hands-off for USD 10 or EUR 9 per camera per month. See <a href="plans.html">Plans</a>, and rest assured that we will never charge you without asking first.</p>`],
   ["What if my internet goes down?", `<p>Your camera and QoreWitness keep recording. Footage from while the connection was down may have no seal, and the public record shows that gap openly, with its start and its length.</p><p>Nobody can fill the gap later with a backdated seal.</p>`],
   ["Will the police or a court accept it?", `<p>A seal gives your footage strong, independent support that anyone can check. A court decides for itself how much weight to give it, just as with other evidence, and QoreWitness is not an EU qualified time stamp service. For a specific case, ask a lawyer.</p>`],
-  ["What if my QoreWitness computer breaks?", `<p>Your seals live on the public ledger, independent of your computer. During the beta, seals live on the QoreChain test network, which can be reset. <a href="trust.html#beta">What the beta means for you</a>. To prove a clip you also need the clip itself, so press <b>Save evidence</b> in the dashboard for anything that matters to you and keep that file somewhere safe.</p>`],
+  ["What if my QoreWitness computer breaks?", `<p>Your seals live on the public ledger, independent of your computer. To prove a clip you also need the clip itself, so press <b>Save evidence</b> in the dashboard for anything that matters to you and keep that file somewhere safe.</p>`],
   ["Can QoreWitness show that the scene was real?", `<p>No. It proves that the file has not changed since it was sealed. A staged scene or a fake stream would be sealed in exactly the same way.</p>`],
   ["Can someone fake a clip from inside my home network?", `<p>It is hard, but possible for someone who already controls your QoreWitness computer or your camera, because they could feed it fake footage before it is sealed.</p><p>Keep the computer and the camera on a network you trust, and use strong passwords. There is more on <a href="trust.html">Trust and limits</a>.</p>`],
   ["Does QoreWitness record sound?", `<p>Yes, whenever your camera's microphone is switched on, QoreWitness keeps the sound together with the picture and seals both in the same fingerprint, so a clip with sound is just as easy to prove. Would you rather keep only the picture? Simply switch the microphone off in your camera's app and QoreWitness follows your choice.</p><p>Sound travels further than you might expect, so please point your camera at your own home and garden, let visitors know with a small sign that you record picture and sound, and read the advice of your national data protection authority on cameras at home (in the Netherlands, the <a href="https://www.autoriteitpersoonsgegevens.nl">Autoriteit Persoonsgegevens</a>).</p>`],
   ["Who can see my recordings?", `<p>Only you, on your own computer. A receipt shows fingerprints and times, and nothing of the picture or the sound.</p>`],
-  ["How long are my recordings kept?", `<p>QoreWitness keeps about two weeks of video, depending on your disk, and your seals live on the public ledger, independent of your computer. During the beta, seals live on the QoreChain test network, which can be reset. <a href="trust.html#beta">What the beta means for you</a>. Press <b>Save evidence</b> for any clip you may need later, before it is cleared to make room.</p>`],
+  ["How long are my recordings kept?", `<p>QoreWitness keeps about two weeks of video, depending on your disk, and your seals live on the public ledger, independent of your computer. Press <b>Save evidence</b> for any clip you may need later, before it is cleared to make room.</p>`],
 ];
 const faqItems = (list) => `<div class="faq">${list.map(([q, a]) => `<details><summary>${q}</summary><div class="in">${a}</div></details>`).join("")}</div>`;
 
@@ -512,7 +512,7 @@ ${copybox("install-cmd", INSTALL, "Copy line")}</li>
 <li>The first time, your laptop asks whether it may trust the computer. Type <code>yes</code>, then enter the computer's password. At the end, the installer shows a <b>link</b> and a <b>pairing code</b>.
 ${terminal}</li>
 </ol>
-${help("Something not working?", `<ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul>`)}`);
+${help("Something not working?", `<ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself</b> until you choose a password.</li><li>Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul>`)}`);
 const pathProxmox = panel("proxmox", "Home server", `<ol class="plain path-steps">
 <li><b>Proxmox:</b> create a Debian 12 container: unprivileged, with <b>nesting</b> and <b>keyctl</b> on (Options, Features). 2 cores and 2 GB memory are enough. <button type="button" class="linkish" popovertarget="disk-size">Size the disk for the video you want to keep.</button><br><b>Ubuntu or Debian server, or a VM:</b> go straight to the next step.</li>
 <li>Open a shell in it, as root or as a user with sudo, and run:
@@ -543,7 +543,7 @@ curl.exe -fsSLO ${COMPOSE_URL}
 docker compose up -d
 docker compose run --rm -T ui pair`;
 const pathDesktop = panel("desktop", "Windows or Mac", `<ol class="plain path-steps">
-<li>Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and start it. Set the computer to never sleep, because QoreWitness only records while it is on.</li>
+<li>Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and start it.</li>
 <li>On a Mac, open <b>Terminal</b> and paste:
 ${copybox("install-mac", macCmd)}
 On Windows, open <b>PowerShell</b> and paste:
@@ -571,7 +571,7 @@ ${head("Get started", "Set up your camera.", "QoreWitness works with any camera 
 </ul>
 ${help("Hardware requirements", hwTable, "hardware")}
 ${help("How much storage?", `<p>A 2K camera writes about 15 to 20 GB a day, so two weeks of video for one camera needs roughly 200 to 300 GB. On a Raspberry Pi, use a USB SSD, because SD cards wear out quickly when they record video day and night.</p>`)}
-<div class="callout"><b class="t">Aim your camera at your own property</b>If it films the street or a neighbour's home, privacy law may apply to you. A small sign helps. See <a href="trust.html#privacy">Trust and limits</a>.</div>
+<p class="small">Aim your camera at your own property. <a href="trust.html#privacy">Privacy tips</a>.</p>
 </div>
 
 <ol class="steps" style="margin-top:44px">
@@ -579,7 +579,7 @@ ${help("How much storage?", `<p>A 2K camera writes about 15 to 20 GB a day, so t
 <li class="step" id="s1"><h3>Check that your camera is compatible</h3><p class="time">Camera app or manual</p><div class="body">
 <p>Look in your camera app, its settings or its manual for any of these words: <b>RTSP</b>, <b>ONVIF</b>, <b>camera account</b>, <b>local stream</b> or <b>NVR</b>. If you find one, your camera can very likely share its video with QoreWitness.</p>
 <p>Not sure? Search the web or ask an AI assistant: "Does my [brand and model] support RTSP?"</p>
-<p>Battery cameras and cameras that only stream to their maker's cloud do not offer that stream, so they cannot work. The <a href="cameras.html">camera list</a> shows what we know brand by brand, and you can <a href="cameras.html#check">check your own camera in two minutes</a> with the free VLC player.</p>
+<p>The <a href="cameras.html">camera list</a> shows what we know brand by brand, and you can <a href="cameras.html#check">check your own camera in two minutes</a> with the free VLC player.</p>
 </div></li>
 
 <li class="step" id="s2"><h3>Prepare your camera</h3><p class="time">Camera app or camera web page</p><div class="body">
@@ -610,7 +610,7 @@ ${pathDesktop}
 <li><b>Enter the camera account</b> name and password from step 2, tick that the camera films your own property, and press <b>Test camera</b>.</li>
 <li><b>Is this your camera?</b> QoreWitness tests the picture and shows it. Press <b>Yes, this is my camera</b>.</li>
 </ol>
-<p>A progress bar then connects your camera to the public ledger. You can close the page while it works. During the beta we cover the network fees, so there is no wallet to set up and nothing to pay or top up.</p>
+<p>A progress bar then connects your camera to the public ledger. You can close the page while it works. We cover the network fees, so there is no wallet to set up.</p>
 ${screens("The setup in your browser, five screens", [
   ["setup-pair", ALT.pair, "1. Type the pairing code"],
   ["setup-password", ALT.password, "2. Choose a password"],
@@ -618,7 +618,7 @@ ${screens("The setup in your browser, five screens", [
   ["setup-picture", ALT.picture, "4. Confirm its picture"],
   ["setup-progress", ALT.progress, "5. Let it connect"],
 ])}
-${help("Something not working?", `<ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, Tapo Care, the microSD card and QoreWitness can only run two at a time.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the install line from step 3 again with <code>--new-password</code> added after <code>--yes</code>. Without the install line, run <code>docker compose run --rm -T ui pair --new-password</code> in the <code>qorewitness</code> folder.</li></ul>`)}
+${help("Something not working?", `<ul class="plain"><li><b>The camera refused the password.</b> Set up the camera account again with letters and digits only.</li><li><b>No camera answers.</b> Check the camera's address and that it is switched on and on the same network.</li><li><b>The camera is busy or sends no picture.</b> Close its live view in the camera app and try again. On Tapo cameras, switch off Tapo Care or the microSD card.</li><li><b>The free beta is full.</b> The setup tells you and offers to use your own wallet instead. See <a href="plans.html">Plans</a>.</li><li><b>Forgot your dashboard password?</b> Run the install line from step 3 again with <code>--new-password</code> added after <code>--yes</code>. Without the install line, run <code>docker compose run --rm -T ui pair --new-password</code> in the <code>qorewitness</code> folder.</li></ul>`)}
 </div></li>
 
 <li class="step" id="s5"><h3>Done</h3><p class="time">Dashboard</p><div class="body">
@@ -648,7 +648,7 @@ ${head("Cameras", "Does your camera work with QoreWitness?", "If your camera can
 <p>We only call a camera tested when we have run it with QoreWitness ourselves. Everything else is based on what the camera makers document, and we have no partnership with any of them.</p></div>
 <ul class="grid c3 legend">
 <li class="tile">${pill("ok", "Tested by us")}<p>We run this camera with QoreWitness ourselves.</p></li>
-<li class="tile">${RTSP}<p>The maker documents a standard RTSP stream, which is what QoreWitness records. We have not tested these models ourselves.</p></li>
+<li class="tile">${RTSP}<p>The maker documents a standard RTSP stream, which is what QoreWitness records.</p></li>
 <li class="tile">${pill("no", "Not supported")}<p>The camera offers no stream on your home network, so QoreWitness cannot record it.</p></li>
 </ul>
 
@@ -733,7 +733,7 @@ ${help("Using your own wallet: fee messages", `<p>If you chose <b>Use my own wal
 
 <section class="alt"><div class="wrap narrow">
 <h2>About two weeks of video, and seals that outlive your computer</h2>
-<p style="margin-top:16px">QoreWitness keeps about two weeks of recordings, depending on your disk, and clears the oldest to make room. The seals stay on the public ledger. During the beta, seals live on the QoreChain test network, which can be reset. <a href="trust.html#beta">What the beta means for you</a>. A clip that has been cleared cannot be proven, so press <b>Save evidence</b> for anything you may need later. <a href="prove.html#owner">Prove a video</a> shows how.</p>
+<p style="margin-top:16px">QoreWitness keeps about two weeks of recordings, depending on your disk, and clears the oldest to make room. The seals stay on the public ledger. Press <b>Save evidence</b> for any clip you may need later. <a href="prove.html#owner">Prove a video</a> shows how.</p>
 </div></section>
 
 <section><div class="wrap narrow">
@@ -752,7 +752,7 @@ ${help("Using your own wallet: fee messages", `<p>If you chose <b>Use my own wal
 <li>To remove QoreWitness, see <a href="developers.html#run">Developers</a>.</li>
 <li>Seals on the public record cannot be deleted. They hold only fingerprints and times.</li>
 </ul>
-${help("Advanced: back up your QoreWitness computer", `<p>If the computer breaks, you set QoreWitness up again with a new camera seal, and every earlier seal stays checkable on the public ledger (during the beta, until the test network is reset). To keep the same camera identity, copy the folder <code>~/qorewitness/data</code> to a USB stick and keep it safe. Anyone with these files can use your account, which is why QoreWitness never asks for them.</p>`)}
+${help("Advanced: back up your QoreWitness computer", `<p>If the computer breaks, you set QoreWitness up again with a new camera seal, and every earlier seal stays checkable on the public ledger. To keep the same camera identity, copy the folder <code>~/qorewitness/data</code> to a USB stick and keep it safe. Anyone with these files can use your account, which is why QoreWitness never asks for them.</p>`)}
 <div class="callout"><b class="t">Keep QoreWitness on your home network</b>Use a network you trust, and never open port 8080 to the internet in your router.</div>
 </div></section>
 ${closing("Need to prove a clip?", "Press Save evidence, share the file, and let anyone check it with QoreWitness Verify.", "prove.html", "Prove a video")}`,
