@@ -116,6 +116,9 @@ $SUDO chmod 700 data
 is_private() { [[ "$1" =~ ^10\. || "$1" =~ ^192\.168\. || "$1" =~ ^172\.(1[6-9]|2[0-9]|3[01])\. || "$1" =~ ^127\. ]]; }
 LAN_IP="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i = 1; i < NF; i++) if ($i == "src") { print $(i + 1); exit }}' || true)"
 [ -n "$LAN_IP" ] || LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
+# The home network with its prefix (192.168.1.229/21), for "Find my camera" in the setup.
+LAN_CIDR=""
+[ -n "$LAN_IP" ] && LAN_CIDR="$(ip -4 -o addr show scope global 2>/dev/null | awk -v ip="$LAN_IP" '{split($4, a, "/"); if (a[1] == ip) { print $4; exit }}' || true)"
 PUBLIC=""
 for ip in $(ip -4 -o addr show scope global 2>/dev/null | awk '{sub(/\/.*/, "", $4); print $4}'); do
   is_private "$ip" || PUBLIC="$ip"
@@ -152,6 +155,7 @@ BASE="http://$URL_HOST:$PORT"
 set_env QW_VERSION "$QW_VERSION"
 set_env QW_UI_BIND "$BIND"
 set_env QW_UI_PUBLIC_URL "$BASE"
+if [ -n "$LAN_CIDR" ] && is_private "$LAN_IP"; then set_env QW_LAN_CIDR "$LAN_CIDR"; fi
 chmod 600 .env
 
 # ---------------------------------------------------------------- image

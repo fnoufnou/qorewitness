@@ -76,6 +76,25 @@ describe("install.sh (fake docker)", () => {
     assert.match(readFileSync(join(home, "docker.log"), "utf8"), /ui pair/);
   });
 
+  it("writes the home network with its prefix (QW_LAN_CIDR) for Find my camera (run 1, 28 Nov)", () => {
+    const home = mkdtempSync(join(tmpdir(), "qw-inst-"));
+    const bin = join(home, "bin");
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(join(bin, "ip"), `#!/bin/sh
+case "$*" in
+  *"route get"*) echo "1.1.1.1 via 192.168.0.1 dev eth0 src 192.168.1.229 uid 0" ;;
+  *"addr show"*) echo "2: eth0    inet 192.168.1.229/21 brd 192.168.7.255 scope global eth0\\       valid_lft forever preferred_lft forever" ;;
+esac
+`);
+    chmodSync(join(bin, "ip"), 0o755);
+    const r = run(home);
+    assert.equal(r.status, 0, r.stderr + r.stdout);
+    const env = readFileSync(join(home, "qorewitness", ".env"), "utf8");
+    assert.match(env, /^QW_LAN_CIDR=192\.168\.1\.229\/21$/m);
+    assert.match(env, /^QW_UI_PUBLIC_URL=http:\/\/192\.168\.1\.229:\d+$/m);
+    assert.match(readFileSync("docker-compose.yml", "utf8"), /QW_LAN_CIDR: \$\{QW_LAN_CIDR:-\}/, "the ui container gets it");
+  });
+
   it("refuses unknown options", () => {
     const home = mkdtempSync(join(tmpdir(), "qw-inst-"));
     assert.equal(run(home, ["--frobnicate"]).status, 2);

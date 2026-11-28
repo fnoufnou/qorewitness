@@ -21,9 +21,9 @@ import {
   FAUCET, MIN_SETUP_UQOR, REGISTER_STEPS, ensureDeviceKey, ensureOwnerAccount, finishSetup, isSetupDone, keyFingerprint,
   readAccountInfo, readEnvFile, readOwnerPublic, registerOnChain, saveCamera, writeSecretFile, type ChainOps, type Paths, type Plan,
 } from "../setup/steps.js";
-import { brandStreamUrl, parseStreamUrl, proposeRetentionDays, type SnapshotResult, type StreamPath } from "./camera.js";
+import { CAMERA_ERRORS, brandStreamUrl, parseStreamUrl, proposeRetentionDays, streamEndpoint, type SnapshotResult, type StreamPath } from "./camera.js";
 import { CAMERA_BRANDS, brandById, type BrandId } from "./cameras.js";
-import { cameraLabel, type FoundCamera } from "./discover.js";
+import { cameraLabel, describeRanges, type DiscoverResult, type FoundCamera } from "./discover.js";
 import { esc, hidden } from "./html.js";
 import { SPONSOR_TEXT, enrollDevice, type SponsorClient, type SponsorStatus } from "./sponsor.js";
 
@@ -83,7 +83,9 @@ export interface WizardDeps {
   /** How long the connect step waits for network fees (default 20 minutes). */
   fundsTimeoutMs?: number;
   /** "Find my camera": search the home network. Missing: no search (tests). The server passes discoverCameras. */
-  discover?: (hints: (string | undefined)[]) => Promise<FoundCamera[]>;
+  discover?: (hints: (string | undefined)[]) => Promise<DiscoverResult | FoundCamera[]>;
+  /** TCP check of the stream port after a failed test: tells "nothing there" from "there, but silent". */
+  reach?: (host: string, port: number) => Promise<boolean>;
 }
 
 /** Address hints for the home /24: QW_LAN_CIDR, the address from install.sh, the address the browser used. */
@@ -125,7 +127,7 @@ export class Wizard {
   private lastSnapshot?: Buffer;
   /** The last typed camera password, in memory only, so a retry does not need it again. */
   private lastPassword?: { host: string; user: string; password: string };
-  private scan?: { at: number; found: FoundCamera[]; running?: Promise<void> };
+  private scan?: { at: number; found: DiscoverResult; running?: Promise<void>; skipped?: boolean };
   private ownerPub?: { cosmos: string; evm: `0x${string}`; registry: `0x${string}` };
 
   constructor(private readonly d: WizardDeps) {}
@@ -275,7 +277,13 @@ export class Wizard {
     }
     if (action === "rescan") {
       this.scan = undefined;
-      return { html: await this.renderCameraForm(csrf, undefined, this.formValues(s), undefined, form._base ?? "") };
+      this.startScan(form._base ?? "");
+      return { redirect: "/setup" };
+    }
+    if (action === "skipscan") {
+      // The search keeps running in the background, its result is not shown.
+      this.scan = { at: Date.now(), found: [], skipped: true };
+      return { html: await this.renderCameraForm(csrf, undefined, this.formValues(s)) };
     }
 
     let url: string;
@@ -310,10 +318,16 @@ export class Wizard {
       this.update((n) => (n.plan = form.selfManaged === "yes" ? "self" : "sponsored"));
     }
 
-    const result = await this.d.snapshot(url);
+    let result = await this.d.snapshot(url);
+    if (!result.ok && (result.kind === "unreachable" || result.kind === "timeout") && this.d.reach) {
+      // Run 1 (28 Nov): "No camera answered" while the C210 was there. Check the port before saying so.
+      const ep = streamEndpoint(url);
+      if (ep && (await this.d.reach(ep.host, ep.port).catch(() => false))) result = { ...result, kind: "silent", message: CAMERA_ERRORS.silent };
+    }
     if (!result.ok) {
       // Brand hints only for that brand (for example the Tapo recording rule).
-      const hint = result.kind === "no_video" || result.kind === "busy" ? brandById(cam.brand).notes[0] : undefined;
+      const b = brandById(cam.brand);
+      const hint = result.kind === "no_video" || result.kind === "busy" ? b.notes[0] : undefined;
       const msg = cam.brand === "tapo" && hint ? `${result.message} ${hint}` : result.message;
       return { html: await this.renderCameraForm(csrf, msg, { host: cam.host, user: cam.user, brand: cam.brand ?? "", link: "", consent: true, hasPassword: this.lastPassword?.host === cam.host && this.lastPassword?.user === cam.user }, result.detail) };
     }
@@ -334,27 +348,28 @@ export class Wizard {
     return { host: s.camera?.host ?? "", user: s.camera?.user ?? "", brand: s.camera?.brand ?? (s.camera?.path ? "tapo" : ""), link: "", consent: Boolean(s.camera?.testedAt) };
   }
 
-  /** Runs "Find my camera" once (cached for 2 minutes). At most about 5 seconds. */
-  private async findCameras(base: string): Promise<FoundCamera[] | undefined> {
-    if (!this.d.discover) return undefined;
-    if (this.scan && !this.scan.running && Date.now() - this.scan.at < 120_000) return this.scan.found;
-    if (!this.scan?.running) {
-      const scan: { at: number; found: FoundCamera[]; running?: Promise<void> } = { at: Date.now(), found: [] };
-      scan.running = this.d.discover(lanHints(base))
-        .then((f) => {
-          scan.found = f;
-        })
-        .catch(() => {
-          scan.found = [];
-        })
-        .finally(() => {
-          scan.at = Date.now();
-          scan.running = undefined;
-        });
-      this.scan = scan;
-    }
-    await this.scan.running;
-    return this.scan.found;
+  /** Starts "Find my camera" unless a result is fresh (2 minutes) or a search runs. Up to about 11 seconds. */
+  private startScan(base: string): void {
+    if (!this.d.discover) return;
+    if (this.scan?.running || (this.scan && Date.now() - this.scan.at < 120_000)) return;
+    const scan: NonNullable<Wizard["scan"]> = { at: Date.now(), found: [] };
+    scan.running = this.d.discover(lanHints(base))
+      .then((f) => {
+        scan.found = f;
+      })
+      .catch(() => {
+        scan.found = [];
+      })
+      .finally(() => {
+        scan.at = Date.now();
+        scan.running = undefined;
+      });
+    this.scan = scan;
+  }
+
+  /** True while "Find my camera" runs (the page then shows "Searching" and reloads itself). */
+  private scanning(): boolean {
+    return Boolean(this.scan?.running);
   }
 
   // ------------------------------------------------------------ pages
@@ -362,7 +377,12 @@ export class Wizard {
   async render(screen: Screen, csrf: string, base = ""): Promise<string> {
     if (screen === "camera") {
       const s = this.state();
-      return s.camera && this.lastSnapshot ? this.renderPicture(csrf) : this.renderCameraForm(csrf, undefined, this.formValues(s), undefined, base);
+      if (s.camera && this.lastSnapshot) return this.renderPicture(csrf);
+      // "Find my camera" runs when the screen opens. A quick answer shows at once, else "Searching".
+      this.startScan(base);
+      if (this.scan?.running) await Promise.race([this.scan.running, new Promise((r) => setTimeout(r, 400))]);
+      if (this.scanning()) return this.renderSearching(csrf);
+      return this.renderCameraForm(csrf, undefined, this.formValues(s));
     }
     if (screen === "connect") return this.renderConnect(csrf);
     if (screen === "done") return renderDone(base, process.env.QW_UI_PUBLIC_URL);
@@ -371,20 +391,37 @@ export class Wizard {
 
   /** Seconds until the page reloads itself (the connect step runs). */
   refreshFor(screen: Screen): number | undefined {
+    if (screen === "camera" && this.scanning()) return 2;
     return screen === "connect" && this.state().job?.status !== "failed" ? 5 : undefined;
   }
 
-  private async renderCameraForm(csrf: string, error?: string, v: CameraFormValues = { host: "", user: "", brand: "", link: "" }, detail?: string, base?: string): Promise<string> {
+  private renderSearching(csrf: string): string {
+    return `<div class="card">${eyebrow(1, "Camera")}
+<h1>Connect your camera</h1>
+<p class="note" role="status" aria-live="polite"><strong>Searching your network for cameras…</strong><br>This takes up to 10 seconds. The page updates by itself.</p>
+<form method="post" action="/setup/camera">${hidden("_csrf", csrf)}${hidden("action", "skipscan")}<button class="secondary">Skip the search and type the address</button></form></div>`;
+  }
+
+  /** "No camera answered" with the addresses that were searched. */
+  private noCameraNote(found: DiscoverResult): string {
+    const range = found.searched?.length ? describeRanges(found.searched) : "";
+    const where = range ? `We searched ${esc(range)} and no camera answered.` : "No camera answered on your network.";
+    return `<p class="note">${where} Type the camera address below. Your router's app lists the devices on your network.</p>`;
+  }
+
+  private async renderCameraForm(csrf: string, error?: string, v: CameraFormValues = { host: "", user: "", brand: "", link: "" }, detail?: string): Promise<string> {
     const plan = this.state().plan;
-    // "Find my camera" runs when the screen opens (base is set on a page load, not after a failed test).
-    const found = base !== undefined ? await this.findCameras(base) : this.scan?.found;
+    // The result of "Find my camera" (none while it runs or when it was skipped).
+    const found = this.scan && !this.scan.running ? this.scan.found : undefined;
+    const skipped = Boolean(this.scan?.skipped);
     const pick = v.host || found?.[0]?.ip || "";
     const brand = v.brand || found?.find((f) => f.ip === pick)?.brand || "";
-    const list = found === undefined ? ""
+    // After a failed test the error says what is wrong: no second "No camera answered" note under it.
+    const list = found === undefined || (!found.length && (skipped || error)) ? ""
       : found.length
         ? `<fieldset style="border:0;padding:0;margin:0"><legend style="font-weight:500;margin:14px 0 4px">Cameras on your network</legend>${found.map((f) =>
             `<label class="check" style="margin:6px 0"><input type="radio" name="found" value="${esc(f.ip)}"${f.brand ? ` data-brand="${esc(f.brand)}"` : ""}${f.ip === pick ? " checked" : ""}> <span>${esc(cameraLabel(f))}</span></label>`).join("")}</fieldset>`
-        : `<p class="note">No camera answered on your network. Type its address below. Your router's app lists the devices on your network.</p>`;
+        : this.noCameraNote(found);
     const brands = CAMERA_BRANDS.map((b) => `<option value="${b.id}"${b.id === brand ? " selected" : ""}${b.fullLink ? ' data-full="1"' : ""}>${esc(b.name)}</option>`).join("");
     const howTo = CAMERA_BRANDS.map((b) => `<p data-hint="${b.id}"><strong>${esc(b.name)}:</strong> ${esc(b.enableRtsp)}${b.notes.map((n) => ` ${esc(n)}`).join("")}${b.pathStatus === "check-manual" ? "" : ""}</p>`).join("");
     return `<div class="card">${eyebrow(1, "Camera")}

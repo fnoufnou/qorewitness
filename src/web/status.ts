@@ -277,7 +277,7 @@ export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
     if (f.plan !== "sponsored") return r("bad", `${paused}: the fees ran out.`, addFees);
     if (f.sponsor?.paused) return r("bad", `${paused}: the free beta is paused.`, "Nothing to do. Your camera keeps recording, and we seal the waiting video when the free beta is back.");
     if (f.sponsor?.limitReached) return r("bad", `${paused}: today's free beta limit is reached.`, "Nothing to do. Your camera keeps recording, and we seal the waiting video after midnight (UTC).");
-    return r("bad", `${paused}: the fees ran out.`, "Free beta: we cover the network fees and top them up for you. If this stays for a day, the beta service may be paused or full.");
+    return r("bad", `${paused}: the fees ran out.`, "We top up the fees for you. Nothing to do.");
   }
   if (days !== undefined && f.plan !== "sponsored" && days < 3) {
     return r("warn", `Fees are running low. Sealing pauses in ${daysText(days)}.`, addFees);
@@ -287,7 +287,7 @@ export function boxHealth(s: LocalStatus, f: BoxFacts): BoxHealth {
       "Nothing to do now. Sealing goes on with the fees you have.");
   }
   if (days !== undefined && f.plan === "sponsored" && days < 0.25) {
-    return r("warn", "Sealing pauses soon: fees are running out.", "Free beta: we cover the network fees and top them up for you. Nothing to do now.");
+    return r("warn", "Sealing pauses soon: fees are running out.", "We top up the fees for you. Nothing to do now.");
   }
   if (lastSeal === undefined) {
     return age > 1800

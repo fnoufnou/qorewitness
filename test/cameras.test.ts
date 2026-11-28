@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 import { brandStreamUrl, CAMERA_ERRORS, codecSupported, snapshot } from "../src/web/camera.js";
 import { CAMERA_BRANDS, brandById, brandFromOnvif } from "../src/web/cameras.js";
-import { cameraLabel, discoverCameras, lanPrefix, parseProbeMatch, probeXml, wsDiscovery, xaddrHost } from "../src/web/discover.js";
+import { cameraLabel, describeRanges, discoverCameras, lanPrefix, lanRanges, parseProbeMatch, probeXml, wsDiscovery, xaddrHost } from "../src/web/discover.js";
 
 describe("camera brands (src/web/cameras.ts)", () => {
   it("every brand is complete and has a unique id", () => {
@@ -115,6 +115,54 @@ describe("find my camera (src/web/discover.ts)", () => {
     assert.equal(lanPrefix(["http://localhost:8080", "http://8.8.8.8"]), undefined);
   });
 
+  it("searches the real home network: own /24 first, capped at a /22 (run 1, 28 Nov: C210 at 192.168.2.53 on a /21)", () => {
+    const r = lanRanges(["192.168.1.229/21", "http://192.168.1.229:8080", "http://192.168.1.229:8080"])!;
+    assert.deepEqual(r.prefixes, ["192.168.1", "192.168.0", "192.168.2", "192.168.3"]);
+    assert.equal(r.network, "192.168.0.0/21");
+    assert.equal(describeRanges(r.prefixes), "192.168.0.1 to 192.168.3.254");
+    assert.deepEqual(lanRanges(["192.168.5.10/21"])!.prefixes, ["192.168.5", "192.168.4", "192.168.6", "192.168.7"], "the /22 around the box");
+    assert.deepEqual(lanRanges(["10.0.0.0/16", "http://10.0.3.7:8080"])!.prefixes, ["10.0.3", "10.0.0", "10.0.1", "10.0.2"], "network address only: box from the URL");
+    assert.deepEqual(lanRanges(["192.168.1.40/24"])!.prefixes, ["192.168.1"]);
+    assert.deepEqual(lanRanges(["192.168.1.40/23"])!.prefixes, ["192.168.1", "192.168.0"]);
+    assert.deepEqual(lanRanges([undefined, "http://192.168.1.228:8080"]), { prefixes: ["192.168.1"] }, "no CIDR: the /24 as before");
+    assert.deepEqual(lanRanges(["172.18.0.3/16", "http://192.168.1.2:8080"])!.prefixes, ["192.168.1"], "Docker bridge CIDR skipped");
+    assert.equal(lanRanges(["http://localhost:8080"]), undefined);
+    assert.equal(describeRanges(["10.0.1", "10.0.5"]), "10.0.1.1 to 10.0.1.254, 10.0.5.1 to 10.0.5.254");
+  });
+
+  it("checks all ports of one address together and waits 2 s per address for slow Wi-Fi cameras", async () => {
+    const calls: { ip: string; timeout: number; at: number }[] = [];
+    const t0 = Date.now();
+    const found = await discoverCameras({
+      prefixes: ["192.168.1", "192.168.2"],
+      network: "192.168.0.0/21",
+      connect: async (ip, port, timeout) => {
+        calls.push({ ip, timeout, at: Date.now() - t0 });
+        return ip === "192.168.2.53" && port === 2020;
+      },
+      wsd: async () => [],
+    });
+    assert.equal(calls.length, 2 * 254 * 3);
+    assert.ok(calls.every((c) => c.timeout === 2000));
+    assert.equal(calls[0].ip, "192.168.1.1", "own /24 first");
+    assert.deepEqual(found.map((f) => [f.ip, f.ports, f.brand]), [["192.168.2.53", [2020], "tapo"]]);
+    assert.deepEqual(found.searched, ["192.168.1", "192.168.2"]);
+    assert.equal(found.network, "192.168.0.0/21");
+    assert.equal(found.partial, false);
+  });
+
+  it("stops new checks at the deadline and says how far it got", async () => {
+    const found = await discoverCameras({
+      prefixes: ["10.0.0", "10.0.1"],
+      concurrency: 10,
+      deadlineMs: 30,
+      connect: () => new Promise((r) => setTimeout(() => r(false), 20)),
+      wsd: async () => [],
+    });
+    assert.equal(found.partial, true);
+    assert.deepEqual(found.searched, ["10.0.0"]);
+  });
+
   it("merges the TCP check and ONVIF answers, guesses Tapo from port 2020", async () => {
     const open = new Set(["192.168.1.20:554", "192.168.1.20:2020", "192.168.1.31:8554", "192.168.1.40:2020"]);
     const asked: string[][] = [];
@@ -135,6 +183,7 @@ describe("find my camera (src/web/discover.ts)", () => {
     assert.equal(found[3].brand, "hikvision");
     assert.equal(cameraLabel(found[3]), "Camera at 192.168.1.64 · HIKVISION DS-2CD2143G2-I DS-2CD2143G2-I");
     assert.equal(cameraLabel(found[1]), "Camera at 192.168.1.31");
+    assert.equal(cameraLabel({ ip: "192.168.2.53", ports: [554, 2020], onvif: true, name: "C210", hardware: "C210" }), "Camera at 192.168.2.53 · C210");
   });
 
   it("sends a directed Probe and reads the answer (real UDP on localhost)", async (t) => {

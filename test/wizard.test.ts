@@ -13,6 +13,7 @@ import { ensurePairing, readPairing, setPassword } from "../src/web/auth.js";
 import type { SnapshotResult } from "../src/web/camera.js";
 import { createHandler } from "../src/web/server.js";
 import { SponsorClient } from "../src/web/sponsor.js";
+import type { FoundCamera } from "../src/web/discover.js";
 import { DEFAULT_LABEL, Wizard, freeBytes, screenFor, writeState, type WizardState } from "../src/web/wizard.js";
 import { proposeRetentionDays } from "../src/web/camera.js";
 import { mockChain } from "./helpers/mock-chain.js";
@@ -411,6 +412,62 @@ describe("wizard: any camera (find, brand, link)", () => {
     await t.w.render("camera", "x", "http://192.168.1.228:8080");
     assert.equal(t.hints.length, 1, "the search result is cached");
     assert.doesNotMatch(html.replace(/<details>[\s\S]*?<\/details>/g, ""), /Tapo app|Tapo C210/, "no Tapo wording outside the brand hints");
+  });
+
+  it("shows Searching while the search runs, then the list; skip and rescan work (run 1, 28 Nov)", async () => {
+    const paths = dataPaths(mkdtempSync(join(tmpdir(), "qw-any-")));
+    ensureDirs(paths);
+    let release: (f: FoundCamera[]) => void = () => {};
+    let searches = 0;
+    const w = new Wizard({
+      paths, chain: mockChain().chain, sponsor: () => { throw new Error("no sponsor"); }, diskFree: () => 500e9,
+      snapshot: async () => ({ ok: true, jpeg: JPEG, info: {} }),
+      discover: () => {
+        searches++;
+        return new Promise((r) => (release = r));
+      },
+    });
+    const h1 = await w.render("camera", "x", "http://192.168.1.229:8080");
+    assert.match(h1, /Searching your network for cameras/);
+    assert.match(h1, /role="status"/);
+    assert.equal(w.refreshFor("camera"), 2, "the page reloads itself while searching");
+    const skip = await w.post("/setup/camera", { action: "skipscan", _csrf: "x" });
+    assert.match(skip.html!, /id="host"/);
+    assert.doesNotMatch(skip.html!, /No camera answered|Searching/);
+    const re = await w.post("/setup/camera", { action: "rescan", _csrf: "x", _base: "http://192.168.1.229:8080" });
+    assert.equal(re.redirect, "/setup");
+    assert.equal(searches, 2);
+    release(Object.assign([] as FoundCamera[], { searched: ["192.168.1", "192.168.0", "192.168.2", "192.168.3"], network: "192.168.0.0/21" }));
+    await new Promise((r) => setTimeout(r, 10));
+    assert.equal(w.refreshFor("camera"), undefined);
+    const h2 = await w.render("camera", "x", "http://192.168.1.229:8080");
+    assert.match(h2, /We searched 192\.168\.0\.1 to 192\.168\.3\.254 and no camera answered\./);
+  });
+
+  it("a camera that is there but silent is not called absent (run 1, 28 Nov)", async () => {
+    const paths = dataPaths(mkdtempSync(join(tmpdir(), "qw-any-")));
+    ensureDirs(paths);
+    const reached: string[] = [];
+    let snap: SnapshotResult = { ok: false, kind: "unreachable", message: "No camera answered at this address.", detail: "" };
+    const w = new Wizard({
+      paths, chain: mockChain().chain, sponsor: () => { throw new Error("no sponsor"); }, diskFree: () => 500e9,
+      snapshot: async () => snap,
+      reach: async (h, p) => {
+        reached.push(`${h}:${p}`);
+        return h === "192.168.2.53";
+      },
+    });
+    const form = { action: "test", host: "192.168.2.53", brand: "tapo", user: "dogcam", password: "secret12", consent: "yes" };
+    const r1 = await w.post("/setup/camera", form);
+    assert.match(r1.html!, /A camera is on this address, but it sent no video/);
+    assert.deepEqual(reached, ["192.168.2.53:554"]);
+    const r2 = await w.post("/setup/camera", { ...form, host: "192.168.2.99" });
+    assert.match(r2.html!, /No camera answered at this address/);
+    snap = { ok: false, kind: "auth", message: "The camera refused the name or password.", detail: "" };
+    const r3 = await w.post("/setup/camera", form);
+    assert.match(r3.html!, /refused the name or password\./);
+    assert.doesNotMatch(r3.html!, /No camera answered on your network|and no camera answered/, "no search note under a test error");
+    assert.equal(reached.length, 2, "no port check after a clear answer");
   });
 
   it("a picked camera and a brand give the vendor link, name and password typed only", async () => {

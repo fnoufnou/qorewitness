@@ -66,12 +66,13 @@ export function parseStreamUrl(url: string): (TapoInput & { scheme: string }) | 
   }
 }
 
-export type CameraErrorKind = "auth" | "unreachable" | "busy" | "not_found" | "no_video" | "unsupported" | "timeout" | "no_ffmpeg" | "unknown";
+export type CameraErrorKind = "auth" | "unreachable" | "silent" | "busy" | "not_found" | "no_video" | "unsupported" | "timeout" | "no_ffmpeg" | "unknown";
 
 /** Plain words for the owner, for any camera brand. No error codes and no URLs. Each ends with what to do. */
 export const CAMERA_ERRORS: Record<CameraErrorKind, string> = {
   auth: "The camera refused the name or password. Check the camera account in your camera's app, then try again.",
   unreachable: "No camera answered at this address. Check the address, and check that the camera is on and connected to your network.",
+  silent: "A camera is on this address, but it sent no video. Check the camera account in your camera's app, wait a few minutes and try again.",
   busy: "The camera is busy. Many cameras send only a few streams at a time. Close the live view in the camera's app and try again.",
   not_found: "The camera answered, but it has no video at this link. Check the brand you picked, or paste the link from your camera's manual (Other camera).",
   no_video: "The camera sends no picture. Check that the video stream (RTSP) is switched on in your camera's app.",

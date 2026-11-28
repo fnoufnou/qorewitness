@@ -29,7 +29,7 @@ import {
   passwordProblem, privateAddress, readPairing, safeEqual, sessionSecret, sessionValid, setPassword, SESSION_SECONDS,
 } from "./auth.js";
 import { cameraReachable, snapshot, streamEndpoint } from "./camera.js";
-import { discoverCameras, lanPrefix } from "./discover.js";
+import { discoverCameras, lanRanges } from "./discover.js";
 import { evidenceForm, evidencePage, parseRange, planEvidence, writeZip } from "./evidence.js";
 import { CSP, esc, layout } from "./html.js";
 import { SponsorClient, type SponsorAnswer } from "./sponsor.js";
@@ -470,10 +470,10 @@ if (process.argv[1] && /server\.(ts|js)$/.test(process.argv[1])) {
   ensureDirs(paths);
   if (isSetupDone(paths)) lockSecrets();
   const wizard = new Wizard({
-    paths, chain: liveChain(), sponsor: () => new SponsorClient(), snapshot: (u) => snapshot(u),
+    paths, chain: liveChain(), sponsor: () => new SponsorClient(), snapshot: (u) => snapshot(u), reach: (h, p) => cameraReachable(h, p),
     discover: async (hints) => {
-      const prefix = lanPrefix(hints);
-      return prefix ? discoverCameras({ prefix }) : [];
+      const r = lanRanges(hints);
+      return r ? discoverCameras({ prefixes: r.prefixes, network: r.network }) : [];
     },
   });
   const host = process.env.QW_UI_HOST?.trim() || "127.0.0.1";
