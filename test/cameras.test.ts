@@ -197,7 +197,8 @@ describe("find my camera (src/web/discover.ts)", () => {
       if (/discovery\/Probe</.test(msg.toString())) cam.send(TAPO_MATCH, r.port, r.address);
     });
     try {
-      const answers = await wsDiscovery(["127.0.0.1"], 300);
+      // Only the fake camera on localhost counts: on a LAN host a real camera may answer the multicast Probe too.
+      const answers = (await wsDiscovery(["127.0.0.1"], 300)).filter((a) => a.from === "127.0.0.1");
       assert.equal(answers.length, 1);
       assert.equal(answers[0].match.hardware, "C210");
     } finally {
