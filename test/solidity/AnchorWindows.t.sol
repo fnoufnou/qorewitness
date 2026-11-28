@@ -35,6 +35,26 @@ contract AnchorWindowsFuzzTest is RegistryFixture, MerkleReference {
 
     // =============================================================== accepted windows are stored exactly
 
+    /// @dev Anchors a correctly signed claim of alice and checks the exact events: WindowGap(owner,
+    ///      device, gap start, gap) first when `gap` > 0, then Anchored with every field, nothing else.
+    ///      The first window of a device has gap 0 and so emits Anchored only.
+    function _anchorExpectingEvents(AnchorRegistry.WindowClaim memory w, uint64 gap) internal returns (bytes32 id) {
+        bytes memory sig = _sign(devKey, _winMsg(address(reg), alice, w));
+        if (gap > 0) {
+            vm.expectEmit(true, true, true, true, address(reg));
+            emit AnchorRegistry.WindowGap(alice, w.deviceId, w.windowStart - gap, gap);
+        }
+        vm.expectEmit(true, true, true, true, address(reg));
+        emit AnchorRegistry.Anchored(
+            keccak256(abi.encode(alice, w.deviceId, w.windowStart)), alice, w.deviceId, w.windowStart, w.windowSeconds,
+            w.leafCount, w.root, keccak256(sig)
+        );
+        vm.recordLogs();
+        vm.prank(alice);
+        id = reg.anchor(w, devKey, sig);
+        assertEq(vm.getRecordedLogs().length, gap > 0 ? 2 : 1, "one Anchored, plus one WindowGap when there is a gap");
+    }
+
     /// A1/A2: a valid claim is stored field by field; the chain head, the pointer and the gap follow it.
     function testFuzz_anchor_storesExactRecord(uint32 secs1, uint32 secs2, uint32 leaves, bytes32 root1, bytes32 root2, uint32 gap)
         public
@@ -44,19 +64,13 @@ contract AnchorWindowsFuzzTest is RegistryFixture, MerkleReference {
         leaves = uint32(_bound(leaves, 1, type(uint32).max));
         uint64 g = uint64(_bound(gap, 0, 30 days));
         uint64 s1 = T0 - 40 days;
-        AnchorRegistry.WindowClaim memory w1 = _claim(reg, alice, DEV, s1, secs1, leaves, root1);
-        bytes32 id1 = _anchor(reg, alice, w1, devKey);
+        bytes32 id1 = _anchorExpectingEvents(_claim(reg, alice, DEV, s1, secs1, leaves, root1), 0);
         vm.roll(block.number + 1);
         vm.warp(block.timestamp + 13);
         uint64 s2 = s1 + secs1 + g;
         AnchorRegistry.WindowClaim memory w2 = _claim(reg, alice, DEV, s2, secs2, 7, root2);
         bytes memory sig2 = _sign(devKey, _winMsg(address(reg), alice, w2));
-        if (g > 0) {
-            vm.expectEmit(address(reg));
-            emit AnchorRegistry.WindowGap(alice, DEV, s1 + secs1, g);
-        }
-        vm.prank(alice);
-        bytes32 id2 = reg.anchor(w2, devKey, sig2);
+        bytes32 id2 = _anchorExpectingEvents(w2, g);
 
         assertEq(id1, keccak256(abi.encode(alice, DEV, s1)));
         assertEq(id2, keccak256(abi.encode(alice, DEV, s2)));
@@ -218,8 +232,16 @@ contract AnchorWindowsFuzzTest is RegistryFixture, MerkleReference {
     }
 
     /// A2: the window end may be at most MAX_FUTURE_SKEW after block time, for any start (overflow included).
-    function testFuzz_window_future(uint64 start, uint32 secs) public {
+    /// Mode 0 takes any start. Mode 1 puts the end within 2 days of the limit, so a changed limit
+    /// (for example 100,000 s instead of 120 s) is hit. Mode 2 puts the end within 3 s of the limit.
+    function testFuzz_window_future(uint64 start, uint32 secs, uint8 mode, uint64 delta) public {
         secs = uint32(_bound(secs, 1, MAX_SECS));
+        mode %= 3;
+        if (mode != 0) {
+            uint256 span = mode == 1 ? 2 days : 3;
+            uint256 end_ = _bound(delta, uint256(T0) + SKEW - span, uint256(T0) + SKEW + span);
+            start = uint64(end_ - secs);
+        }
         AnchorRegistry.WindowClaim memory w = _claim(reg, alice, DEV, start, secs, 1, keccak256("r"));
         (bool ok, bytes memory ret) = _try(w, devKey, _sign(devKey, _winMsg(address(reg), alice, w)));
         uint256 end = uint256(start) + secs;
@@ -285,6 +307,43 @@ contract AnchorWindowsFuzzTest is RegistryFixture, MerkleReference {
             assertEq(ok, accepted[i]);
             if (!ok) assertEq(ret, abi.encodeWithSelector(AnchorRegistry.BadRefBlock.selector, w.refBlock));
         }
+    }
+
+    /// A2: with block hashes unknown to the EVM (as on qorechain-diana), a signed refBlockHash of 0 is
+    /// refused with BadRefBlock. Without the zero check the contract could not compare anything here.
+    function test_refBlock_zeroSignedHashRefusedWhenUnknown() public {
+        vm.roll(10_000);
+        _forgetBlockhashes();
+        AnchorRegistry.WindowClaim memory w = _claim(reg, alice, DEV, T0 - 1 days, 60, 1, keccak256("r"));
+        w.refBlockHash = bytes32(0);
+        bytes memory sig = _sign(devKey, _winMsg(address(reg), alice, w));
+        bytes32 before = _digest(reg, alice, DEV);
+        vm.prank(alice);
+        vm.expectRevert(abi.encodeWithSelector(AnchorRegistry.BadRefBlock.selector, w.refBlock));
+        reg.anchor(w, devKey, sig);
+        assertEq(_digest(reg, alice, DEV), before, "state changed");
+        // positive control: the same claim with a non-zero signed hash is accepted
+        w.refBlockHash = keccak256("signed");
+        (bool ok,) = _try(w, devKey, _sign(devKey, _winMsg(address(reg), alice, w)));
+        assertTrue(ok, "non-zero signed hash refused");
+    }
+
+    /// A2: unknown block hash combined with a zero and with a non-zero signed hash, anywhere in the
+    /// 256-block range: zero is always refused, non-zero is always accepted.
+    function testFuzz_refBlock_unknownHashZeroOrNot(uint256 cur, uint16 back, bytes32 signedHash, bool zero) public {
+        cur = _bound(cur, 300, 10_000_000);
+        vm.roll(cur);
+        _forgetBlockhashes();
+        uint64 ref = uint64(cur - _bound(back, 1, 256));
+        assertEq(blockhash(ref), bytes32(0));
+        bytes32 h = zero ? bytes32(0) : (signedHash == bytes32(0) ? keccak256(abi.encode(cur)) : signedHash);
+        AnchorRegistry.WindowClaim memory w = _claim(reg, alice, DEV, T0 - 1 days, 60, 1, keccak256("r"));
+        w.refBlock = ref;
+        w.refBlockHash = h;
+        (bool ok, bytes memory ret) = _try(w, devKey, _sign(devKey, _winMsg(address(reg), alice, w)));
+        assertEq(ok, !zero, "zero hash rule with unknown block hash");
+        if (!ok) assertEq(ret, abi.encodeWithSelector(AnchorRegistry.BadRefBlock.selector, ref));
+        else assertEq(reg.getAnchor(reg.anchorIdOf(alice, DEV, w.windowStart)).refBlock, ref);
     }
 
     /// A2: a known block hash that differs from the signed one is refused; the true one is accepted.
