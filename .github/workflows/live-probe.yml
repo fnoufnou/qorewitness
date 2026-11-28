@@ -1,14 +1,13 @@
 # Live read-only checks against the public QoreChain testnet: the real pqcVerify precompile and the
 # deployed AnchorRegistry. eth_call only: no secrets, no keys, no funds, no transactions.
 # This workflow is separate from `test` on purpose. A public testnet can be down, and that must never
-# block a merge, a release or the image build. A red run here means "look at the testnet", not "the code is broken".
+# block a merge, a release or the image build. It runs on a daily schedule and on manual start only, never on
+# push, so a testnet outage never marks a commit red. A red run here means "look at the testnet".
 name: live-probe
 on:
   schedule:
     - cron: "17 5 * * *"
   workflow_dispatch:
-  push:
-    branches: [main]
 permissions:
   contents: read
 jobs:

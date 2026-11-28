@@ -5,7 +5,6 @@ Post-quantum proof that your home camera footage is original, and of when it was
 [![test](https://github.com/fnoufnou/qorewitness/actions/workflows/test.yml/badge.svg)](https://github.com/fnoufnou/qorewitness/actions/workflows/test.yml)
 [![release](https://img.shields.io/github/v/tag/fnoufnou/qorewitness?sort=semver&label=release)](https://github.com/fnoufnou/qorewitness/tags)
 [![image](https://img.shields.io/badge/image-ghcr.io%2Ffnoufnou%2Fqorewitness-2496ED?logo=docker&logoColor=white)](https://github.com/fnoufnou/qorewitness/pkgs/container/qorewitness)
-[![live probe](https://github.com/fnoufnou/qorewitness/actions/workflows/live-probe.yml/badge.svg)](https://github.com/fnoufnou/qorewitness/actions/workflows/live-probe.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![Built on QoreChain](https://build.qorechain.io/badge/qorewitness.svg)](https://build.qorechain.io/p/qorewitness)
 ![network](https://img.shields.io/badge/QoreChain-testnet%20diana-orange)
