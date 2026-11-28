@@ -595,9 +595,6 @@ abstract contract RegistryInvariantBase is StdInvariant, PqcFixture {
     }
 }
 
-/// @notice Fixed-seed walk of 200 handler calls, with a printed reach report: how many anchors,
-///         rotations, revocations and refused attacks a walk of this length produces. It checks the
-///         no-forgery invariant after every step and all invariants at the end.
 /// @notice The invariant test. Each invariant runs after every handler call of every run.
 contract RegistryInvariantTest is RegistryInvariantBase {
     function invariant_hashChainIntact() public view {
@@ -629,6 +626,9 @@ contract RegistryInvariantTest is RegistryInvariantBase {
     }
 }
 
+/// @notice Fixed-seed walk of 200 handler calls, with a printed reach report: how many anchors,
+///         rotations, revocations and refused attacks a walk of this length produces. It checks the
+///         no-forgery invariant after every step and all invariants at the end.
 contract RegistryHandlerReachTest is RegistryInvariantBase {
     function test_reach_fixedSeedWalk() public {
         uint256 steps = 200;
