@@ -13,7 +13,7 @@ import type { Hex } from "viem";
 export type CallOutcome =
   | { kind: "return"; data: Hex }
   | { kind: "revert"; data?: Hex; message: string }
-  | { kind: "rpc-error"; message: string };
+  | { kind: "rpc-error"; message: string; blockUnavailable?: boolean };
 
 export type FetchLike = (url: string, init: { method: "POST"; headers: Record<string, string>; body: string; signal?: AbortSignal }) => Promise<{
   ok: boolean;
@@ -23,10 +23,13 @@ export type FetchLike = (url: string, init: { method: "POST"; headers: Record<st
 
 export interface Rpc {
   readonly url: string;
-  /** Generic read call. Throws RpcDownError when the node cannot answer after the retries. */
+  /**
+   * Generic read call. Throws RpcDownError when the node cannot answer after the retries, and
+   * BlockUnavailableError at once when the node says it does not have the requested block.
+   */
   request(method: string, params: unknown[]): Promise<unknown>;
-  /** eth_call at "latest". Never throws. */
-  ethCall(to: string, data: Hex, from?: string): Promise<CallOutcome>;
+  /** eth_call at `block` (a hex block number, default "latest"). Never throws. */
+  ethCall(to: string, data: Hex, from?: string, block?: string): Promise<CallOutcome>;
 }
 
 export class RpcDownError extends Error {
@@ -35,6 +38,18 @@ export class RpcDownError extends Error {
     this.name = "RpcDownError";
   }
 }
+
+/** The node does not have the block the request asked for (pruned, or a node behind a load balancer lags). */
+export class BlockUnavailableError extends Error {
+  constructor(detail: string) {
+    super(`The node does not have the requested block: ${detail}`);
+    this.name = "BlockUnavailableError";
+  }
+}
+
+/** Answers of nodes that do not have a block. qorechain-diana says "header not found". */
+export const isBlockUnavailableMessage = (m: string): boolean =>
+  /header not found|block not found|unknown block|missing trie node|height \d+ is not available|state .*not available|pruned/i.test(m);
 
 export interface RpcOptions {
   url: string;
@@ -53,6 +68,8 @@ interface JsonRpcError { code?: number; message?: string; data?: unknown }
 
 const isRevert = (e: JsonRpcError): boolean =>
   e.code === 3 || /revert/i.test(e.message ?? "") || (typeof e.data === "string" && /^0x[0-9a-f]{8,}$/i.test(e.data));
+
+const isBlockGone = (e: JsonRpcError): boolean => isBlockUnavailableMessage(e.message ?? "");
 
 const revertData = (e: JsonRpcError): Hex | undefined =>
   typeof e.data === "string" && /^0x[0-9a-f]*$/i.test(e.data) ? (e.data as Hex) : undefined;
@@ -108,13 +125,17 @@ export function createRpc(opts: RpcOptions): Rpc {
     }
   }
 
-  /** Retries transport failures and non-revert JSON-RPC errors. A revert is returned at once. */
+  /**
+   * Retries transport failures and other JSON-RPC errors. A revert and a "block not available"
+   * answer are returned at once: asking again for the same block gives the same answer.
+   */
   async function withRetry(method: string, params: unknown[], stopOnRevert: boolean): Promise<Raw> {
     let last: Raw = { ok: false, transport: "no attempt" };
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (attempt > 0) await sleep(baseDelay * 2 ** (attempt - 1));
       last = await once(method, params);
       if (last.ok) return last;
+      if ("rpcError" in last && isBlockGone(last.rpcError)) return last;
       if (stopOnRevert && "rpcError" in last && isRevert(last.rpcError)) return last;
     }
     return last;
@@ -128,17 +149,19 @@ export function createRpc(opts: RpcOptions): Rpc {
     async request(method, params) {
       const r = await withRetry(method, params, false);
       if (r.ok) return r.result;
+      if ("rpcError" in r && isBlockGone(r.rpcError)) throw new BlockUnavailableError(`${method}: ${describe(r)}`);
       throw new RpcDownError(opts.url, `${method}: ${describe(r)}`);
     },
-    async ethCall(to, data, from) {
+    async ethCall(to, data, from, block = "latest") {
       const call: Record<string, string> = { to, data };
       if (from) call.from = from;
-      const r = await withRetry("eth_call", [call, "latest"], true);
+      const r = await withRetry("eth_call", [call, block], true);
       if (r.ok) {
         return typeof r.result === "string" && /^0x[0-9a-f]*$/i.test(r.result)
           ? { kind: "return", data: r.result as Hex }
           : { kind: "rpc-error", message: "eth_call result is not hex" };
       }
+      if ("rpcError" in r && isBlockGone(r.rpcError)) return { kind: "rpc-error", message: describe(r), blockUnavailable: true };
       if ("rpcError" in r && isRevert(r.rpcError)) {
         return { kind: "revert", data: revertData(r.rpcError), message: (r.rpcError.message ?? "").split("\n")[0] };
       }

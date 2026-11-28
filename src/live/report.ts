@@ -1,7 +1,7 @@
 /** Markdown evidence reports for the live probes. Pure functions: structured data in, text out. */
 import { execFileSync } from "node:child_process";
-import type { FuzzSummary } from "./fuzz.js";
-import type { Check, RegistryRun } from "./registry.js";
+import { MAX_NOT_RUN_SHARE, type FuzzSummary } from "./fuzz.js";
+import { REGISTRY_EXIT, type Check, type RegistryRun } from "./registry.js";
 
 export interface RunMeta {
   startedAt: string; // ISO UTC
@@ -97,12 +97,20 @@ export function renderFuzzReport(i: FuzzReportInput): string {
   if (s.forgeries.length > 0) {
     out.push("### Accepted inputs", "", ...s.forgeries.map((r) => `- case ${r.id}, ${r.cls}: ${r.label}`), "");
   }
-  out.push(
-    "## What this shows",
-    "",
-    "The live pqcVerify precompile returned true for fresh valid signatures and did not return true for any of the mutated inputs above. It is a black-box sample, not a proof of ML-DSA conformance and not an audit. An RPC error counts as \"not run\", never as a pass.",
-    "",
-  );
+  if (i.exitCode === 0 && !s.aborted) {
+    out.push(
+      "## What this shows",
+      "",
+      "The live pqcVerify precompile returned true for fresh valid signatures and did not return true for any of the mutated inputs above. It is a black-box sample. It is no proof of ML-DSA conformance and no audit. An RPC error counts as \"not run\".",
+      "",
+    );
+  } else {
+    out.push("## What failed", "");
+    for (const c of s.controls.filter((x) => x.verdict !== "pass")) out.push(`- Positive control "${cell(c.label)}" gave ${c.observed}${c.detail ? ` (${cell(c.detail)})` : ""}, expected true.`);
+    for (const f of s.forgeries) out.push(`- Mutated input accepted: case ${f.id}, ${f.cls}: ${cell(f.label)}.`);
+    if (!s.aborted && s.notRunShare > MAX_NOT_RUN_SHARE) out.push(`- ${s.notRun} of ${neg} cases could not run, more than the limit of ${MAX_NOT_RUN_SHARE * 100}%.`);
+    out.push("", "A run that did not pass shows nothing about the precompile. Rerun when the cause is fixed.", "");
+  }
   return out.join("\n");
 }
 
@@ -115,10 +123,18 @@ export interface RegistryReportInput {
 
 const GROUP_TITLES: Record<Check["group"], string> = {
   state: "Live state read",
+  control: "Gating positive controls (run first, the run stops if one does not hold)",
   sanity: "Message sanity (what we sign is what the contract hashes)",
   anchor: "anchor(): forged and replayed signatures, broken chain",
   "owner-actions": "Owner actions with forged owner signatures",
-  "positive-control": "Positive control with the public sample receipt (no private key needed)",
+  receipt: "Public sample receipt with verifyAnchor (no private key needed)",
+};
+
+const EXIT_TEXT: Record<number, string> = {
+  [REGISTRY_EXIT.control]: "a gating positive control did not hold",
+  [REGISTRY_EXIT.accepted]: "a forged or replayed input was accepted",
+  [REGISTRY_EXIT.unexpected]: "a check gave another answer than expected",
+  [REGISTRY_EXIT.notRun]: "a check could not run",
 };
 
 export function renderRegistryReport(i: RegistryReportInput): string {
@@ -127,25 +143,34 @@ export function renderRegistryReport(i: RegistryReportInput): string {
   const nr = r.checks.filter((c) => c.verdict === "not-run").length;
   const out = header("Live AnchorRegistry negative simulations (eth_call)", i.meta);
   out.push(
+    `- Every call and state read used block ${r.blockNumber} (head at the start ${r.headAtStart}, pinned ${r.headAtStart - r.blockNumber} blocks below it)${r.retriedAtFreshBlock ? ". The node did not have the first pinned block, so the run started once more at a fresh block" : ""}`,
     `- Registry: ${r.registry} (v4)`,
     `- Owner address used as \`from\`: ${r.owner}`,
     `- Device id: ${r.deviceId ?? "-"}`,
     `- Registered device key hash: ${r.deviceKeyHash ?? "-"}`,
+    r.realAnchor
+      ? `- Newest real anchor (used by the controls): block ${r.realAnchor.blockNumber}, transaction ${r.realAnchor.txHash}, anchor id ${r.realAnchor.anchorId}, windowStart ${r.realAnchor.windowStart}`
+      : "- Newest real anchor: -",
     `- Chain head (root of the newest window): ${r.chainHead ?? "-"}`,
     `- nextWindowStart: ${r.nextWindowStart ?? "-"}`,
     r.window ? `- Claim used: windowStart ${r.window.start}, windowSeconds ${r.window.seconds}, refBlock ${r.window.refBlock}` : "- Claim used: -",
     r.replaySource ? `- Replayed signature copied from block ${r.replaySource.blockNumber}, transaction ${r.replaySource.txHash}` : "- Replayed signature: -",
     `- Sample receipt: ${r.receiptUrl}`,
+    `- Exit code: ${i.exitCode}`,
     "",
     "## Result",
     "",
-    fails > 0
-      ? `**FAILED.** ${fails} check(s) gave an unexpected answer.`
-      : nr > 0
-        ? `**INCOMPLETE.** ${r.checks.length - nr} of ${r.checks.length} checks passed, ${nr} could not run.`
-        : `**PASSED.** ${r.checks.length} of ${r.checks.length} checks gave the expected answer.`,
+    r.aborted
+      ? "**ABORTED.** A gating positive control did not hold, so the negative simulations were not run."
+      : i.exitCode === REGISTRY_EXIT.accepted
+        ? "**FAILED.** A forged or replayed input was ACCEPTED. See below."
+        : fails > 0
+          ? `**FAILED.** ${fails} check(s) gave an unexpected answer.`
+          : nr > 0
+            ? `**INCOMPLETE.** ${r.checks.length - nr} of ${r.checks.length} checks passed, ${nr} could not run.`
+            : `**PASSED.** ${r.checks.length} of ${r.checks.length} checks gave the expected answer.`,
     "",
-    "Nothing was sent. Every call is an `eth_call`. The owner address is only the `from` field, no owner key or signature was used.",
+    "Nothing was sent. Every call is an `eth_call`. The owner address is only the `from` field. No owner key or device key was used.",
     "",
   );
   for (const g of Object.keys(GROUP_TITLES) as Check["group"][]) {
@@ -157,13 +182,22 @@ export function renderRegistryReport(i: RegistryReportInput): string {
     if (notes.length) out.push("");
   }
   if (r.observations.length > 0) out.push("## Observations", "", ...r.observations.map((o) => `- ${o}`), "");
-  out.push(
-    "## What this shows",
-    "",
-    "The deployed contract, running with the real pqcVerify and pqcKeyStatus precompiles, refuses forged, replayed and attacker-made signatures with the expected custom errors. BadSignature() after the window, chain, block and key checks means the precompile refused the signature inside the real contract. The contract treats a precompile that returns false and one that fails the same way, but it reports an inactive precompile as a different error.",
-    "",
-    "What it does not show: a simulation is not a transaction, so it says nothing about what a node would include in a block. A valid signature by the real device key was not tested here because that key is not available to this script. That path is shown by the real anchor transactions of the live camera.",
-    "",
-  );
+  if (i.exitCode === REGISTRY_EXIT.ok) {
+    out.push(
+      "## What this shows",
+      "",
+      "The gating controls show that the live pqcVerify precompile accepts a fresh valid signature and the real signature of the camera over the exact bytes that the live contract builds, and refuses both with one flipped bit. This is a replay with eth_call of a verification the chain already did when it included the newest anchor. No private key was used.",
+      "",
+      "The deployed contract, running with the same precompiles, refuses forged, replayed and attacker-made signatures with the expected custom errors. BadSignature() means that the precompile did not accept the signature: it returned false or the call failed. Together with the gating controls in the same run, a dead precompile cannot produce a passing run.",
+      "",
+      "Limits: a simulation is not a transaction, so it says nothing about what a node would include in a block. The real device key signs only on the camera, so this script cannot make a new valid camera signature. The real anchor transactions of the live camera show that path.",
+      "",
+    );
+  } else {
+    out.push("## What failed", "", `Exit code ${i.exitCode}: ${EXIT_TEXT[i.exitCode] ?? "see the checks above"}.`, "");
+    for (const c of r.checks.filter((x) => x.verdict !== "pass")) out.push(`- ${cell(c.title)}: expected ${cell(c.expected)}, got ${cell(c.got)} (${c.verdict}${c.accepted ? ", ACCEPTED" : ""}).`);
+    if (r.aborted) out.push("- The negative simulations were not run.");
+    out.push("", "A run that did not pass shows nothing about the contract. Rerun when the cause is fixed.", "");
+  }
   return out.join("\n");
 }
