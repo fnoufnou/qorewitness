@@ -4,6 +4,17 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+## 0.6.0-beta.2 (28 Nov 2026)
+
+Fixes from the first C210 install run (CT 263, home server path). Install line pinned to this tag.
+
+- Fix: "Find my camera" missed Wi-Fi cameras. Each address now gets 2 s (700 ms before), with all ports of one address checked together and 256 addresses at a time. Measured on the home server: the LSC camera and the Tapo C210 found in 9.2 s, 3 of 3 runs.
+- Fix: the search covered only the /24 of the box. `install.sh` now writes the home network with its prefix (`QW_LAN_CIDR`), and the search covers it up to a /22, own /24 first, with a 9 s deadline. The C210 was at 192.168.2.53 on a /21.
+- Setup: a "Searching your network" state that updates by itself, with a button to skip the search. "No camera answered" says which addresses were searched, and it is not shown under a camera test error. A camera that is there but sends no video is not called absent. The C210 shows its model once.
+- Setup: a failed camera test keeps the consent tick and the typed password (same address and account).
+- Site, Get started: Home server tab (Proxmox, Ubuntu, Debian), disk size pop-up, "Any other RTSP camera" help, shorter camera step. Fewer warnings on the customer pages: one-line beta bar, the test-network reset stays on Trust and Plans.
+- Tests: 395 (328 node, 67 Solidity).
+
 - Docs: `JUDGES.md` in the repository root. A 5-minute route for jurors, the official rubric with evidence, the category requirements with file and line, what is real and what is mocked, known limits and the testnet findings.
 - Fix: the README links to the explorer used the EVM transaction hash, which the explorer does not accept. They now use the Cosmos hash and say to switch the explorer to Testnet. The sample clip is from our test camera. The live home camera is another device.
 - Fix: seal counts recounted on chain on 28 Nov 2026 (block 10,876,582). The live home camera has more than 1,900 seals on registry v4, and v4 holds 2,400 from all our devices. The jury page said "more than 2,300 seals on v4" in a sentence about the home camera.
