@@ -376,7 +376,10 @@ describe("e2e-1 regressions", () => {
     await w.post("/setup/camera", { action: "test", host: "10.0.0.2", brand: "tapo", user: "qwcam", password: CAM_PASS, consent: "yes" });
     const free = freeBytes(paths.data);
     assert.ok(free && free > 0);
-    assert.equal(readEnvFile(paths.cameraEnv).QW_RETENTION_DAYS, String(proposeRetentionDays(free, "stream1")));
+    // Standard quality when high quality fits less than a week (small CI disks).
+    const path = proposeRetentionDays(free, "stream1") < 7 ? "stream2" : "stream1";
+    assert.equal(readEnvFile(paths.cameraEnv).QW_RETENTION_DAYS, String(proposeRetentionDays(free, path)));
+    assert.match(readEnvFile(paths.cameraEnv).QW_STREAM_URL, new RegExp(`/${path}$`));
   });
 });
 
