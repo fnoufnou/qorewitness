@@ -52,7 +52,7 @@ Find the IP address of your Pi in your router app.
 Paste this line. Replace `USER` with your Pi user name and `IP-ADDRESS` with its IP address. Press Enter.
 
 ```bash
-ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.3/install.sh | bash -s -- --yes"
+ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.4/install.sh | bash -s -- --yes"
 ```
 
 What you will see:
@@ -68,7 +68,7 @@ What you will see:
 
 Do not share the code. Anyone with it can set up QoreWitness until you choose a password.
 
-Already on the computer itself (keyboard and screen, or an SSH session)? Paste the part between the quotes: `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.3/install.sh | bash -s -- --yes`.
+Already on the computer itself (keyboard and screen, or an SSH session)? Paste the part between the quotes: `curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.4/install.sh | bash -s -- --yes`.
 
 You can run the line again at any time. It keeps your camera, keys, account and video.
 
@@ -140,7 +140,7 @@ Technical facts (block numbers, the registry, the keys) are under **Details** on
 
 ```bash
 cd ~/qorewitness
-# set the new version in .env, for example QW_VERSION=0.6.0-beta.3
+# set the new version in .env, for example QW_VERSION=0.6.0-beta.4
 docker compose pull && docker compose up -d
 ```
 

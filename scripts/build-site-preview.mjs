@@ -26,7 +26,7 @@ const GH = "https://github.com/fnoufnou/qorewitness";
 const GHDOC = (f) => `${GH}/blob/main/docs/${f}`;
 const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
-const TAG = "v0.6.0-beta.3"; // the release the install line runs; the "read the script" link points to the same tag
+const TAG = "v0.6.0-beta.4"; // the release the install line runs; the "read the script" link points to the same tag
 const INSTALL = `ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/install.sh | bash -s -- --yes"`;
 const VERIFIER_SHA = "0f3c7558c822e04fa3568021e479abd3e6e0b1e8dd0dfd11d4cac8ddbdaf87b2";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";

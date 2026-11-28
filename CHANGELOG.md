@@ -4,9 +4,9 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
-## 0.6.0-beta.3 (28 Nov 2026)
+## 0.6.0-beta.4 (28 Nov 2026)
 
-Second round of fixes from the first C210 install run. Install line pinned to this tag.
+Second round of fixes from the first C210 install run. Install line pinned to this tag. The tag v0.6.0-beta.3 has the same code but no image: one test assumed a large disk and failed in CI (fixed).
 
 - Fix: "Find my camera" still missed cameras on a cold start. Cause, measured on the home server: 1,000 address lookups at once drown the network, and a camera late in the list did not answer (1 run in 2). The search now goes one /24 at a time and spreads the lookups (one address every 4 ms, 2.5 s each). Both cameras found in 5 of 5 cold runs, 3.6 s per /24, about 15 s for a /22. The page shows the cameras found so far.
 - Setup: a known brand (from ONVIF or the Tapo port) is folded as "Brand: TP-Link Tapo · Change", and a camera with a known brand is preselected.
