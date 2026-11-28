@@ -422,14 +422,16 @@ describe("wizard: any camera (find, brand, link)", () => {
     const w = new Wizard({
       paths, chain: mockChain().chain, sponsor: () => { throw new Error("no sponsor"); }, diskFree: () => 500e9,
       snapshot: async () => ({ ok: true, jpeg: JPEG, info: {} }),
-      discover: () => {
+      discover: (_h, onProgress) => {
         searches++;
+        onProgress?.(Object.assign([{ ip: "192.168.1.162", ports: [8554], onvif: false }] as FoundCamera[], { searched: ["192.168.1"] }));
         return new Promise((r) => (release = r));
       },
     });
     const h1 = await w.render("camera", "x", "http://192.168.1.229:8080");
     assert.match(h1, /Searching your network for cameras/);
     assert.match(h1, /role="status"/);
+    assert.match(h1, /Found so far:<\/p><ul><li>Camera at 192\.168\.1\.162<\/li>/, "the page shows what is found per /24");
     assert.equal(w.refreshFor("camera"), 2, "the page reloads itself while searching");
     const skip = await w.post("/setup/camera", { action: "skipscan", _csrf: "x" });
     assert.match(skip.html!, /id="host"/);

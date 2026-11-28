@@ -471,9 +471,9 @@ if (process.argv[1] && /server\.(ts|js)$/.test(process.argv[1])) {
   if (isSetupDone(paths)) lockSecrets();
   const wizard = new Wizard({
     paths, chain: liveChain(), sponsor: () => new SponsorClient(), snapshot: (u) => snapshot(u), reach: (h, p) => cameraReachable(h, p),
-    discover: async (hints) => {
+    discover: async (hints, onProgress) => {
       const r = lanRanges(hints);
-      return r ? discoverCameras({ prefixes: r.prefixes, network: r.network }) : [];
+      return r ? discoverCameras({ prefixes: r.prefixes, network: r.network, onProgress }) : [];
     },
   });
   const host = process.env.QW_UI_HOST?.trim() || "127.0.0.1";

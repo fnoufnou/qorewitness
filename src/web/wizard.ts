@@ -83,7 +83,7 @@ export interface WizardDeps {
   /** How long the connect step waits for network fees (default 20 minutes). */
   fundsTimeoutMs?: number;
   /** "Find my camera": search the home network. Missing: no search (tests). The server passes discoverCameras. */
-  discover?: (hints: (string | undefined)[]) => Promise<DiscoverResult | FoundCamera[]>;
+  discover?: (hints: (string | undefined)[], onProgress?: (found: DiscoverResult) => void) => Promise<DiscoverResult | FoundCamera[]>;
   /** TCP check of the stream port after a failed test: tells "nothing there" from "there, but silent". */
   reach?: (host: string, port: number) => Promise<boolean>;
 }
@@ -127,7 +127,7 @@ export class Wizard {
   private lastSnapshot?: Buffer;
   /** The last typed camera password, in memory only, so a retry does not need it again. */
   private lastPassword?: { host: string; user: string; password: string };
-  private scan?: { at: number; found: DiscoverResult; running?: Promise<void>; skipped?: boolean };
+  private scan?: { at: number; found: DiscoverResult; running?: Promise<void>; skipped?: boolean; soFar?: DiscoverResult };
   private ownerPub?: { cosmos: string; evm: `0x${string}`; registry: `0x${string}` };
 
   constructor(private readonly d: WizardDeps) {}
@@ -368,7 +368,7 @@ export class Wizard {
     if (!this.d.discover) return;
     if (this.scan?.running || (this.scan && Date.now() - this.scan.at < 120_000)) return;
     const scan: NonNullable<Wizard["scan"]> = { at: Date.now(), found: [] };
-    scan.running = this.d.discover(lanHints(base))
+    scan.running = this.d.discover(lanHints(base), (f) => (scan.soFar = f))
       .then((f) => {
         scan.found = f;
       })
@@ -396,7 +396,7 @@ export class Wizard {
       // "Find my camera" runs when the screen opens. A quick answer shows at once, else "Searching".
       this.startScan(base);
       if (this.scan?.running) await Promise.race([this.scan.running, new Promise((r) => setTimeout(r, 400))]);
-      if (this.scanning()) return this.renderSearching(csrf);
+      if (this.scanning()) return this.renderSearching(csrf, this.scan?.soFar);
       return this.renderCameraForm(csrf, undefined, this.formValues(s));
     }
     if (screen === "connect") return this.renderConnect(csrf);
@@ -410,10 +410,11 @@ export class Wizard {
     return screen === "connect" && this.state().job?.status !== "failed" ? 5 : undefined;
   }
 
-  private renderSearching(csrf: string): string {
+  private renderSearching(csrf: string, soFar?: DiscoverResult): string {
+    const list = soFar?.length ? `<ul>${soFar.map((f) => `<li>${esc(cameraLabel(f))}</li>`).join("")}</ul>` : "";
     return `<div class="card">${eyebrow(1, "Camera")}
 <h1>Connect your camera</h1>
-<p class="note" role="status" aria-live="polite"><strong>Searching your network for cameras…</strong><br>This takes up to 10 seconds. The page updates by itself.</p>
+<p class="note" role="status" aria-live="polite"><strong>Searching your network for cameras…</strong><br>This takes up to 15 seconds. The page updates by itself.</p>${list ? `<p style="margin-bottom:0">Found so far:</p>${list}` : ""}
 <form method="post" action="/setup/camera">${hidden("_csrf", csrf)}${hidden("action", "skipscan")}<button class="secondary">Skip the search and type the address</button></form></div>`;
   }
 

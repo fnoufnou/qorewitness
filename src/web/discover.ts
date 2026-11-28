@@ -18,11 +18,14 @@
  * install.sh wrote (QW_UI_PUBLIC_URL) or the address the browser used. Docker
  * bridge addresses (172.17 to 172.31) are skipped: they are not the home network.
  *
- * Timing (measured on CT 263, 28 Nov): Wi-Fi cameras in power save answer the
- * first connect after 1 to 2 seconds (ARP and the first SYN wait for the camera to
- * wake). With 700 ms the LSC camera was missed, with 2,000 ms it was found. So each
- * address gets 2,000 ms, 256 addresses at a time: a /24 takes about 2 seconds plus
- * the ONVIF wait, a /22 about 8 seconds. A deadline stops new checks after 9 seconds.
+ * Timing (measured on CT 262 and CT 263, 28 Nov). A Wi-Fi camera answers a single
+ * connect in under 100 ms. The trouble is the address lookups (ARP): each address
+ * that does not exist costs up to three broadcasts, and after a few hundred
+ * broadcasts in a row the cameras (or the network) stop answering. With 1,000
+ * addresses at once a camera late in the list was missed 1 run in 2. So the search
+ * goes one /24 at a time, starts one address every 4 ms and waits 2.5 s per address:
+ * 3.6 s per /24, about 15 s for a /22, both cameras found in 4 of 4 cold runs.
+ * The setup page shows what is found after each /24.
  */
 import { createSocket } from "node:dgram";
 import { randomUUID } from "node:crypto";
@@ -226,47 +229,56 @@ export interface DiscoverOptions {
   network?: string;
   ports?: readonly number[];
   connectTimeoutMs?: number;
-  /** Addresses checked at the same time (each with all ports). */
-  concurrency?: number;
-  /** No new checks after this many ms (the ONVIF wait comes after). */
+  /** Time between the start of two addresses (spreads the ARP broadcasts). */
+  startGapMs?: number;
+  /** No new /24 after this many ms (the ONVIF wait comes after). */
   deadlineMs?: number;
   wsdWaitMs?: number;
   connect?: Connect;
   wsd?: WsDiscovery;
+  /** Called after each /24 with what is found so far. */
+  onProgress?: (found: DiscoverResult) => void;
 }
 
 /** The found cameras, plus what was searched (for the "No camera answered" message). */
 export type DiscoverResult = FoundCamera[] & { searched?: string[]; network?: string; partial?: boolean };
 
 const ipKey = (ip: string) => toInt(parseIp(ip) ?? [0, 0, 0, 0]);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** TCP check of the network (own /24 first), then ONVIF Probes. Sorted by address. A /24 takes about 3 seconds, a /22 about 9. */
+const sorted = (m: Map<string, FoundCamera>, extra: Partial<DiscoverResult>): DiscoverResult =>
+  Object.assign([...m.values()].map((f) => ({ ...f, ports: [...f.ports].sort((a, b) => a - b) })).sort((a, b) => ipKey(a.ip) - ipKey(b.ip)), extra);
+
+/** TCP check of the network, one /24 at a time (own /24 first), then ONVIF Probes. Sorted by address. */
 export async function discoverCameras(o: DiscoverOptions): Promise<DiscoverResult> {
   const prefixes = o.prefixes?.length ? o.prefixes : o.prefix ? [o.prefix] : [];
   const ports = o.ports ?? SCAN_PORTS;
   const connect = o.connect ?? tcpOpen;
-  const timeout = o.connectTimeoutMs ?? 2000;
-  const deadline = Date.now() + (o.deadlineMs ?? 9000);
-  const hosts: string[] = [];
-  for (const p of prefixes) for (let i = 1; i <= 254; i++) hosts.push(`${p}.${i}`);
+  const timeout = o.connectTimeoutMs ?? 2500;
+  const gap = o.startGapMs ?? 4;
+  const deadline = Date.now() + (o.deadlineMs ?? 16_000);
   const found = new Map<string, FoundCamera>();
-  let next = 0;
+  const searched: string[] = [];
   let partial = false;
-  const worker = async () => {
-    for (;;) {
-      if (next >= hosts.length) return;
-      if (Date.now() > deadline) {
-        partial = true;
-        return;
-      }
-      const ip = hosts[next++];
-      // All ports of one address at once: one ARP lookup, one wait.
-      const open = await Promise.all(ports.map((port) => connect(ip, port, timeout).then((ok) => (ok ? port : 0))));
-      const hit = open.filter(Boolean);
-      if (hit.length) found.set(ip, { ip, ports: hit, onvif: false });
+  for (const p of prefixes) {
+    if (searched.length && Date.now() > deadline) {
+      partial = true;
+      break;
     }
-  };
-  await Promise.all(Array.from({ length: Math.min(o.concurrency ?? 256, hosts.length || 1) }, worker));
+    const jobs: Promise<void>[] = [];
+    for (let i = 1; i <= 254; i++) {
+      const ip = `${p}.${i}`;
+      // All ports of one address at once: one ARP lookup, one wait.
+      jobs.push(Promise.all(ports.map((port) => connect(ip, port, timeout).then((ok) => (ok ? port : 0)))).then((open) => {
+        const hit = open.filter(Boolean);
+        if (hit.length) found.set(ip, { ip, ports: hit, onvif: false });
+      }));
+      if (gap) await sleep(gap);
+    }
+    await Promise.all(jobs);
+    searched.push(p);
+    o.onProgress?.(sorted(found, { searched: [...searched], network: o.network }));
+  }
 
   const inRange = (ip: string) => prefixes.some((p) => ip.startsWith(`${p}.`));
   const answers = await (o.wsd ?? wsDiscovery)([...found.keys()], o.wsdWaitMs ?? 1200);
@@ -281,16 +293,10 @@ export async function discoverCameras(o: DiscoverOptions): Promise<DiscoverResul
     found.set(ip, f);
   }
   for (const f of found.values()) {
-    f.ports.sort((a, b) => a - b);
     // Port 2020 is the ONVIF port of Tapo cameras.
     if (!f.brand && f.ports.includes(2020)) f.brand = "tapo";
   }
-  const out: DiscoverResult = [...found.values()].sort((a, b) => ipKey(a.ip) - ipKey(b.ip));
-  const searchedHosts = partial ? hosts.slice(0, next) : hosts;
-  out.searched = prefixes.filter((p) => searchedHosts.some((h) => h.startsWith(`${p}.`)));
-  out.network = o.network;
-  out.partial = partial;
-  return out;
+  return sorted(found, { searched, network: o.network, partial });
 }
 
 /** "Camera at 192.168.1.20 · TP-IPC C210" */

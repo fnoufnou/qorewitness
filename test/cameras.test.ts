@@ -130,12 +130,15 @@ describe("find my camera (src/web/discover.ts)", () => {
     assert.equal(describeRanges(["10.0.1", "10.0.5"]), "10.0.1.1 to 10.0.1.254, 10.0.5.1 to 10.0.5.254");
   });
 
-  it("checks all ports of one address together and waits 2 s per address for slow Wi-Fi cameras", async () => {
+  it("checks all ports of one address together, one /24 at a time, 2.5 s per address", async () => {
     const calls: { ip: string; timeout: number; at: number }[] = [];
+    const progress: string[][] = [];
     const t0 = Date.now();
     const found = await discoverCameras({
       prefixes: ["192.168.1", "192.168.2"],
       network: "192.168.0.0/21",
+      startGapMs: 0,
+      onProgress: (f) => progress.push([...(f.searched ?? [])]),
       connect: async (ip, port, timeout) => {
         calls.push({ ip, timeout, at: Date.now() - t0 });
         return ip === "192.168.2.53" && port === 2020;
@@ -143,7 +146,9 @@ describe("find my camera (src/web/discover.ts)", () => {
       wsd: async () => [],
     });
     assert.equal(calls.length, 2 * 254 * 3);
-    assert.ok(calls.every((c) => c.timeout === 2000));
+    assert.ok(calls.every((c) => c.timeout === 2500));
+    assert.deepEqual(progress, [["192.168.1"], ["192.168.1", "192.168.2"]], "progress after each /24");
+    assert.ok(calls.slice(0, 254 * 3).every((c) => c.ip.startsWith("192.168.1.")), "the next /24 starts after the first is done");
     assert.equal(calls[0].ip, "192.168.1.1", "own /24 first");
     assert.deepEqual(found.map((f) => [f.ip, f.ports, f.brand]), [["192.168.2.53", [2020], "tapo"]]);
     assert.deepEqual(found.searched, ["192.168.1", "192.168.2"]);
@@ -154,8 +159,8 @@ describe("find my camera (src/web/discover.ts)", () => {
   it("stops new checks at the deadline and says how far it got", async () => {
     const found = await discoverCameras({
       prefixes: ["10.0.0", "10.0.1"],
-      concurrency: 10,
-      deadlineMs: 30,
+      startGapMs: 0,
+      deadlineMs: 10,
       connect: () => new Promise((r) => setTimeout(() => r(false), 20)),
       wsd: async () => [],
     });
