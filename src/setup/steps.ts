@@ -28,7 +28,7 @@ import { ensureScopedWindow, TESTNET_WINDOW } from "../agent/evm-window.js";
 import { deviceIdOf } from "../core/message.js";
 
 export const PUBLIC_REGISTRY_V4 = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
-export const FAUCET = "https://dashboard.qorechain.io";
+export const FAUCET = "https://dashboard.qorechain.io/faucet";
 export const EXPLORER = "https://explore.qore.network";
 /** Enough for the key registration, one window and the camera registration. */
 export const MIN_SETUP_UQOR = 2_000_000n;

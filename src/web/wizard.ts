@@ -203,7 +203,8 @@ export class Wizard {
     // 2. Network fees: the free beta sends them (default), or the owner does (Self-managed).
     progress(2, "Getting the network fees");
     const poll = this.d.pollMs ?? 10_000;
-    const deadline = Date.now() + (this.d.fundsTimeoutMs ?? 20 * 60_000);
+    // Own wallet: the owner signs in at the faucet, so wait longer.
+    const deadline = Date.now() + (this.d.fundsTimeoutMs ?? ((s0.plan ?? "sponsored") === "self" ? 60 : 20) * 60_000);
     const deviceId = deviceIdOf(label);
     let lastAsk = 0;
     while ((await this.d.chain.balanceUqor(owner.cosmos)) < MIN_SETUP_UQOR) {
@@ -407,7 +408,9 @@ export class Wizard {
   /** Seconds until the page reloads itself (the connect step runs). */
   refreshFor(screen: Screen): number | undefined {
     if (screen === "camera" && this.scanning()) return 2;
-    return screen === "connect" && this.state().job?.status !== "failed" ? 5 : undefined;
+    if (screen !== "connect" || this.state().job?.status === "failed") return undefined;
+    // Own wallet, waiting for test QOR: slower, so the address can be copied in peace.
+    return this.state().plan === "self" && this.state().job?.step === 2 ? 15 : 5;
   }
 
   private renderSearching(csrf: string, soFar?: DiscoverResult): string {
@@ -477,7 +480,7 @@ ${this.d.discover ? `<form method="post" action="/setup/camera">${hidden("_csrf"
     const btn = (action: string, label: string, cls = "") => `<form method="post" action="/setup/connect">${hidden("_csrf", csrf)}${hidden("action", action)}<button${cls ? ` class="${cls}"` : ""}>${label}</button></form>`;
     if (job?.status === "failed") {
       const msg = job.reason === "sponsor_stop" ? job.error ?? SPONSOR_TEXT.unknown
-        : job.reason === "no_funds" ? (self ? "No test tokens arrived yet. Add them, then try again." : "The network fees did not arrive yet. Try again in a few minutes.")
+        : job.reason === "no_funds" ? (self ? "No test QOR arrived yet. Claim them at the faucet, then try again." : "The network fees did not arrive yet. Try again in a few minutes.")
         : "Something went wrong while connecting to the test network. Nothing is lost. Try again.";
       return `<div class="card">${eyebrow(2, "Connect")}
 <h1>The connection stopped</h1><div class="error" role="alert">${esc(msg)}</div>
@@ -490,8 +493,10 @@ ${job.reason === "error" ? `<details><summary>Technical details</summary><pre>${
     if (self && step === 2 && existsSync(this.d.paths.accountEnv)) {
       const owner = await this.owner().catch(() => undefined);
       if (owner) {
-        waitSelf = `<div class="note"><strong>Self-managed:</strong> add at least 2 test QOR to your account. Claim them at the <a href="${FAUCET}" target="_blank" rel="noreferrer">QoreChain dashboard</a> (Faucet). This page goes on by itself when they arrive.
-<p class="mono" id="addr" style="margin:8px 0 0">${esc(owner.cosmos)}</p><button type="button" class="secondary" data-copy="addr">Copy address</button></div>`;
+        waitSelf = `<div class="note"><strong>Add test QOR to your camera's wallet</strong>
+<p class="mono" id="addr" style="margin:8px 0">${esc(owner.cosmos)}</p><button type="button" class="secondary" data-copy="addr">Copy address</button>
+<ol style="margin:12px 0 0;padding-left:20px"><li>Open the <a href="${FAUCET}" target="_blank" rel="noreferrer">QoreChain faucet</a> and sign in.</li><li>Paste the address and press <strong>Request Tokens</strong>. You get 100 test QOR, enough for about two weeks.</li></ol>
+<p class="hint">Or send at least 2 test QOR from your own QoreChain wallet. This page goes on by itself when they arrive.</p></div>`;
       }
     }
     return `<div class="card">${eyebrow(2, "Connect")}

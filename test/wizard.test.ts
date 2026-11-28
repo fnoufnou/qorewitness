@@ -314,6 +314,9 @@ describe("wizard: connect step (mocked chain and sponsor)", () => {
     while (t.wizard.state().job?.step !== 2) await new Promise((ok) => setTimeout(ok, 5));
     const waiting = await t.wizard.render("connect", "x");
     assert.match(waiting, /qor1[0-9a-z]+/);
+    assert.match(waiting, /href="https:\/\/dashboard\.qorechain\.io\/faucet"/, "a direct link to the faucet");
+    assert.match(waiting, /Request Tokens/);
+    assert.equal(t.wizard.refreshFor("connect"), 15, "slow refresh while the owner claims test QOR");
     t.chainOpts.balance = MIN_SETUP_UQOR;
     await t.wizard.idle();
     assert.equal(await t.wizard.screen(), "done");
@@ -325,7 +328,7 @@ describe("wizard: connect step (mocked chain and sponsor)", () => {
     await confirmed(t, "self");
     await t.wizard.idle();
     assert.equal(t.sponsorCalls.length, 0);
-    assert.match(await t.wizard.render("connect", "x"), /No test tokens arrived yet/);
+    assert.match(await t.wizard.render("connect", "x"), /No test QOR arrived yet\. Claim them at the faucet/);
   });
 
   it("resumes an interrupted connect step after a restart", async () => {
