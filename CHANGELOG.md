@@ -4,6 +4,19 @@ Newest first. Dates in UTC. Dependency updates follow the checks in the "Depende
 
 ## Unreleased
 
+## 0.6.0-beta.3 (28 Nov 2026)
+
+Second round of fixes from the first C210 install run. Install line pinned to this tag.
+
+- Fix: "Find my camera" still missed cameras on a cold start. Cause, measured on the home server: 1,000 address lookups at once drown the network, and a camera late in the list did not answer (1 run in 2). The search now goes one /24 at a time and spreads the lookups (one address every 4 ms, 2.5 s each). Both cameras found in 5 of 5 cold runs, 3.6 s per /24, about 15 s for a /22. The page shows the cameras found so far.
+- Setup: a known brand (from ONVIF or the Tapo port) is folded as "Brand: TP-Link Tapo · Change", and a camera with a known brand is preselected.
+- Setup: the camera account name says that upper and lower case count. The browser no longer fills in an old password.
+- Setup: no quality choice. High quality, or standard when high quality fits less than a week on the disk.
+- Setup: the camera test runs once more when a sleeping Wi-Fi camera missed the first lookup ("No route to host").
+- Setup: fewer lines that cause doubt. No footer line, no "You can close this page", no backup line on the done page.
+- Own QoreChain wallet (Advanced): the camera's wallet address with a copy button, a direct link to the faucet with the two steps, or send test QOR from your own wallet. The setup waits up to 60 minutes and goes on by itself.
+- Tests: 397 (330 node, 67 Solidity).
+
 ## 0.6.0-beta.2 (28 Nov 2026)
 
 Fixes from the first C210 install run (CT 263, home server path). Install line pinned to this tag.

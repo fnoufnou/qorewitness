@@ -26,7 +26,7 @@ const GH = "https://github.com/fnoufnou/qorewitness";
 const GHDOC = (f) => `${GH}/blob/main/docs/${f}`;
 const X = "https://x.com/fnoufnou";
 const DISCORD = "https://discord.gg/qorechain";
-const TAG = "v0.6.0-beta.2"; // the release the install line runs; the "read the script" link points to the same tag
+const TAG = "v0.6.0-beta.3"; // the release the install line runs; the "read the script" link points to the same tag
 const INSTALL = `ssh -t USER@IP-ADDRESS "curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/${TAG}/install.sh | bash -s -- --yes"`;
 const VERIFIER_SHA = "0f3c7558c822e04fa3568021e479abd3e6e0b1e8dd0dfd11d4cac8ddbdaf87b2";
 const REGISTRY = "0xa1378D6558B32e1f8d37b68cf90e3C93839Da365";
@@ -49,7 +49,7 @@ const RUBRIC_URL = "https://build.qorechain.io/faq";
 // tx: the anchor transaction of the sample window (registry v4, sent by the test computer's owner account ACCOUNTS.test).
 // The explorer finds a transaction only by its Cosmos hash (tx); evmTx is the same transaction on the EVM RPC.
 const SAMPLE = { clip: "sample-clip.mp4", receipt: "sample-receipt.json", block: "10,653,907", sealed: "24 Nov 2026, 08:10 CET", recorded: "08:08 to 08:09 CET", within: "1 minute", tx: "4E1BE84FC988529DC5A3D6C22AD3094F6724E3C1EC560162330A017B300F7DBD", evmTx: "0xc144eb064bc87a199711ba178493f13bfdee2f48664aa3946404c8ca594fa482" };
-const TESTS = 395; // automated tests (pnpm test): 328 node tests and 67 Solidity fuzz, invariant and unit tests
+const TESTS = 397; // automated tests (pnpm test): 330 node tests and 67 Solidity fuzz, invariant and unit tests
 const TESTS_DATE = "28 Nov 2026"; // the day TESTS was counted
 const DRILLS = {
   qdayDry: "9 Nov 2026", // our own dry run of the Q-Day Drill (docs/TESTNET_FINDINGS.md)

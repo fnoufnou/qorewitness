@@ -89,7 +89,7 @@ verifier (static page or CLI): clip + receipt
 <section id="run"><div class="wrap narrow">
 <p class="eyebrow">Run it yourself</p><h2>Install, update, back up, remove.</h2>
 <ul class="plain" style="margin-top:16px">
-<li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.2/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/INSTALL.md">INSTALL.md</a>.</li>
+<li><b>Install on the recorder computer itself:</b> <code>curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.3/install.sh | bash -s -- --yes</code>. Options: <code>--local-only</code>, <code>--new-password</code>, <code>--terminal</code> (setup with questions in the terminal), <code>--build</code>. See <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/INSTALL.md">INSTALL.md</a>.</li>
 <li><b>Other platforms:</b> a NAS, a home server, Windows and macOS use the same <code>docker-compose.yml</code> (<a href="get-started.html#s3">guide</a>).</li>
 <li><b>Other camera brands:</b> with <code>--terminal</code> you can give a full stream URL, for example <code>rtsp://user:password@192.168.1.20:554/stream</code>. Compatibility status per brand: <a href="cameras.html">cameras</a>. Research notes: <a href="https://github.com/fnoufnou/qorewitness/blob/main/docs/CAMERAS.md">CAMERAS.md</a>.</li>
 <li><b>Update:</b> set the new version in <code>~/qorewitness/.env</code> (<code>QW_VERSION</code>), then <code>docker compose pull &amp;&amp; docker compose up -d</code>. The version is pinned, and QoreWitness never updates itself.</li>
@@ -114,7 +114,7 @@ verifier (static page or CLI): clip + receipt
 <dt>QoreWitness Verify SHA-256</dt><dd><code>0f3c7558c822e04fa3568021e479abd3e6e0b1e8dd0dfd11d4cac8ddbdaf87b2</code><br><span class="small muted">Build it with <code>pnpm build:verifier</code> and compare.</span></dd>
 <dt>Check a receipt in a terminal</dt><dd><code>pnpm tsx scripts/verify-receipt.ts sample-receipt.json sample-clip.mp4</code></dd>
 <dt>Without our code</dt><dd><code>python3 tools/verify_receipt.py &lt;receipt&gt; &lt;file&gt;</code> (standard library only)</dd>
-<dt>Run the tests</dt><dd><code>pnpm test</code> (395 automated tests on 28 Nov 2026, with fuzz and invariant tests for the contracts). Contract tests mock the precompiles. <code>pnpm probe:pqc</code>, <code>pnpm probe:pqc:fuzz</code> and <code>pnpm probe:registry</code> check real ML-DSA-87 signatures against the live <code>pqcVerify</code> and the live contract, with no key and no transaction.</dd>
+<dt>Run the tests</dt><dd><code>pnpm test</code> (397 automated tests on 28 Nov 2026, with fuzz and invariant tests for the contracts). Contract tests mock the precompiles. <code>pnpm probe:pqc</code>, <code>pnpm probe:pqc:fuzz</code> and <code>pnpm probe:registry</code> check real ML-DSA-87 signatures against the live <code>pqcVerify</code> and the live contract, with no key and no transaction.</dd>
 </dl>
 </div></section>
 

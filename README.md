@@ -33,7 +33,7 @@ Without a browser: `python3 tools/verify_receipt.py sample-receipt.json sample-c
 | Project page | https://build.qorechain.io/p/qorewitness |
 | Install on your own camera | [docs/INSTALL.md](docs/INSTALL.md) |
 | Guide for jurors | [JUDGES.md](JUDGES.md): score it in 5 minutes, the rubric with evidence |
-| Run the tests | `pnpm install --frozen-lockfile --ignore-scripts && pnpm test` (395 tests, with fuzz and invariant tests for the contracts) |
+| Run the tests | `pnpm install --frozen-lockfile --ignore-scripts && pnpm test` (397 tests, with fuzz and invariant tests for the contracts) |
 | Check the live precompile, no key needed | `pnpm probe:pqc:fuzz && pnpm probe:registry` ([what they show](docs/LIVE_PROBES.md)) |
 
 ## Why post-quantum
@@ -117,7 +117,7 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 On a 64-bit Linux machine (Raspberry Pi OS Lite 64-bit, Debian, Ubuntu) on your home network:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.2/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/fnoufnou/qorewitness/v0.6.0-beta.3/install.sh | bash
 ```
 
 The installer installs Docker when it is missing (Enter or `--yes` means yes), pulls the published image `ghcr.io/fnoufnou/qorewitness:<QW_VERSION>`, starts QoreWitness and prints the dashboard address and a pairing code. The rest happens in the browser on your phone or laptop: a password, the camera ("Is this your camera?" with a picture), and one progress bar to "Sealing started". Keys and the owner account are made in the background. The free beta pays the network fees (no code). Self-managed sits under "Advanced". Everything lives in `~/qorewitness/data`. Read [install.sh](install.sh) before you run it.
@@ -146,7 +146,7 @@ The `retention` service deletes segments older than `QW_RETENTION_DAYS` (default
 
 ```bash
 pnpm install --frozen-lockfile --ignore-scripts
-pnpm test                 # 395 tests: 328 node tests and 67 Solidity fuzz, invariant and unit tests (precompile mocks)
+pnpm test                 # 397 tests: 330 node tests and 67 Solidity fuzz, invariant and unit tests (precompile mocks)
 pnpm test:fuzz            # deep profile: 4,096 runs per fuzz test, invariants 256 runs x depth 100
 pnpm test:coverage        # line and statement coverage of the contracts
 pnpm probe:pqc:fuzz       # 300 mutated inputs against the live pqcVerify, no key, no transaction
@@ -189,7 +189,7 @@ Create the account with `scripts/new-account.ts` (mnemonic). Do not use the `PRI
 | [deploy/](deploy/) | Docker entrypoint, recorder (ffmpeg) and agent systemd units, per-camera config, sponsor service |
 | [ignition/](ignition/) | Hardhat Ignition deploy module for the registry |
 | [scripts/](scripts/) | Device CLI, EVM window helper, anchor and verify CLIs, live precompile probes, drills, site and verifier builds |
-| [test/](test/) | 395 tests. 328 node tests: contracts with precompile mocks, agent, setup, dashboard, sponsor, installer, verifier, live probe logic (Hardhat 3, node:test, viem). 67 Solidity tests in [test/solidity/](test/solidity/): 52 fuzz tests, 6 invariants, 9 unit tests |
+| [test/](test/) | 397 tests. 330 node tests: contracts with precompile mocks, agent, setup, dashboard, sponsor, installer, verifier, live probe logic (Hardhat 3, node:test, viem). 67 Solidity tests in [test/solidity/](test/solidity/): 52 fuzz tests, 6 invariants, 9 unit tests |
 
 ### Docs
 
