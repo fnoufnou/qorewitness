@@ -170,7 +170,7 @@ export function renderRegistryReport(i: RegistryReportInput): string {
             ? `**INCOMPLETE.** ${r.checks.length - nr} of ${r.checks.length} checks passed, ${nr} could not run.`
             : `**PASSED.** ${r.checks.length} of ${r.checks.length} checks gave the expected answer.`,
     "",
-    "Nothing was sent. Every call is an `eth_call`. The owner address is only the `from` field. No owner key or device key was used.",
+    "Nothing was sent. Every call is an `eth_call`. The owner address is only the `from` field. No owner or device private key was used.",
     "",
   );
   for (const g of Object.keys(GROUP_TITLES) as Check["group"][]) {
@@ -186,7 +186,7 @@ export function renderRegistryReport(i: RegistryReportInput): string {
     out.push(
       "## What this shows",
       "",
-      "The gating controls show that the live pqcVerify precompile accepts a fresh valid signature and the real signature of the camera over the exact bytes that the live contract builds, and refuses both with one flipped bit. This is a replay with eth_call of a verification the chain already did when it included the newest anchor. No private key was used.",
+      "The gating controls show that the live pqcVerify precompile accepts a fresh valid signature and the real signature of the camera over the exact bytes that the live contract builds. It returns false when one bit of that signature or of that message is flipped. The real-signature control is a replay with eth_call of a verification the chain already did when it included the newest anchor. No owner or device private key was used.",
       "",
       "The deployed contract, running with the same precompiles, refuses forged, replayed and attacker-made signatures with the expected custom errors. BadSignature() means that the precompile did not accept the signature: it returned false or the call failed. Together with the gating controls in the same run, a dead precompile cannot produce a passing run.",
       "",

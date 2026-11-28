@@ -284,7 +284,7 @@ async function runAt(rpc: Rpc, cfg: RegistryConfig, chainId: number, retried: bo
     "newest real anchor: signingMessage(owner, claim) of the live contract equals the message built here", "equal",
     liveMsg === localMsg ? `equal (${(liveMsg.length - 2) / 2} bytes)` : "differs", liveMsg === localMsg,
   );
-  const REPLAY_NOTE = "Replay with eth_call of a verification the chain already did when it included the newest anchor transaction. No private key is used.";
+  const REPLAY_NOTE = "Replay with eth_call of a verification the chain already did when it included the newest anchor transaction. No owner or device private key is used.";
   const real = await pqc(devicePk, cur.sig, liveMsg);
   control(
     "newest real anchor: pqcVerify(device key, its signature, message from the live contract)", "true",
