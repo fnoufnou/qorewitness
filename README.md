@@ -33,7 +33,7 @@ Without a browser: `python3 tools/verify_receipt.py sample-receipt.json sample-c
 | Project page | https://build.qorechain.io/p/qorewitness |
 | Install on your own camera | [docs/INSTALL.md](docs/INSTALL.md) |
 | Guide for jurors | [JUDGES.md](JUDGES.md): score it in 5 minutes, the rubric with evidence |
-| Run the tests | `pnpm install --frozen-lockfile --ignore-scripts && pnpm test` (365 tests, with fuzz and invariant tests for the contracts) |
+| Run the tests | `pnpm install --frozen-lockfile --ignore-scripts && pnpm test` (388 tests, with fuzz and invariant tests for the contracts) |
 | Check the live precompile, no key needed | `pnpm probe:pqc:fuzz && pnpm probe:registry` ([what they show](docs/LIVE_PROBES.md)) |
 
 ## Why post-quantum
@@ -80,7 +80,7 @@ QoreWitness targets the qorechain-diana testnet, where the fest is judged. The Q
 | Registry v2 (9 to 12 Nov, devices, rotation, `verifyAnchor`) | [0x1854EeE2A659F4f39A05d5832cceC405E8045336](https://explore.qore.network/address/0x1854EeE2A659F4f39A05d5832cceC405E8045336) |
 | Registry v1 (9 Nov, anchors by account key) | [0xA73d4347b50C2A373533915d698Bf03a01c65aAF](https://explore.qore.network/address/0xA73d4347b50C2A373533915d698Bf03a01c65aAF) |
 | Owner and agent account of the live camera | `qor16mrtm7l9v77wwvvsw7ycqqs9mu9h3jjj0785k7` ([0xD6C6bDfBE567BcE731907789800205Df0B78ca52](https://explore.qore.network/address/0xD6C6bDfBE567BcE731907789800205Df0B78ca52)) |
-| Owner of the test computer (sample clip on the site) | `qor1j2shg2wadqw3eg8dafw0uh3env49y2qx7en2tl` ([0x92a17429Dd681d1CA0EDeA5Cfe5E399B2a522806](https://explore.qore.network/address/0x92a17429Dd681d1CA0EDeA5Cfe5E399B2a522806)) |
+| Owner of the test camera (sample clip on the site) | `qor1j2shg2wadqw3eg8dafw0uh3env49y2qx7en2tl` ([0x92a17429Dd681d1CA0EDeA5Cfe5E399B2a522806](https://explore.qore.network/address/0x92a17429Dd681d1CA0EDeA5Cfe5E399B2a522806)) |
 | Free beta fee sponsor | `qor10u3hsshqhe0w9sp39p2nar6qrv5dph9uc428gc` ([0x7f237842e0be5ee2c03128553e8f401b28d0dcbc](https://explore.qore.network/address/0x7f237842e0be5ee2c03128553e8f401b28d0dcbc)) |
 
 - A home camera records 60-second segments. The agent anchors every 10-minute window. It used v2 from 9 Nov, v3 from 12 Nov and v4 since 14 Nov 2026.
@@ -146,11 +146,11 @@ The `retention` service deletes segments older than `QW_RETENTION_DAYS` (default
 
 ```bash
 pnpm install --frozen-lockfile --ignore-scripts
-pnpm test                 # 365 tests: 308 node tests and 57 Solidity fuzz, invariant and unit tests (precompile mocks)
+pnpm test                 # 388 tests: 321 node tests and 67 Solidity fuzz, invariant and unit tests (precompile mocks)
 pnpm test:fuzz            # deep profile: 4,096 runs per fuzz test, invariants 256 runs x depth 100
 pnpm test:coverage        # line and statement coverage of the contracts
 pnpm probe:pqc:fuzz       # 300 mutated inputs against the live pqcVerify, no key, no transaction
-pnpm probe:registry       # forged and replayed seals simulated against the live registry v4
+pnpm probe:registry       # gated on the real camera signature, then forged and replayed seals simulated against the live registry v4
 pnpm typecheck
 pnpm probe:pqc            # live ML-DSA-87 checks against the testnet precompile, no funds needed
 ```
@@ -189,7 +189,7 @@ Create the account with `scripts/new-account.ts` (mnemonic). Do not use the `PRI
 | [deploy/](deploy/) | Docker entrypoint, recorder (ffmpeg) and agent systemd units, per-camera config, sponsor service |
 | [ignition/](ignition/) | Hardhat Ignition deploy module for the registry |
 | [scripts/](scripts/) | Device CLI, EVM window helper, anchor and verify CLIs, live precompile probes, drills, site and verifier builds |
-| [test/](test/) | 365 tests. 308 node tests: contracts with precompile mocks, agent, setup, dashboard, sponsor, installer, verifier, live probe logic (Hardhat 3, node:test, viem). 57 Solidity tests in [test/solidity/](test/solidity/): 45 fuzz tests, 6 invariants, 6 unit tests |
+| [test/](test/) | 388 tests. 321 node tests: contracts with precompile mocks, agent, setup, dashboard, sponsor, installer, verifier, live probe logic (Hardhat 3, node:test, viem). 67 Solidity tests in [test/solidity/](test/solidity/): 52 fuzz tests, 6 invariants, 9 unit tests |
 
 ### Docs
 
