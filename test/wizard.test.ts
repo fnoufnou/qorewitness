@@ -223,7 +223,7 @@ describe("wizard: browser setup over HTTP (mocked chain, camera and sponsor)", (
     const done = (await b.get("/setup/done")).body;
     assert.match(done, /Sealing started/);
     assert.match(done, /http:\/\/192\.168\.1\.50:8080/);
-    assert.match(done, /Back up that folder once/);
+    assert.doesNotMatch(done, /Back up that folder|close this page|never asks for your passwords/, "no friction lines (Pieter, 28 Nov)");
     const info = JSON.parse(readFileSync(t.paths.accountJson, "utf8"));
     assert.equal(info.plan, "sponsored");
     assert.ok(existsSync(t.paths.done));
@@ -461,6 +461,17 @@ describe("wizard: any camera (find, brand, link)", () => {
     const r1 = await w.post("/setup/camera", form);
     assert.match(r1.html!, /A camera is on this address, but it sent no video/);
     assert.deepEqual(reached, ["192.168.2.53:554"]);
+    // Second test after a "No route to host" on a sleeping Wi-Fi camera: the retry gives the picture.
+    let calls = 0;
+    const paths2 = dataPaths(mkdtempSync(join(tmpdir(), "qw-any-")));
+    ensureDirs(paths2);
+    const w2 = new Wizard({
+      paths: paths2, chain: mockChain().chain, sponsor: () => { throw new Error("no sponsor"); }, diskFree: () => 500e9,
+      snapshot: async () => (++calls === 1 ? { ok: false, kind: "unreachable", message: "No camera answered at this address.", detail: "No route to host" } : { ok: true, jpeg: JPEG, info: {} }),
+      reach: async () => true,
+    });
+    assert.match((await w2.post("/setup/camera", form)).html!, /Is this your camera/);
+    assert.equal(calls, 2);
     const r2 = await w.post("/setup/camera", { ...form, host: "192.168.2.99" });
     assert.match(r2.html!, /No camera answered at this address/);
     snap = { ok: false, kind: "auth", message: "The camera refused the name or password.", detail: "" };
@@ -468,6 +479,35 @@ describe("wizard: any camera (find, brand, link)", () => {
     assert.match(r3.html!, /refused the name or password\./);
     assert.doesNotMatch(r3.html!, /No camera answered on your network|and no camera answered/, "no search note under a test error");
     assert.equal(reached.length, 2, "no port check after a clear answer");
+  });
+
+  it("chooses the quality for the owner: no quality choice on the picture screen, standard on a small disk (Pieter, 28 Nov)", async () => {
+    const mk = (free: number) => {
+      const paths = dataPaths(mkdtempSync(join(tmpdir(), "qw-any-")));
+      ensureDirs(paths);
+      const urls: string[] = [];
+      const w = new Wizard({ paths, chain: mockChain().chain, sponsor: () => { throw new Error("no sponsor"); }, diskFree: () => free,
+        snapshot: async (u) => { urls.push(u); return { ok: true, jpeg: JPEG, info: {} }; } });
+      return { w, paths, urls };
+    };
+    const form = { action: "test", host: "192.168.2.53", brand: "tapo", user: "Dogcam", password: "secret12", consent: "yes" };
+    const big = mk(500e9);
+    const pic = (await big.w.post("/setup/camera", form)).html!;
+    assert.doesNotMatch(pic, /standard quality/i);
+    assert.match(readEnvFile(big.paths.cameraEnv).QW_STREAM_URL, /\/stream1$/);
+    const small = mk(60e9); // about 2 days of high quality
+    await small.w.post("/setup/camera", form);
+    assert.equal(small.urls[0], "rtsp://Dogcam:secret12@192.168.2.53:554/stream1", "the test uses high quality");
+    assert.match(readEnvFile(small.paths.cameraEnv).QW_STREAM_URL, /\/stream2$/, "the recorder gets standard quality");
+    const html = await small.w.render("camera", "x");
+    assert.doesNotMatch(html, /never asks for your passwords/, "no footer line");
+  });
+
+  it("says that the account name is case-sensitive, and the browser does not fill in an old password", async () => {
+    const t = wiz();
+    const html = await t.w.render("camera", "x", "http://192.168.1.228:8080");
+    assert.match(html, /Upper and lower case count\./);
+    assert.match(html, /id="password" name="password" type="password" autocomplete="new-password"/);
   });
 
   it("a picked camera and a brand give the vendor link, name and password typed only", async () => {

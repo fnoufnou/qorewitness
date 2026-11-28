@@ -321,8 +321,13 @@ export class Wizard {
     let result = await this.d.snapshot(url);
     if (!result.ok && (result.kind === "unreachable" || result.kind === "timeout") && this.d.reach) {
       // Run 1 (28 Nov): "No camera answered" while the C210 was there. Check the port before saying so.
+      // A Wi-Fi camera in power save can miss the first address lookup ("No route to host"). When the
+      // port answers now, the camera is awake: test once more before saying anything.
       const ep = streamEndpoint(url);
-      if (ep && (await this.d.reach(ep.host, ep.port).catch(() => false))) result = { ...result, kind: "silent", message: CAMERA_ERRORS.silent };
+      if (ep && (await this.d.reach(ep.host, ep.port).catch(() => false))) {
+        result = await this.d.snapshot(url);
+        if (!result.ok && (result.kind === "unreachable" || result.kind === "timeout")) result = { ...result, kind: "silent", message: CAMERA_ERRORS.silent };
+      }
     }
     if (!result.ok) {
       // Brand hints only for that brand (for example the Tapo recording rule).
@@ -333,7 +338,17 @@ export class Wizard {
     }
     cam.testedAt = new Date().toISOString();
     // Without an injected value, ask the disk that holds /data (the server passes none).
-    cam.retentionDays = proposeRetentionDays(this.d.diskFree ? this.d.diskFree() : freeBytes(this.d.paths.data), cam.quality === "sub" ? "stream2" : "stream1");
+    const free = this.d.diskFree ? this.d.diskFree() : freeBytes(this.d.paths.data);
+    // Quality is chosen for the owner: high quality, or standard when high quality fits less than a week on the disk.
+    const sb = brandById(cam.brand);
+    if (cam.quality === "main" && sb.subPath && !sb.fullLink && proposeRetentionDays(free, "stream1") < 7) {
+      const parsed = parseStreamUrl(url);
+      if (parsed) {
+        url = brandStreamUrl(sb, { host: parsed.host, user: parsed.user, password: parsed.password, quality: "sub" });
+        cam.quality = "sub";
+      }
+    }
+    cam.retentionDays = proposeRetentionDays(free, cam.quality === "sub" ? "stream2" : "stream1");
     saveCamera(this.d.paths, { label: cam.label, streamUrl: url, retentionDays: cam.retentionDays });
     this.update((n) => {
       n.camera = cam;
@@ -432,14 +447,14 @@ ${error ? `<div class="error" role="alert">${esc(error)}</div>` : ""}${detail ? 
 ${list}
 <label for="host">${found?.length ? "Or type the camera address" : "Camera address"}</label><input id="host" name="host" type="text" inputmode="decimal" autocomplete="off" placeholder="192.168.1.20" value="${esc(found?.some((f) => f.ip === v.host) ? "" : v.host)}">
 <label for="brand">Brand</label><select id="brand" name="brand" data-brand><option value="">Choose the brand</option>${brands}</select>
-<label for="user">Camera account name</label><input id="user" name="user" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" value="${esc(v.user)}">
-<label for="password">Camera account password</label><input id="password" name="password" type="password" autocomplete="off"${v.hasPassword ? ' placeholder="Leave empty to use the password you typed"' : ""}>
+<label for="user">Camera account name</label><input id="user" name="user" type="text" autocomplete="off" data-lpignore="true" autocapitalize="none" spellcheck="false" value="${esc(v.user)}"><div class="hint">Type it exactly as in the camera app. Upper and lower case count.</div>
+<label for="password">Camera account password</label><input id="password" name="password" type="password" autocomplete="new-password"${v.hasPassword ? ' placeholder="Leave empty to use the password you typed"' : ""}>
 <div data-linkfield><label for="link">Camera link (only for Other camera and UniFi Protect)</label><input id="link" name="link" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="rtsp://..." value="${esc(v.link)}"></div>
 <label class="check"><input type="checkbox" name="consent" value="yes"${v.consent ? " checked" : ""}> <span>My camera films my own property.</span></label>
 <p class="hint">Clips keep sound when your camera's microphone is on. You can switch it off in your camera's app at any time.</p>
 <button>Test camera</button><div class="hint">The test takes up to 15 seconds.</div>
 <details><summary>Where do I find the camera account?</summary>${howTo}</details>
-<details><summary>Advanced</summary><label class="check"><input type="checkbox" name="selfManaged" value="yes"${plan === "self" ? " checked" : ""}> <span>Use my own wallet (Self-managed). You pay the network fees with your own test tokens.</span></label></details>
+<details><summary>Advanced</summary><label class="check"><input type="checkbox" name="selfManaged" value="yes"${plan === "self" ? " checked" : ""}> <span>Use my own QoreChain wallet. You pay the network fees with your own test-network tokens.</span></label></details>
 </form>
 ${this.d.discover ? `<form method="post" action="/setup/camera">${hidden("_csrf", csrf)}${hidden("action", "rescan")}<button class="secondary">Search my network again</button></form>` : ""}</div>`;
   }
@@ -448,12 +463,9 @@ ${this.d.discover ? `<form method="post" action="/setup/camera">${hidden("_csrf"
     const form = (action: string, label: string, cls = "") => `<form method="post" action="/setup/camera">${hidden("_csrf", csrf)}${hidden("action", action)}<button${cls ? ` class="${cls}"` : ""}>${label}</button></form>`;
     const img = this.lastSnapshot ? `<img class="snap" alt="Picture from your camera" src="data:image/jpeg;base64,${this.lastSnapshot.toString("base64")}">` : "";
     const cam = this.state().camera;
-    const b = brandById(cam?.brand ?? (cam?.path ? "tapo" : undefined));
-    const std = !!cam && cam.quality !== "sub" && cam.path !== "stream2" && !b.fullLink && !!b.subPath;
     return `<div class="card">${eyebrow(1, "Camera")}
 <h1>Is this your camera?</h1>${img}
-<div class="row">${form("confirm", "Yes, this is my camera")}${form("retry", "Try again", "secondary")}</div>
-${std ? `<details><summary>Why standard quality?</summary><p>Standard quality uses less disk space and Wi-Fi. Use it when the computer has a small disk or the camera is far from the router.</p>${form("standard", "Use standard quality", "secondary")}</details>` : ""}</div>`;
+<div class="row">${form("confirm", "Yes, this is my camera")}${form("retry", "Try again", "secondary")}</div></div>`;
   }
 
   private async renderConnect(csrf: string): Promise<string> {
@@ -483,7 +495,7 @@ ${job.reason === "error" ? `<details><summary>Technical details</summary><pre>${
     return `<div class="card">${eyebrow(2, "Connect")}
 <h1>Connecting your camera…</h1>
 <progress value="${esc(step)}" max="${esc(total)}" aria-label="Progress"></progress>
-<p class="muted">This takes a few minutes. You can close this page. QoreWitness goes on.</p>${waitSelf}</div>`;
+<p class="muted">This takes a few minutes.</p>${waitSelf}</div>`;
   }
 
   /** Last test picture, for tests. */
@@ -512,8 +524,7 @@ export function renderDone(dashboardUrl: string, installerUrl?: string): string 
 <p>Your dashboard is here. Bookmark it now, or add it to your home screen:</p>
 ${big(dashboardUrl || "/")}${other ? `<p>From any phone or computer in your home, this address also works:</p>${big(other)}` : ""}
 <a class="btn" href="/">Open my dashboard</a>
-<p style="margin-top:16px">To prove a video later: open the dashboard and press <strong>Download</strong> next to the time you need.</p>
-<p class="muted">QoreWitness keeps its keys in the qorewitness folder on this computer. Back up that folder once.</p></div>`;
+<p style="margin-top:16px">To prove a video later: open the dashboard and press <strong>Download</strong> next to the time you need.</p></div>`;
 }
 
 // ---------------------------------------------------------------- claim (pairing and password)

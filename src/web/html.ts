@@ -96,7 +96,6 @@ ${o.refreshSeconds ? `<meta http-equiv="refresh" content="${o.refreshSeconds}">`
 <link rel="icon" href="/favicon.svg"><style>${CSS}${o.wide ? "main,footer{max-width:60rem}" : ""}</style></head><body>
 <header>${LOGO}<strong>QoreWitness</strong>${o.nav ?? ""}<span class="tag" title="Beta on the QoreChain test network, which can be reset. Free while we build out the service.">Beta · test network</span></header>
 <main>${o.body}</main>
-<footer>Free beta: we cover the network fees on the QoreChain test network. QoreWitness never asks for your passwords or files.</footer>
 <script>${BOX_SCRIPT}</script>${o.evidence ? `<script>${EVIDENCE_SCRIPT}</script>` : ""}</body></html>`;
 }
 
