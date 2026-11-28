@@ -442,6 +442,20 @@ describe("wizard: any camera (find, brand, link)", () => {
     assert.doesNotMatch(alert((await t.w.post("/setup/camera", { action: "test", found: "192.168.1.31", brand: "reolink", user: "u", password: "secret12", consent: "yes" })).html!), /only two of the three work/);
   });
 
+  it("after a failed test the tick and the typed password stay, the password never in the page", async () => {
+    const t = wiz({ ok: false, kind: "unreachable", message: "The camera does not respond.", detail: "" });
+    const r = await t.w.post("/setup/camera", { action: "test", host: "192.168.2.53", brand: "tapo", user: "dogcam", password: "s3cret-pass", consent: "yes" });
+    assert.match(r.html!, /name="consent" value="yes" checked/);
+    assert.match(r.html!, /Leave empty to use the password you typed/);
+    assert.doesNotMatch(r.html!, /s3cret-pass/);
+    await t.w.post("/setup/camera", { action: "test", host: "192.168.2.53", brand: "tapo", user: "dogcam", password: "", consent: "yes" });
+    assert.equal(t.urls[1], "rtsp://dogcam:s3cret-pass@192.168.2.53:554/stream1");
+    await t.w.post("/setup/camera", { action: "test", host: "192.168.2.54", brand: "tapo", user: "dogcam", password: "", consent: "yes" });
+    assert.ok(!t.urls.some((u) => u.includes("192.168.2.54") && u.includes("s3cret-pass")), "another address does not get the old password");
+    const v = await t.w.post("/setup/camera", { action: "test", host: "192.168.2.53", brand: "tapo", user: "dogcam", password: "x", consent: "" });
+    assert.doesNotMatch(v.html!, /name="consent" value="yes" checked/);
+  });
+
   it("an unsupported video format is a plain error", async () => {
     const t = wiz({ ok: false, kind: "unsupported", message: "Your camera sends a video format that QoreWitness cannot record yet. In the camera's settings, choose H.264 or H.265 and try again.", detail: "video codec mjpeg" });
     const r = await t.w.post("/setup/camera", { action: "test", found: "192.168.1.31", brand: "axis", user: "u", password: "secret12", consent: "yes" });

@@ -123,6 +123,8 @@ class StopError extends Error {
 export class Wizard {
   private running?: Promise<void>;
   private lastSnapshot?: Buffer;
+  /** The last typed camera password, in memory only, so a retry does not need it again. */
+  private lastPassword?: { host: string; user: string; password: string };
   private scan?: { at: number; found: FoundCamera[]; running?: Promise<void> };
   private ownerPub?: { cosmos: string; evm: `0x${string}`; registry: `0x${string}` };
 
@@ -287,13 +289,17 @@ export class Wizard {
       url = brandStreamUrl(brand, { host: parsed.host, user: parsed.user, password: parsed.password, quality: "sub" });
     } else {
       const host = ((form.host ?? "").trim() || (form.found ?? "")).trim();
-      const values: CameraFormValues = { host, user: form.user ?? "", brand: form.brand ?? "", link: form.link ?? "" };
+      const user = form.user ?? "";
+      const keep = this.lastPassword && this.lastPassword.host === host && this.lastPassword.user === user ? this.lastPassword.password : undefined;
+      const password = form.password || keep || "";
+      if (form.password) this.lastPassword = { host, user, password: form.password };
+      const values: CameraFormValues = { host, user, brand: form.brand ?? "", link: form.link ?? "", consent: form.consent === "yes", hasPassword: password !== "" };
       const fail = async (msg: string) => ({ html: await this.renderCameraForm(csrf, msg, values) });
       if (!CAMERA_BRANDS.some((b) => b.id === values.brand)) return fail("Pick the brand of your camera. Not in the list? Pick Other camera.");
       if (form.consent !== "yes") return fail("Please confirm that your camera films your own property: tick \"My camera films my own property\".");
       const brand = brandById(values.brand);
       try {
-        url = brandStreamUrl(brand, { host, user: values.user, password: form.password ?? "", link: values.link, quality: "main" });
+        url = brandStreamUrl(brand, { host, user: values.user, password, link: values.link, quality: "main" });
       } catch (e) {
         return fail(e instanceof Error ? e.message : "Check the camera details.");
       }
@@ -309,7 +315,7 @@ export class Wizard {
       // Brand hints only for that brand (for example the Tapo recording rule).
       const hint = result.kind === "no_video" || result.kind === "busy" ? brandById(cam.brand).notes[0] : undefined;
       const msg = cam.brand === "tapo" && hint ? `${result.message} ${hint}` : result.message;
-      return { html: await this.renderCameraForm(csrf, msg, { host: cam.host, user: cam.user, brand: cam.brand ?? "", link: "" }, result.detail) };
+      return { html: await this.renderCameraForm(csrf, msg, { host: cam.host, user: cam.user, brand: cam.brand ?? "", link: "", consent: true, hasPassword: this.lastPassword?.host === cam.host && this.lastPassword?.user === cam.user }, result.detail) };
     }
     cam.testedAt = new Date().toISOString();
     // Without an injected value, ask the disk that holds /data (the server passes none).
@@ -320,11 +326,12 @@ export class Wizard {
       n.cameraConfirmed = false;
     });
     this.lastSnapshot = result.jpeg;
+    this.lastPassword = undefined;
     return { html: this.renderPicture(csrf) };
   }
 
   private formValues(s: WizardState): CameraFormValues {
-    return { host: s.camera?.host ?? "", user: s.camera?.user ?? "", brand: s.camera?.brand ?? (s.camera?.path ? "tapo" : ""), link: "" };
+    return { host: s.camera?.host ?? "", user: s.camera?.user ?? "", brand: s.camera?.brand ?? (s.camera?.path ? "tapo" : ""), link: "", consent: Boolean(s.camera?.testedAt) };
   }
 
   /** Runs "Find my camera" once (cached for 2 minutes). At most about 5 seconds. */
@@ -389,9 +396,9 @@ ${list}
 <label for="host">${found?.length ? "Or type the camera address" : "Camera address"}</label><input id="host" name="host" type="text" inputmode="decimal" autocomplete="off" placeholder="192.168.1.20" value="${esc(found?.some((f) => f.ip === v.host) ? "" : v.host)}">
 <label for="brand">Brand</label><select id="brand" name="brand" data-brand><option value="">Choose the brand</option>${brands}</select>
 <label for="user">Camera account name</label><input id="user" name="user" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" value="${esc(v.user)}">
-<label for="password">Camera account password</label><input id="password" name="password" type="password" autocomplete="off">
+<label for="password">Camera account password</label><input id="password" name="password" type="password" autocomplete="off"${v.hasPassword ? ' placeholder="Leave empty to use the password you typed"' : ""}>
 <div data-linkfield><label for="link">Camera link (only for Other camera and UniFi Protect)</label><input id="link" name="link" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="rtsp://..." value="${esc(v.link)}"></div>
-<label class="check"><input type="checkbox" name="consent" value="yes"> <span>My camera films my own property.</span></label>
+<label class="check"><input type="checkbox" name="consent" value="yes"${v.consent ? " checked" : ""}> <span>My camera films my own property.</span></label>
 <p class="hint">Clips keep sound when your camera's microphone is on. You can switch it off in your camera's app at any time.</p>
 <button>Test camera</button><div class="hint">The test takes up to 15 seconds.</div>
 <details><summary>Where do I find the camera account?</summary>${howTo}</details>
@@ -509,4 +516,8 @@ interface CameraFormValues {
   user: string;
   brand: string;
   link: string;
+  /** "My camera films my own property" stays ticked after an error. */
+  consent?: boolean;
+  /** A password was typed for this host and account: an empty field keeps it. */
+  hasPassword?: boolean;
 }
