@@ -386,6 +386,53 @@ contract SignaturesFuzzTest is RegistryFixture {
         assertEq(uint8(reg.getDevice(alice, DEV2).status), 1);
     }
 
+    /// @dev Calldata of owner or device action X for the replay test, signed at `nonce`.
+    ///      0: revoke DEV (owner key). 1: rotate DEV to a new key (old and new device key). 2: register a new device.
+    function _heldBackAction(uint256 x, uint256 nonce) internal view returns (bytes memory) {
+        if (x == 0) {
+            return abi.encodeCall(DeviceRegistry.revokeDevice, (DEV, _sign(aliceKey, _revMsg(address(reg), alice, DEV, nonce))));
+        }
+        if (x == 1) {
+            bytes memory nk = _key(40);
+            bytes memory m = _rotMsg(address(reg), alice, DEV, keccak256(devKey), keccak256(nk), nonce);
+            return abi.encodeCall(DeviceRegistry.rotateDeviceKey, (DEV, devKey, nk, _sign(devKey, m), _sign(nk, m)));
+        }
+        bytes32 nid = keccak256("held-back-device");
+        bytes memory k = _key(41);
+        bytes memory rm = _regMsg(address(reg), alice, nid, keccak256(k), nonce);
+        return abi.encodeCall(DeviceRegistry.registerDevice, (nid, k, _sign(aliceKey, rm), _sign(k, rm)));
+    }
+
+    /// A3: held-back signature replay that reaches the signature check. The owner signs action X at
+    /// nonce n and holds it back, then performs a different action Y, which moves the nonce. X at the
+    /// old nonce fails on the signature check itself (BadOwnerSignature or BadOldKeySignature, never a
+    /// state check), and X signed again at the new nonce succeeds. Every pair of X and Y in
+    /// register, rotate and revoke.
+    function testFuzz_replay_heldBackReachesSignatureCheck(uint8 x, uint8 y) public {
+        uint256 xi = x % 3;
+        uint256 yi = y % 3;
+        _register(reg, alice, aliceKey, DEV, devKey);
+        _register(reg, alice, aliceKey, DEV2, _key(2));
+        uint256 n = reg.nonces(alice);
+        bytes memory held = _heldBackAction(xi, n);
+        // Y acts on DEV2 or on a third device, never on what X touches
+        if (yi == 0) _register(reg, alice, aliceKey, keccak256("third-device"), _key(3));
+        else if (yi == 1) _rotate(reg, alice, DEV2, _key(2), _key(4));
+        else _revoke(reg, alice, aliceKey, DEV2);
+        assertEq(reg.nonces(alice), n + 1, "Y moved the nonce");
+        bytes32 before = _digest(reg, alice, DEV);
+        vm.prank(alice);
+        (bool ok, bytes memory ret) = address(reg).call(held);
+        assertFalse(ok, "held-back signature accepted after the nonce moved");
+        bytes4 expected = xi == 1 ? DeviceRegistry.BadOldKeySignature.selector : DeviceRegistry.BadOwnerSignature.selector;
+        assertEq(ret, abi.encodePacked(expected), "refused by the signature check");
+        assertEq(_digest(reg, alice, DEV), before, "state changed");
+        vm.prank(alice);
+        (ok,) = address(reg).call(_heldBackAction(xi, n + 1));
+        assertTrue(ok, "X signed at the new nonce refused");
+        assertEq(reg.nonces(alice), n + 2);
+    }
+
     /// A3/A4: rotation K1 -> K2 -> K1 does not make the first K1 -> K2 signatures valid again.
     function testFuzz_replay_rotateBackAndForth(uint256 seedB) public {
         vm.assume(seedB != 1);
