@@ -430,7 +430,8 @@ export class Wizard {
     // The result of "Find my camera" (none while it runs or when it was skipped).
     const found = this.scan && !this.scan.running ? this.scan.found : undefined;
     const skipped = Boolean(this.scan?.skipped);
-    const pick = v.host || found?.[0]?.ip || "";
+    // Preselect a camera whose brand is known (ONVIF or Tapo port), else the first one.
+    const pick = v.host || (found?.find((f) => f.brand) ?? found?.[0])?.ip || "";
     const brand = v.brand || found?.find((f) => f.ip === pick)?.brand || "";
     // After a failed test the error says what is wrong: no second "No camera answered" note under it.
     const list = found === undefined || (!found.length && (skipped || error)) ? ""
@@ -442,12 +443,12 @@ export class Wizard {
     const howTo = CAMERA_BRANDS.map((b) => `<p data-hint="${b.id}"><strong>${esc(b.name)}:</strong> ${esc(b.enableRtsp)}${b.notes.map((n) => ` ${esc(n)}`).join("")}${b.pathStatus === "check-manual" ? "" : ""}</p>`).join("");
     return `<div class="card">${eyebrow(1, "Camera")}
 <h1>Connect your camera</h1>
-<p>QoreWitness works with cameras that send a video stream (RTSP or ONVIF). Pick your camera, choose its brand and type the camera account.</p>
+<p>QoreWitness works with cameras that send a video stream (RTSP or ONVIF). Pick your camera and type its account.</p>
 ${error ? `<div class="error" role="alert">${esc(error)}</div>` : ""}${detail ? `<details><summary>Technical details</summary><pre>${esc(detail)}</pre></details>` : ""}
 <form method="post" action="/setup/camera">${hidden("_csrf", csrf)}${hidden("action", "test")}
 ${list}
 <label for="host">${found?.length ? "Or type the camera address" : "Camera address"}</label><input id="host" name="host" type="text" inputmode="decimal" autocomplete="off" placeholder="192.168.1.20" value="${esc(found?.some((f) => f.ip === v.host) ? "" : v.host)}">
-<label for="brand">Brand</label><select id="brand" name="brand" data-brand><option value="">Choose the brand</option>${brands}</select>
+${brand ? `<details data-brandbox style="margin-top:14px"><summary>Brand: <b data-brandname>${esc(brandById(brand as BrandId).name)}</b> <span class="hint">· Change</span></summary>` : ""}<label for="brand">Brand</label><select id="brand" name="brand" data-brand><option value="">Choose the brand</option>${brands}</select>${brand ? "</details>" : ""}
 <label for="user">Camera account name</label><input id="user" name="user" type="text" autocomplete="off" data-lpignore="true" autocapitalize="none" spellcheck="false" value="${esc(v.user)}"><div class="hint">Type it exactly as in the camera app. Upper and lower case count.</div>
 <label for="password">Camera account password</label><input id="password" name="password" type="password" autocomplete="new-password"${v.hasPassword ? ' placeholder="Leave empty to use the password you typed"' : ""}>
 <div data-linkfield><label for="link">Camera link (only for Other camera and UniFi Protect)</label><input id="link" name="link" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="rtsp://..." value="${esc(v.link)}"></div>

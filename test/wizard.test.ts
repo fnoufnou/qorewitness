@@ -408,6 +408,7 @@ describe("wizard: any camera (find, brand, link)", () => {
     assert.match(html, /Camera at 192\.168\.1\.31/);
     assert.match(html, /value="192\.168\.1\.20" data-brand="tapo" checked/);
     assert.match(html, /<option value="tapo" selected>/);
+    assert.match(html, /<details data-brandbox[^>]*><summary>Brand: <b data-brandname>TP-Link Tapo<\/b>/, "a known brand is folded, with a way to change it");
     assert.ok(t.hints[0].includes("http://192.168.1.228:8080"));
     await t.w.render("camera", "x", "http://192.168.1.228:8080");
     assert.equal(t.hints.length, 1, "the search result is cached");
