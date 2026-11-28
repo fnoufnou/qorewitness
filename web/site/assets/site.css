@@ -487,3 +487,10 @@ code.break{word-break:break-all}
 @media (prefers-color-scheme:dark){.video-card{box-shadow:0 18px 40px rgba(0,0,0,.5)}}
 @media (min-width:860px){.story{grid-template-columns:.9fr 1.1fr;gap:56px}.video-card .play{width:88px;height:88px;margin:-44px 0 0 -44px}}
 @media print{.site-header,.site-footer,.band,.edge,.beta-bar{display:none}body{font-size:12pt}}
+.linkish{background:none;border:0;padding:0;font:inherit;color:var(--link);text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}
+.pop{max-width:min(440px,calc(100vw - 32px));padding:20px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);box-shadow:0 18px 40px rgba(19,32,28,.25)}
+.pop::backdrop{background:rgba(0,0,0,.35)}
+.pop h5{margin:0 0 8px;font-size:17px}
+.pop{box-sizing:border-box}
+.pop table{width:100%;min-width:0;border-collapse:collapse;margin:0}
+.pop th,.pop td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}

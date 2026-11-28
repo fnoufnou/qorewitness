@@ -321,13 +321,14 @@ const hwTable = `<div class="tablewrap"><table class="stack"><caption class="sr"
 
 /* ---------- camera brand hints ---------- */
 const BRANDS = [
-  ["TP-Link Tapo (wired models, such as the C210)", `<div><ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Advanced Settings</b>, then <b>Camera Account</b>, and agree to the notice.</li><li>Choose a name and a password of 6 to 32 characters each. Letters and digits work best.</li></ol><p>Tapo Care, a microSD card and a recorder such as QoreWitness can only run two at a time, so switch one off if all three are on.</p></div>`],
+  ["TP-Link Tapo (wired models, such as the C210)", `<div><ol class="plain"><li>In the Tapo app, tap your camera, then the gear icon.</li><li>Open <b>Advanced Settings</b>, then <b>Camera Account</b>, and agree to the notice.</li><li>Choose a name and a password of 6 to 32 characters each.</li></ol><p class="small" style="margin-top:10px"><em>Tapo Care, a microSD card and a recorder such as QoreWitness can only run two at a time, so switch one off if all three are on.</em></p></div>`],
   ["Reolink (wired and PoE models)", `<div><p>In the Reolink app or desktop client, open the camera settings, then <b>Network</b>, <b>Advanced</b> and <b>Server Settings</b> (on some models <b>Port Settings</b>), and switch on <b>RTSP</b>. Use the camera's own login.</p></div>`],
   ["Hikvision and Annke", `<p>RTSP is usually on already. Open the camera in your browser and check <b>Configuration</b>, <b>Network</b>, <b>Advanced Settings</b>. To use ONVIF, switch it on under <b>Integration Protocol</b> and add an ONVIF user.</p>`],
   ["Dahua and Amcrest", `<p>RTSP is usually on already. You can check it in the camera's web page under the network settings, where you can also switch on ONVIF.</p>`],
   ["Ubiquiti UniFi Protect", `<p>In UniFi Protect, open the camera, go to its settings and switch on an <b>RTSP</b> stream under the advanced options. Protect then shows a ready-made stream link. Copy it and keep it for the setup.</p>`],
   ["Axis", `<p>Axis cameras offer RTSP as standard. Create a user for QoreWitness in the camera's web page, under the system or account settings.</p>`],
   ["Any other ONVIF camera", `<p>Switch on ONVIF in the camera settings and create an ONVIF user if the camera asks for one. To find the exact stream address, search for your model together with the words "RTSP URL".</p>`],
+  ["Any other RTSP camera", `<p>Many low-cost cameras can send a video stream on your home network. Look in the camera app for a switch called <b>RTSP</b>, <b>ONVIF</b> or <b>local stream</b> and switch it on. The setup finds cameras that listen on port 554 or 8554. To find the stream address, search for your model together with the words "RTSP URL". Common endings are <code>/stream1</code>, <code>/main</code> and <code>/Streaming/Channels/101</code>. Test the full address in <a href="${UP}cameras.html">VLC</a> first. Some cameras have no local stream and cannot work.</p>`],
 ];
 const brandHints = BRANDS.map(([b, inner]) => help(b, inner)).join("");
 
@@ -512,13 +513,14 @@ ${copybox("install-cmd", INSTALL, "Copy line")}</li>
 ${terminal}</li>
 </ol>
 ${help("Something not working?", `<ul class="plain"><li><b>Connection refused or timed out.</b> Check the IP address in your router app and that SSH is on.</li><li><b>Permission denied.</b> Check the user name and password of the computer.</li><li><b>Already working on that computer itself?</b> Paste only the part between the quotes.</li><li><b>Keep the pairing code to yourself.</b> Anyone with it can set up QoreWitness until you choose a password.</li><li>Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs. You can run the line again at any time.</li></ul>`)}`);
-const pathProxmox = panel("proxmox", "Proxmox or another home server", `<ol class="plain path-steps">
-<li>Create a Debian 12 container: unprivileged, with <b>nesting</b> and <b>keyctl</b> on (Options, Features). 2 cores and 2 GB memory are enough. Size the disk for the video you want to keep. A Debian or Ubuntu VM works too.</li>
+const pathProxmox = panel("proxmox", "Home server", `<ol class="plain path-steps">
+<li><b>Proxmox:</b> create a Debian 12 container: unprivileged, with <b>nesting</b> and <b>keyctl</b> on (Options, Features). 2 cores and 2 GB memory are enough. <button type="button" class="linkish" popovertarget="disk-size">Size the disk for the video you want to keep.</button><br><b>Ubuntu or Debian server, or a VM:</b> go straight to the next step.</li>
 <li>Open a shell in it, as root or as a user with sudo, and run:
 ${copybox("install-here", INSTALL_HERE, "Copy line")}
 The installer adds Docker when it is missing, installs into <code>~/qorewitness</code> and ends with a <b>link</b> and a <b>pairing code</b>.</li>
 </ol>
-<p class="small">Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs.</p>`);
+<p class="small">Want to read the script first? It is on <a href="${GH}/blob/${TAG}/install.sh">GitHub</a>, exactly the version the line runs.</p>
+<div id="disk-size" class="pop" popover><h5>How big a disk?</h5><p class="small">Estimates for one 2K camera at about 1.5 to 2 Mbit/s. A 1080p camera often needs less.</p><div class="tablewrap" role="region" aria-label="Disk size per number of days kept" tabindex="0"><table><caption class="sr">Disk size per number of days kept</caption><thead><tr><th scope="col">Video kept</th><th scope="col">Disk</th></tr></thead><tbody><tr><td>3 days</td><td>64 to 80 GB</td></tr><tr><td>1 week</td><td>128 to 160 GB</td></tr><tr><td>2 weeks</td><td>250 to 320 GB</td></tr><tr><td>1 month</td><td>500 to 650 GB</td></tr></tbody></table></div><p class="small">The sizes include about 10 GB for the system. When the disk is almost full, QoreWitness removes the oldest video first.</p><button type="button" class="btn" popovertarget="disk-size" popovertargetaction="hide">Close</button></div>`);
 const nasCmd = `mkdir -p qorewitness/data && cd qorewitness
 curl -fsSLO ${COMPOSE_URL}
 sudo chown 10001:10001 data && sudo chmod 700 data
@@ -583,7 +585,6 @@ ${help("How much storage?", `<p>A 2K camera writes about 15 to 20 GB a day, so t
 <li class="step" id="s2"><h3>Prepare your camera</h3><p class="time">Camera app or camera web page</p><div class="body">
 <p>Switch on the camera's local stream and give it its own account name and password. QoreWitness uses that account to read the video on your home network. Pick your brand for the exact steps.</p>
 ${brandHints}
-<p style="margin-top:20px">Two good habits for any camera: use a new password that you do not use anywhere else, and give the camera a fixed address in your router (often called a "DHCP reservation"), so QoreWitness always finds it.</p>
 </div></li>
 
 <li class="step" id="s3"><h3>Install QoreWitness</h3><p class="time">Pick where it runs</p><div class="body">
@@ -591,7 +592,7 @@ ${brandHints}
 <p class="tabs-q">Where will QoreWitness run?</p>
 <div class="tablist" role="tablist" aria-label="Where will QoreWitness run?" hidden>
 ${whereTab("linux", "Raspberry Pi", "Or another Linux computer", true)}
-${whereTab("proxmox", "Proxmox", "Or another home server")}
+${whereTab("proxmox", "Home server", "Proxmox, Ubuntu, Debian")}
 ${whereTab("nas", "NAS", "Synology, Unraid, TrueNAS")}
 ${whereTab("desktop", "Windows or Mac", "With Docker Desktop")}
 </div>
